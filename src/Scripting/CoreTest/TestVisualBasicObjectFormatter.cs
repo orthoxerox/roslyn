@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.VisualBasic.Scripting.Hosting;
 
 namespace Microsoft.CodeAnalysis.Scripting.Hosting.UnitTests
 {
-    internal sealed class TestVisualBasicObjectFormatter : VisualBasicObjectFormatter
+    internal sealed class TestVisualBasicObjectFormatter : VisualBasicObjectFormatterImpl
     {
         private readonly bool _quoteStringsAndCharacters;
         private readonly int _maximumLineLength;
@@ -22,7 +22,7 @@ namespace Microsoft.CodeAnalysis.Scripting.Hosting.UnitTests
             _cultureInfo = cultureInfo ?? CultureInfo.InvariantCulture;
         }
 
-        internal override BuilderOptions GetInternalBuilderOptions(PrintOptions printOptions) =>
+        protected override BuilderOptions GetInternalBuilderOptions(PrintOptions printOptions) =>
             new BuilderOptions(
                 indentation: "  ",
                 newLine: Environment.NewLine,
@@ -32,9 +32,9 @@ namespace Microsoft.CodeAnalysis.Scripting.Hosting.UnitTests
 
         protected override CommonPrimitiveFormatterOptions GetPrimitiveOptions(PrintOptions printOptions) =>
             new CommonPrimitiveFormatterOptions(
-                numberRadix: printOptions.NumberRadix, 
+                numberRadix: printOptions.NumberRadix,
                 includeCodePoints: false,
-                escapeNonPrintableCharacters: printOptions.EscapeNonPrintableCharacters, 
+                escapeNonPrintableCharacters: printOptions.EscapeNonPrintableCharacters,
                 quoteStringsAndCharacters: _quoteStringsAndCharacters,
                 cultureInfo: _cultureInfo);
     }

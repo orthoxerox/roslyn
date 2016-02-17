@@ -1,25 +1,25 @@
 ' Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-Imports System.Reflection
 Imports Microsoft.CodeAnalysis.Scripting.Hosting
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Scripting.Hosting
 
-    Friend Class VisualBasicObjectFormatter
-        Inherits CommonObjectFormatter
+    Public NotInheritable Class VisualBasicObjectFormatter
+        Inherits ObjectFormatter
 
-        Protected Overrides ReadOnly Property TypeNameFormatter As CommonTypeNameFormatter
-        Protected Overrides ReadOnly Property PrimitiveFormatter As CommonPrimitiveFormatter
-        Protected Overrides ReadOnly Property Filter As MemberFilter
+        Public Shared ReadOnly Property Instance As New VisualBasicObjectFormatter()
 
-        Public Sub New()
-            PrimitiveFormatter = New VisualBasicPrimitiveFormatter()
-            TypeNameFormatter = New VisualBasicTypeNameFormatter(PrimitiveFormatter)
-            Filter = New VisualBasicMemberFilter()
+        Private Shared ReadOnly s_impl As ObjectFormatter = New VisualBasicObjectFormatterImpl()
+
+        Private Sub New()
         End Sub
 
-        Protected Overrides Function FormatRefKind(parameter As ParameterInfo) As String
-            Return If(parameter.IsOut, "ByRef", "")
+        Public Overrides Function FormatObject(obj As Object, options As PrintOptions) As String
+            Return s_impl.FormatObject(obj, options)
+        End Function
+
+        Public Overrides Function FormatException(e As Exception) As String
+            Return s_impl.FormatException(e)
         End Function
     End Class
 

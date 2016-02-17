@@ -11,15 +11,15 @@ using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp
 {
-    partial class BoundExpression : IExpression
+    internal partial class BoundExpression : IOperation
     {
-        ITypeSymbol IExpression.ResultType => this.Type;
+        ITypeSymbol IOperation.Type => this.Type;
 
         OperationKind IOperation.Kind => this.ExpressionKind;
 
         bool IOperation.IsInvalid => this.HasErrors;
 
-        Optional<object> IExpression.ConstantValue
+        Optional<object> IOperation.ConstantValue
         {
             get
             {
@@ -28,106 +28,19 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
         SyntaxNode IOperation.Syntax => this.Syntax;
-        
+
         protected abstract OperationKind ExpressionKind { get; }
 
-        public abstract void Accept(IOperationVisitor visitor);
+        public abstract void Accept(OperationVisitor visitor);
 
-        public abstract TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument);
+        public abstract TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument);
     }
 
-    internal abstract partial class BoundNode : IOperationSearchable
-    {
-        IEnumerable<IOperation> IOperationSearchable.Descendants()
-        {
-            var list = new List<IOperation>();
-            new Collector(list).Visit(this);
-            list.RemoveAt(0);
-            return list;
-        }
-
-        IEnumerable<IOperation> IOperationSearchable.DescendantsAndSelf()
-        {
-            var list = new List<IOperation>();
-            new Collector(list).Visit(this);
-            return list;
-        }
-
-        private class Collector : BoundTreeWalkerWithStackGuard
-        {
-            private readonly List<IOperation> _nodes;
-
-            public Collector(List<IOperation> nodes)
-            {
-                this._nodes = nodes;
-            }
-
-            public override BoundNode Visit(BoundNode node)
-            {
-                IOperation operation = node as IOperation;
-                if (operation != null && operation.Kind != OperationKind.None)
-                {
-                    this._nodes.Add(operation);
-                    // Certain child operations of the following operation kinds do not occur in bound nodes, 
-                    // and those child-operation nodes have to be added explicitly.
-                    //  1. IArgument
-                    //  2. IMemberInitializer
-                    //  3. ICase
-                    switch (operation.Kind)
-                    {
-                        case OperationKind.InvocationExpression:
-                            _nodes.AddRange(((IInvocationExpression)operation).ArgumentsInSourceOrder);
-                            break;
-                        case OperationKind.ObjectCreationExpression:
-                            var objCreationExp = (IObjectCreationExpression)operation;
-                            _nodes.AddRange(objCreationExp.ConstructorArguments);
-                            _nodes.AddRange(objCreationExp.MemberInitializers);
-                            break;
-                        case OperationKind.SwitchStatement:
-                            _nodes.AddRange(((ISwitchStatement)operation).Cases);
-                            break;
-                    }
-                }
-                return base.Visit(node);
-            }
-
-            // We skip visiting all `BoundLocalDeclaration` nodes in `BoundMultipleLocalDeclarations` 
-            // (but not their children), since they are not statements in this case.
-            public override BoundNode VisitMultipleLocalDeclarations(BoundMultipleLocalDeclarations node)
-            {
-                foreach (var declaration in node.LocalDeclarations)
-                {
-                    this.Visit(declaration.DeclaredType);
-                    this.Visit(declaration.InitializerOpt);
-                    this.VisitList(declaration.ArgumentsOpt);
-                }
-                return null;
-            }
-
-            // Skip visiting `BoundAssignmentOperator` nodes (but not their children) if they are used for initializing members in object creation.
-            // The corresponding operations are covered by `IMemberInitializer`.
-            public override BoundNode VisitObjectInitializerExpression(BoundObjectInitializerExpression node)
-            {
-                foreach (var expression in node.Initializers)
-                {
-                    if (expression.HasErrors)
-                    {
-                        continue;
-                    }
-                    var assignment = (BoundAssignmentOperator) expression;
-                    this.Visit(assignment.Left);
-                    this.Visit(assignment.Right);
-                }
-                return null;
-            }
-        }
-    }
-
-    partial class BoundCall : IInvocationExpression
+    internal partial class BoundCall : IInvocationExpression
     {
         IMethodSymbol IInvocationExpression.TargetMethod => this.Method;
 
-        IExpression IInvocationExpression.Instance => this.ReceiverOpt;
+        IOperation IInvocationExpression.Instance => this.Method.IsStatic ? null : this.ReceiverOpt;
 
         bool IInvocationExpression.IsVirtual => (this.Method.IsVirtual || this.Method.IsAbstract || this.Method.IsOverride) && !this.ReceiverOpt.SuppressVirtualCalls;
 
@@ -138,7 +51,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 ArrayBuilder<IArgument> sourceOrderArguments = ArrayBuilder<IArgument>.GetInstance(this.Arguments.Length);
                 for (int argumentIndex = 0; argumentIndex < this.Arguments.Length; argumentIndex++)
                 {
-                    IArgument argument = DeriveArgument(this.ArgsToParamsOpt.IsDefault ? argumentIndex : this.ArgsToParamsOpt[argumentIndex], argumentIndex, this.Arguments, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, this.Method.Parameters);
+                    IArgument argument = DeriveArgument(this.ArgsToParamsOpt.IsDefault ? argumentIndex : this.ArgsToParamsOpt[argumentIndex], argumentIndex, this.Arguments, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, this.Method.Parameters, this.Syntax);
                     sourceOrderArguments.Add(argument);
                     if (argument.ArgumentKind == ArgumentKind.ParamArray)
                     {
@@ -149,27 +62,27 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return sourceOrderArguments.ToImmutableAndFree();
             }
         }
-        
-        ImmutableArray<IArgument> IInvocationExpression.ArgumentsInParameterOrder => DeriveArguments(this.Arguments, this.ArgumentNamesOpt, this.ArgsToParamsOpt, this.ArgumentRefKindsOpt, this.Method.Parameters);
 
-        IArgument IInvocationExpression.ArgumentMatchingParameter(IParameterSymbol parameter)
+        ImmutableArray<IArgument> IHasArgumentsExpression.ArgumentsInParameterOrder => DeriveArguments(this.Arguments, this.ArgumentNamesOpt, this.ArgsToParamsOpt, this.ArgumentRefKindsOpt, this.Method.Parameters, this.Syntax);
+
+        IArgument IHasArgumentsExpression.GetArgumentMatchingParameter(IParameterSymbol parameter)
         {
-            return ArgumentMatchingParameter(this.Arguments, this.ArgsToParamsOpt, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, parameter.ContainingSymbol as Symbols.MethodSymbol, parameter);
+            return ArgumentMatchingParameter(this.Arguments, this.ArgsToParamsOpt, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, parameter.ContainingSymbol, ((Symbols.MethodSymbol)parameter.ContainingSymbol).Parameters, parameter, this.Syntax);
         }
 
         protected override OperationKind ExpressionKind => OperationKind.InvocationExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitInvocationExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitInvocationExpression(this, argument);
         }
 
-        internal static ImmutableArray<IArgument> DeriveArguments(ImmutableArray<BoundExpression> boundArguments, ImmutableArray<string> argumentNames, ImmutableArray<int> argumentsToParameters, ImmutableArray<RefKind> argumentRefKinds, ImmutableArray<Symbols.ParameterSymbol> parameters)
+        internal static ImmutableArray<IArgument> DeriveArguments(ImmutableArray<BoundExpression> boundArguments, ImmutableArray<string> argumentNames, ImmutableArray<int> argumentsToParameters, ImmutableArray<RefKind> argumentRefKinds, ImmutableArray<Symbols.ParameterSymbol> parameters, SyntaxNode invocationSyntax)
         {
             ArrayBuilder<IArgument> arguments = ArrayBuilder<IArgument>.GetInstance(boundArguments.Length);
             for (int parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
@@ -199,12 +112,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                     {
                         // If corresponding parameter is Param array, then this means 0 element is provided and an Argument of kind == ParamArray will be added, 
                         // otherwise it is an error and null is added.
-                        arguments.Add(DeriveArgument(parameterIndex, argumentIndex, boundArguments, argumentNames, argumentRefKinds, parameters));
+                        arguments.Add(DeriveArgument(parameterIndex, argumentIndex, boundArguments, argumentNames, argumentRefKinds, parameters, invocationSyntax));
                     }
                 }
                 else
                 {
-                    arguments.Add(DeriveArgument(parameterIndex, argumentIndex, boundArguments, argumentNames, argumentRefKinds, parameters));
+                    arguments.Add(DeriveArgument(parameterIndex, argumentIndex, boundArguments, argumentNames, argumentRefKinds, parameters, invocationSyntax));
                 }
             }
 
@@ -213,7 +126,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private static readonly ConditionalWeakTable<BoundExpression, IArgument> s_argumentMappings = new ConditionalWeakTable<BoundExpression, IArgument>();
 
-        private static IArgument DeriveArgument(int parameterIndex, int argumentIndex, ImmutableArray<BoundExpression> boundArguments, ImmutableArray<string> argumentNames, ImmutableArray<RefKind> argumentRefKinds, ImmutableArray<Symbols.ParameterSymbol> parameters)
+        private static IArgument DeriveArgument(int parameterIndex, int argumentIndex, ImmutableArray<BoundExpression> boundArguments, ImmutableArray<string> argumentNames, ImmutableArray<RefKind> argumentRefKinds, ImmutableArray<Symbols.ParameterSymbol> parameters, SyntaxNode invocationSyntax)
         {
             if (argumentIndex >= boundArguments.Length)
             {
@@ -223,7 +136,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     Symbols.ParameterSymbol lastParameter = parameters[parameters.Length - 1];
                     if (lastParameter.IsParams)
                     {
-                        return new Argument(ArgumentKind.ParamArray, lastParameter, CreateParamArray(lastParameter, boundArguments, argumentIndex));
+                        return new Argument(ArgumentKind.ParamArray, lastParameter, CreateParamArray(lastParameter, boundArguments, argumentIndex, invocationSyntax));
                     }
                 }
 
@@ -252,9 +165,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                             // An argument that is an array of the appropriate type is not a params argument.
                             (boundArguments.Length > argumentIndex + 1 ||
                              argument.Type.TypeKind != TypeKind.Array ||
-                             !argument.Type.Equals(parameters[parameters.Length - 1].Type, ignoreCustomModifiersAndArraySizesAndLowerBounds:true)))
+                             !argument.Type.Equals(parameters[parameters.Length - 1].Type, ignoreCustomModifiersAndArraySizesAndLowerBounds: true)))
                         {
-                            return new Argument(ArgumentKind.ParamArray, parameters[parameters.Length - 1], CreateParamArray(parameters[parameters.Length - 1], boundArguments, argumentIndex));
+                            return new Argument(ArgumentKind.ParamArray, parameters[parameters.Length - 1], CreateParamArray(parameters[parameters.Length - 1], boundArguments, argumentIndex, invocationSyntax));
                         }
                         else
                         {
@@ -266,35 +179,38 @@ namespace Microsoft.CodeAnalysis.CSharp
                 });
         }
         
-        private static IExpression CreateParamArray(IParameterSymbol parameter, ImmutableArray<BoundExpression> boundArguments, int firstArgumentElementIndex)
+        private static IOperation CreateParamArray(IParameterSymbol parameter, ImmutableArray<BoundExpression> boundArguments, int firstArgumentElementIndex, SyntaxNode invocationSyntax)
         {
             if (parameter.Type.TypeKind == TypeKind.Array)
             {
                 IArrayTypeSymbol arrayType = (IArrayTypeSymbol)parameter.Type;
-                ArrayBuilder<IExpression> paramArrayArguments = ArrayBuilder<IExpression>.GetInstance(boundArguments.Length - firstArgumentElementIndex);
+                ArrayBuilder<IOperation> builder = ArrayBuilder<IOperation>.GetInstance(boundArguments.Length - firstArgumentElementIndex);
+
                 for (int index = firstArgumentElementIndex; index < boundArguments.Length; index++)
                 {
-                    paramArrayArguments.Add(boundArguments[index]);
+                    builder.Add(boundArguments[index]);
                 }
+                var paramArrayArguments = builder.ToImmutableAndFree();
 
-                return new ArrayCreation(arrayType, paramArrayArguments.ToImmutableAndFree(), boundArguments.Length - 1 > firstArgumentElementIndex ? boundArguments[firstArgumentElementIndex].Syntax : null);
+                // Use the invocation syntax node if there is no actual syntax available for the argument (because the paramarray is empty.)
+                return new ArrayCreation(arrayType, paramArrayArguments, paramArrayArguments.Length > 0 ? paramArrayArguments[0].Syntax : invocationSyntax);
             }
 
             return null;
         }
 
-        internal static IArgument ArgumentMatchingParameter(ImmutableArray<BoundExpression> arguments, ImmutableArray<int> argumentsToParameters, ImmutableArray<string> argumentNames, ImmutableArray<RefKind> argumentRefKinds, Symbols.MethodSymbol targetMethod, IParameterSymbol parameter)
+        internal static IArgument ArgumentMatchingParameter(ImmutableArray<BoundExpression> arguments, ImmutableArray<int> argumentsToParameters, ImmutableArray<string> argumentNames, ImmutableArray<RefKind> argumentRefKinds, ISymbol targetMethod, ImmutableArray<Symbols.ParameterSymbol> parameters, IParameterSymbol parameter, SyntaxNode invocationSyntax)
         {
             int argumentIndex = ArgumentIndexMatchingParameter(arguments, argumentsToParameters, targetMethod, parameter);
             if (argumentIndex >= 0)
             {
-                return DeriveArgument(parameter.Ordinal, argumentIndex, arguments, argumentNames, argumentRefKinds, targetMethod.Parameters);
+                return DeriveArgument(parameter.Ordinal, argumentIndex, arguments, argumentNames, argumentRefKinds, parameters, invocationSyntax);
             }
 
             return null;
         }
 
-        static int ArgumentIndexMatchingParameter(ImmutableArray<BoundExpression> arguments, ImmutableArray<int> argumentsToParameters, IMethodSymbol targetMethod, IParameterSymbol parameter)
+        private static int ArgumentIndexMatchingParameter(ImmutableArray<BoundExpression> arguments, ImmutableArray<int> argumentsToParameters, ISymbol targetMethod, IParameterSymbol parameter)
         {
             if (parameter.ContainingSymbol == targetMethod)
             {
@@ -313,19 +229,19 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private abstract class ArgumentBase : IArgument
         {
-            public ArgumentBase(IParameterSymbol parameter, IExpression value)
+            public ArgumentBase(IParameterSymbol parameter, IOperation value)
             {
                 this.Value = value;
                 this.Parameter = parameter;
             }
-            
+
             public IParameterSymbol Parameter { get; }
 
-            public IExpression Value { get; }
+            public IOperation Value { get; }
 
-            IExpression IArgument.InConversion => null;
+            IOperation IArgument.InConversion => null;
 
-            IExpression IArgument.OutConversion => null;
+            IOperation IArgument.OutConversion => null;
 
             bool IOperation.IsInvalid => this.Parameter == null || this.Value.IsInvalid;
 
@@ -333,14 +249,18 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             SyntaxNode IOperation.Syntax => this.Value.Syntax;
 
+            public ITypeSymbol Type => null;
+
+            public Optional<object> ConstantValue => default(Optional<object>);
+
             public abstract ArgumentKind ArgumentKind { get; }
 
-            void IOperation.Accept(IOperationVisitor visitor)
+            void IOperation.Accept(OperationVisitor visitor)
             {
                 visitor.VisitArgument(this);
             }
 
-            TResult IOperation.Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+            TResult IOperation.Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
             {
                 return visitor.VisitArgument(this, argument);
             }
@@ -348,7 +268,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private sealed class SimpleArgument : ArgumentBase
         {
-            public SimpleArgument(IParameterSymbol parameter, IExpression value)
+            public SimpleArgument(IParameterSymbol parameter, IOperation value)
                 : base(parameter, value)
             { }
 
@@ -357,7 +277,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private sealed class Argument : ArgumentBase
         {
-            public Argument(ArgumentKind kind, IParameterSymbol parameter, IExpression value)
+            public Argument(ArgumentKind kind, IParameterSymbol parameter, IOperation value)
                 : base(parameter, value)
             {
                 this.ArgumentKind = kind;
@@ -367,26 +287,26 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
     }
 
-    partial class BoundLocal : ILocalReferenceExpression
+    internal partial class BoundLocal : ILocalReferenceExpression
     {
         ILocalSymbol ILocalReferenceExpression.Local => this.LocalSymbol;
-        
+
         protected override OperationKind ExpressionKind => OperationKind.LocalReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitLocalReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitLocalReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundFieldAccess : IFieldReferenceExpression
+    internal partial class BoundFieldAccess : IFieldReferenceExpression
     {
-        IExpression IMemberReferenceExpression.Instance => this.ReceiverOpt;
+        IOperation IMemberReferenceExpression.Instance => this.FieldSymbol.IsStatic ? null : this.ReceiverOpt;
 
         ISymbol IMemberReferenceExpression.Member => this.FieldSymbol;
 
@@ -394,85 +314,113 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected override OperationKind ExpressionKind => OperationKind.FieldReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitFieldReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitFieldReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundPropertyAccess : IPropertyReferenceExpression
+    internal partial class BoundPropertyAccess : IPropertyReferenceExpression
     {
         IPropertySymbol IPropertyReferenceExpression.Property => this.PropertySymbol;
-       
-        IExpression IMemberReferenceExpression.Instance => this.ReceiverOpt;
+
+        IOperation IMemberReferenceExpression.Instance => this.PropertySymbol.IsStatic ? null : this.ReceiverOpt;
 
         ISymbol IMemberReferenceExpression.Member => this.PropertySymbol;
 
         protected override OperationKind ExpressionKind => OperationKind.PropertyReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitPropertyReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitPropertyReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundEventAccess : IEventReferenceExpression
+    internal partial class BoundIndexerAccess : IIndexedPropertyReferenceExpression
+    {
+        IPropertySymbol IPropertyReferenceExpression.Property => this.Indexer;
+
+        IOperation IMemberReferenceExpression.Instance => this.Indexer.IsStatic ? null : this.ReceiverOpt;
+
+        ISymbol IMemberReferenceExpression.Member => this.Indexer;
+
+        ImmutableArray<IArgument> IHasArgumentsExpression.ArgumentsInParameterOrder => BoundCall.DeriveArguments(this.Arguments, this.ArgumentNamesOpt, this.ArgsToParamsOpt, this.ArgumentRefKindsOpt, this.Indexer.Parameters, this.Syntax);
+
+        IArgument IHasArgumentsExpression.GetArgumentMatchingParameter(IParameterSymbol parameter)
+        {
+            return BoundCall.ArgumentMatchingParameter(this.Arguments, this.ArgsToParamsOpt, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, this.Indexer, this.Indexer.Parameters, parameter, this.Syntax);
+        }
+
+        protected override OperationKind ExpressionKind => OperationKind.IndexedPropertyReferenceExpression;
+
+        public override void Accept(OperationVisitor visitor)
+        {
+            visitor.VisitIndexedPropertyReferenceExpression(this);
+        }
+
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        {
+            return visitor.VisitIndexedPropertyReferenceExpression(this, argument);
+        }
+    }
+
+    internal partial class BoundEventAccess : IEventReferenceExpression
     {
         IEventSymbol IEventReferenceExpression.Event => this.EventSymbol;
 
-        IExpression IMemberReferenceExpression.Instance => this.ReceiverOpt;
+        IOperation IMemberReferenceExpression.Instance => this.EventSymbol.IsStatic ? null : this.ReceiverOpt;
 
         ISymbol IMemberReferenceExpression.Member => this.EventSymbol;
 
         protected override OperationKind ExpressionKind => OperationKind.EventReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitEventReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitEventReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundEventAssignmentOperator : IEventAssignmentExpression
+    internal partial class BoundEventAssignmentOperator : IEventAssignmentExpression
     {
         IEventSymbol IEventAssignmentExpression.Event => this.Event;
 
-        IExpression IEventAssignmentExpression.EventInstance => this.ReceiverOpt;
+        IOperation IEventAssignmentExpression.EventInstance => this.Event.IsStatic ? null : this.ReceiverOpt;
 
-        IExpression IEventAssignmentExpression.HandlerValue => this.Argument;
+        IOperation IEventAssignmentExpression.HandlerValue => this.Argument;
 
         bool IEventAssignmentExpression.Adds => this.IsAddition;
 
         protected override OperationKind ExpressionKind => OperationKind.EventAssignmentExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitEventAssignmentExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitEventAssignmentExpression(this, argument);
         }
     }
 
-    partial class BoundDelegateCreationExpression : IMethodBindingExpression
+    internal partial class BoundDelegateCreationExpression : IMethodBindingExpression
     {
-        IExpression IMemberReferenceExpression.Instance
+        IOperation IMemberReferenceExpression.Instance
         {
             get
             {
@@ -487,70 +435,73 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         bool IMethodBindingExpression.IsVirtual => this.MethodOpt != null && (this.MethodOpt.IsVirtual || this.MethodOpt.IsAbstract || this.MethodOpt.IsOverride) && !this.SuppressVirtualCalls;
-       
+
         ISymbol IMemberReferenceExpression.Member => this.MethodOpt;
-       
+
         IMethodSymbol IMethodBindingExpression.Method => this.MethodOpt;
-       
+
         protected override OperationKind ExpressionKind => OperationKind.MethodBindingExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        // SyntaxNode for MethodBindingExpression is the argument of DelegateCreationExpression 
+        SyntaxNode IOperation.Syntax => this.Argument.Syntax;
+
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitMethodBindingExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitMethodBindingExpression(this, argument);
         }
     }
 
-    partial class BoundParameter : IParameterReferenceExpression
+    internal partial class BoundParameter : IParameterReferenceExpression
     {
         IParameterSymbol IParameterReferenceExpression.Parameter => this.ParameterSymbol;
 
         protected override OperationKind ExpressionKind => OperationKind.ParameterReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitParameterReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitParameterReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundLiteral : ILiteralExpression
+    internal partial class BoundLiteral : ILiteralExpression
     {
-        string ILiteralExpression.Spelling => this.Syntax.ToString();
+        string ILiteralExpression.Text => this.Syntax.ToString();
 
         protected override OperationKind ExpressionKind => OperationKind.LiteralExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitLiteralExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitLiteralExpression(this, argument);
         }
     }
 
-    partial class BoundObjectCreationExpression : IObjectCreationExpression
+    internal partial class BoundObjectCreationExpression : IObjectCreationExpression
     {
         private static readonly ConditionalWeakTable<BoundObjectCreationExpression, object> s_memberInitializersMappings =
             new ConditionalWeakTable<BoundObjectCreationExpression, object>();
 
         IMethodSymbol IObjectCreationExpression.Constructor => this.Constructor;
 
-        ImmutableArray<IArgument> IObjectCreationExpression.ConstructorArguments => BoundCall.DeriveArguments(this.Arguments, this.ArgumentNamesOpt, this.ArgsToParamsOpt, this.ArgumentRefKindsOpt, this.Constructor.Parameters);
+        ImmutableArray<IArgument> IHasArgumentsExpression.ArgumentsInParameterOrder => BoundCall.DeriveArguments(this.Arguments, this.ArgumentNamesOpt, this.ArgsToParamsOpt, this.ArgumentRefKindsOpt, this.Constructor.Parameters, this.Syntax);
 
-        IArgument IObjectCreationExpression.ArgumentMatchingParameter(IParameterSymbol parameter)
+        IArgument IHasArgumentsExpression.GetArgumentMatchingParameter(IParameterSymbol parameter)
         {
-            return BoundCall.ArgumentMatchingParameter(this.Arguments, this.ArgsToParamsOpt, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, this.Constructor, parameter);
+            return BoundCall.ArgumentMatchingParameter(this.Arguments, this.ArgsToParamsOpt, this.ArgumentNamesOpt, this.ArgumentRefKindsOpt, this.Constructor, this.Constructor.Parameters, parameter, this.Syntax);
         }
 
         ImmutableArray<ISymbolInitializer> IObjectCreationExpression.MemberInitializers
@@ -585,27 +536,27 @@ namespace Microsoft.CodeAnalysis.CSharp
                                 }
                             }
                             return builder.ToImmutableAndFree();
-                        }                        
+                        }
                         return ImmutableArray<ISymbolInitializer>.Empty;
-                    });             
+                    });
             }
         }
 
         protected override OperationKind ExpressionKind => OperationKind.ObjectCreationExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitObjectCreationExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitObjectCreationExpression(this, argument);
         }
 
         private sealed class FieldInitializer : IFieldInitializer
         {
-            public FieldInitializer(SyntaxNode syntax, IFieldSymbol initializedField, IExpression value)
+            public FieldInitializer(SyntaxNode syntax, IFieldSymbol initializedField, IOperation value)
             {
                 this.Syntax = syntax;
                 this.InitializedField = initializedField;
@@ -616,7 +567,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             public ImmutableArray<IFieldSymbol> InitializedFields => ImmutableArray.Create(this.InitializedField);
 
-            public IExpression Value { get; }
+            public IOperation Value { get; }
 
             OperationKind IOperation.Kind => OperationKind.FieldInitializerInCreation;
 
@@ -624,12 +575,16 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             bool IOperation.IsInvalid => this.Value.IsInvalid || this.InitializedField == null;
 
-            void IOperation.Accept(IOperationVisitor visitor)
+            public ITypeSymbol Type => null;
+
+            public Optional<object> ConstantValue => default(Optional<object>);
+
+            void IOperation.Accept(OperationVisitor visitor)
             {
                 visitor.VisitFieldInitializer(this);
             }
 
-            TResult IOperation.Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+            TResult IOperation.Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
             {
                 return visitor.VisitFieldInitializer(this, argument);
             }
@@ -637,7 +592,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         private sealed class PropertyInitializer : IPropertyInitializer
         {
-            public PropertyInitializer(SyntaxNode syntax, IPropertySymbol initializedProperty, IExpression value)
+            public PropertyInitializer(SyntaxNode syntax, IPropertySymbol initializedProperty, IOperation value)
             {
                 this.Syntax = syntax;
                 this.InitializedProperty = initializedProperty;
@@ -646,7 +601,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             public IPropertySymbol InitializedProperty { get; }
 
-            public IExpression Value { get; }
+            public IOperation Value { get; }
 
             OperationKind IOperation.Kind => OperationKind.PropertyInitializerInCreation;
 
@@ -654,34 +609,38 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             bool IOperation.IsInvalid => this.Value.IsInvalid || this.InitializedProperty == null;
 
-            void IOperation.Accept(IOperationVisitor visitor)
+            public ITypeSymbol Type => null;
+
+            public Optional<object> ConstantValue => default(Optional<object>);
+
+            void IOperation.Accept(OperationVisitor visitor)
             {
                 visitor.VisitPropertyInitializer(this);
             }
 
-            TResult IOperation.Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+            TResult IOperation.Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
             {
                 return visitor.VisitPropertyInitializer(this, argument);
             }
         }
     }
 
-    partial class UnboundLambda
+    internal partial class UnboundLambda : IUnboundLambdaExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.UnboundLambdaExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitUnboundLambdaExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitUnboundLambdaExpression(this, argument);
         }
     }
 
-    partial class BoundLambda : ILambdaExpression
+    internal partial class BoundLambda : ILambdaExpression
     {
         IMethodSymbol ILambdaExpression.Signature => this.Symbol;
 
@@ -689,20 +648,20 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected override OperationKind ExpressionKind => OperationKind.LambdaExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitLambdaExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitLambdaExpression(this, argument);
         }
     }
 
-    partial class BoundConversion : IConversionExpression, IMethodBindingExpression
+    internal partial class BoundConversion : IConversionExpression, IMethodBindingExpression
     {
-        IExpression IConversionExpression.Operand => this.Operand;
+        IOperation IConversionExpression.Operand => this.Operand;
 
         Semantics.ConversionKind IConversionExpression.ConversionKind
         {
@@ -712,7 +671,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 {
                     case CSharp.ConversionKind.ExplicitUserDefined:
                     case CSharp.ConversionKind.ImplicitUserDefined:
-                        return Semantics.ConversionKind.Operator;
+                        return Semantics.ConversionKind.OperatorMethod;
 
                     case CSharp.ConversionKind.ExplicitReference:
                     case CSharp.ConversionKind.ImplicitReference:
@@ -748,15 +707,15 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         bool IConversionExpression.IsExplicit => this.ExplicitCastInCode;
 
-        IMethodSymbol IHasOperatorExpression.Operator => this.SymbolOpt;
+        IMethodSymbol IHasOperatorMethodExpression.OperatorMethod => this.SymbolOpt;
 
-        bool IHasOperatorExpression.UsesOperatorMethod => this.ConversionKind == CSharp.ConversionKind.ExplicitUserDefined || this.ConversionKind == CSharp.ConversionKind.ImplicitUserDefined;
+        bool IHasOperatorMethodExpression.UsesOperatorMethod => this.ConversionKind == CSharp.ConversionKind.ExplicitUserDefined || this.ConversionKind == CSharp.ConversionKind.ImplicitUserDefined;
 
         // Consider introducing a different bound node type for method group conversions. These aren't truly conversions, but represent selection of a particular method.
         protected override OperationKind ExpressionKind => this.ConversionKind == ConversionKind.MethodGroup ? OperationKind.MethodBindingExpression : OperationKind.ConversionExpression;
 
         IMethodSymbol IMethodBindingExpression.Method => this.ConversionKind == ConversionKind.MethodGroup ? this.SymbolOpt as IMethodSymbol : null;
-       
+
         bool IMethodBindingExpression.IsVirtual
         {
             get
@@ -766,7 +725,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        IExpression IMemberReferenceExpression.Instance
+        IOperation IMemberReferenceExpression.Instance
         {
             get
             {
@@ -785,7 +744,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         ISymbol IMemberReferenceExpression.Member => ((IMethodBindingExpression)this).Method;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             if (this.ExpressionKind == OperationKind.MethodBindingExpression)
             {
@@ -797,7 +756,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return this.ExpressionKind == OperationKind.MethodBindingExpression
                     ? visitor.VisitMethodBindingExpression(this, argument)
@@ -805,89 +764,85 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
     }
 
-    partial class BoundAsOperator : IConversionExpression
+    internal partial class BoundAsOperator : IConversionExpression
     {
-        IExpression IConversionExpression.Operand => this.Operand;
+        IOperation IConversionExpression.Operand => this.Operand;
 
-        Semantics.ConversionKind IConversionExpression.ConversionKind => Semantics.ConversionKind.AsCast;
+        Semantics.ConversionKind IConversionExpression.ConversionKind => Semantics.ConversionKind.TryCast;
 
         bool IConversionExpression.IsExplicit => true;
 
-        IMethodSymbol IHasOperatorExpression.Operator => null;
+        IMethodSymbol IHasOperatorMethodExpression.OperatorMethod => null;
 
-        bool IHasOperatorExpression.UsesOperatorMethod => false;
+        bool IHasOperatorMethodExpression.UsesOperatorMethod => false;
 
         protected override OperationKind ExpressionKind => OperationKind.ConversionExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitConversionExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitConversionExpression(this, argument);
         }
     }
 
-    partial class BoundIsOperator : IIsExpression
+    internal partial class BoundIsOperator : IIsTypeExpression
     {
-        IExpression IIsExpression.Operand => this.Operand;
+        IOperation IIsTypeExpression.Operand => this.Operand;
 
-        ITypeSymbol IIsExpression.IsType => this.TargetType.Type;
+        ITypeSymbol IIsTypeExpression.IsType => this.TargetType.Type;
 
-        protected override OperationKind ExpressionKind => OperationKind.IsExpression;
+        protected override OperationKind ExpressionKind => OperationKind.IsTypeExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            visitor.VisitIsExpression(this);
+            visitor.VisitIsTypeExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            return visitor.VisitIsExpression(this, argument);
+            return visitor.VisitIsTypeExpression(this, argument);
         }
     }
 
-    partial class BoundSizeOfOperator : ITypeOperationExpression
+    internal partial class BoundSizeOfOperator : ISizeOfExpression
     {
-        TypeOperationKind ITypeOperationExpression.TypeOperationKind => TypeOperationKind.SizeOf;
-
         ITypeSymbol ITypeOperationExpression.TypeOperand => this.SourceType.Type;
 
-        protected override OperationKind ExpressionKind => OperationKind.TypeOperationExpression;
+        protected override OperationKind ExpressionKind => OperationKind.SizeOfExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            visitor.VisitTypeOperationExpression(this);
+            visitor.VisitSizeOfExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            return visitor.VisitTypeOperationExpression(this, argument);
+            return visitor.VisitSizeOfExpression(this, argument);
         }
     }
 
-    partial class BoundTypeOfOperator : ITypeOperationExpression
+    internal partial class BoundTypeOfOperator : ITypeOfExpression
     {
-        TypeOperationKind ITypeOperationExpression.TypeOperationKind => TypeOperationKind.TypeOf;
-
         ITypeSymbol ITypeOperationExpression.TypeOperand => this.SourceType.Type;
 
-        protected override OperationKind ExpressionKind => OperationKind.TypeOperationExpression;
+        protected override OperationKind ExpressionKind => OperationKind.TypeOfExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            visitor.VisitTypeOperationExpression(this);
+            visitor.VisitTypeOfExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            return visitor.VisitTypeOperationExpression(this, argument);
+            return visitor.VisitTypeOfExpression(this, argument);
         }
     }
 
-    partial class BoundArrayCreation : IArrayCreationExpression
+    internal partial class BoundArrayCreation : IArrayCreationExpression
     {
         ITypeSymbol IArrayCreationExpression.ElementType
         {
@@ -903,245 +858,241 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        ImmutableArray<IExpression> IArrayCreationExpression.DimensionSizes => this.Bounds.As<IExpression>();
+        ImmutableArray<IOperation> IArrayCreationExpression.DimensionSizes => this.Bounds.As<IOperation>();
 
         IArrayInitializer IArrayCreationExpression.Initializer => this.InitializerOpt;
 
         protected override OperationKind ExpressionKind => OperationKind.ArrayCreationExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitArrayCreationExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitArrayCreationExpression(this, argument);
         }
     }
 
-    partial class BoundArrayInitialization : IArrayInitializer
+    internal partial class BoundArrayInitialization : IArrayInitializer
     {
-        public ImmutableArray<IExpression> ElementValues => this.Initializers.As<IExpression>();
+        public ImmutableArray<IOperation> ElementValues => this.Initializers.As<IOperation>();
 
         protected override OperationKind ExpressionKind => OperationKind.ArrayInitializer;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitArrayInitializer(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitArrayInitializer(this, argument);
         }
     }
 
-    partial class BoundDefaultOperator
+    internal partial class BoundDefaultOperator : IDefaultValueExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.DefaultValueExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitDefaultValueExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitDefaultValueExpression(this, argument);
         }
     }
 
-    partial class BoundDup
+    internal partial class BoundDup
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
-        }
-    }
-
-    partial class BoundBaseReference : IInstanceReferenceExpression
-    {
-        bool IInstanceReferenceExpression.IsExplicit => this.Syntax.Kind() == SyntaxKind.BaseExpression;
-
-        IParameterSymbol IParameterReferenceExpression.Parameter => (IParameterSymbol)this.ExpressionSymbol;
-        
-        protected override OperationKind ExpressionKind => OperationKind.BaseClassInstanceReferenceExpression;
-
-        public override void Accept(IOperationVisitor visitor)
-        {
-            visitor.VisitInstanceReferenceExpression(this);
-        }
-
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
-        {
-            return visitor.VisitInstanceReferenceExpression(this, argument);
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundThisReference : IInstanceReferenceExpression
+    internal partial class BoundBaseReference : IInstanceReferenceExpression
     {
-        bool IInstanceReferenceExpression.IsExplicit => this.Syntax.Kind() == SyntaxKind.ThisExpression;
-
-        IParameterSymbol IParameterReferenceExpression.Parameter => (IParameterSymbol)this.ExpressionSymbol;
+        InstanceReferenceKind IInstanceReferenceExpression.InstanceReferenceKind => InstanceReferenceKind.BaseClass;
 
         protected override OperationKind ExpressionKind => OperationKind.InstanceReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitInstanceReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitInstanceReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundAssignmentOperator : IAssignmentExpression
+    internal partial class BoundThisReference : IInstanceReferenceExpression
+    {
+        InstanceReferenceKind IInstanceReferenceExpression.InstanceReferenceKind => this.Syntax.Kind() == SyntaxKind.ThisExpression ? InstanceReferenceKind.Explicit : InstanceReferenceKind.Implicit;
+
+        protected override OperationKind ExpressionKind => OperationKind.InstanceReferenceExpression;
+
+        public override void Accept(OperationVisitor visitor)
+        {
+            visitor.VisitInstanceReferenceExpression(this);
+        }
+
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        {
+            return visitor.VisitInstanceReferenceExpression(this, argument);
+        }
+    }
+
+    internal partial class BoundAssignmentOperator : IAssignmentExpression
     {
         IReferenceExpression IAssignmentExpression.Target => this.Left as IReferenceExpression;
 
-        IExpression IAssignmentExpression.Value => this.Right;
+        IOperation IAssignmentExpression.Value => this.Right;
 
         protected override OperationKind ExpressionKind => OperationKind.AssignmentExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitAssignmentExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitAssignmentExpression(this, argument);
         }
     }
 
-    partial class BoundCompoundAssignmentOperator : ICompoundAssignmentExpression
+    internal partial class BoundCompoundAssignmentOperator : ICompoundAssignmentExpression
     {
-        BinaryOperationKind ICompoundAssignmentExpression.BinaryKind => Expression.DeriveBinaryOperationKind(this.Operator.Kind);
+        BinaryOperationKind ICompoundAssignmentExpression.BinaryOperationKind => Expression.DeriveBinaryOperationKind(this.Operator.Kind);
 
         IReferenceExpression IAssignmentExpression.Target => this.Left as IReferenceExpression;
 
-        IExpression IAssignmentExpression.Value => this.Right;
+        IOperation IAssignmentExpression.Value => this.Right;
 
-        bool IHasOperatorExpression.UsesOperatorMethod => (this.Operator.Kind & BinaryOperatorKind.TypeMask) == BinaryOperatorKind.UserDefined;
+        bool IHasOperatorMethodExpression.UsesOperatorMethod => (this.Operator.Kind & BinaryOperatorKind.TypeMask) == BinaryOperatorKind.UserDefined;
 
-        IMethodSymbol IHasOperatorExpression.Operator => this.Operator.Method;
+        IMethodSymbol IHasOperatorMethodExpression.OperatorMethod => this.Operator.Method;
 
         protected override OperationKind ExpressionKind => OperationKind.CompoundAssignmentExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitCompoundAssignmentExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitCompoundAssignmentExpression(this, argument);
         }
     }
 
-    partial class BoundIncrementOperator : IIncrementExpression
+    internal partial class BoundIncrementOperator : IIncrementExpression
     {
-        UnaryOperationKind IIncrementExpression.IncrementKind => Expression.DeriveUnaryOperationKind(this.OperatorKind);
+        UnaryOperationKind IIncrementExpression.IncrementOperationKind => Expression.DeriveUnaryOperationKind(this.OperatorKind);
 
-        BinaryOperationKind ICompoundAssignmentExpression.BinaryKind => Expression.DeriveBinaryOperationKind(((IIncrementExpression)this).IncrementKind);
+        BinaryOperationKind ICompoundAssignmentExpression.BinaryOperationKind => Expression.DeriveBinaryOperationKind(((IIncrementExpression)this).IncrementOperationKind);
 
         IReferenceExpression IAssignmentExpression.Target => this.Operand as IReferenceExpression;
 
-        private static readonly ConditionalWeakTable<BoundIncrementOperator, IExpression> s_incrementValueMappings = new ConditionalWeakTable<BoundIncrementOperator, IExpression>();
+        private static readonly ConditionalWeakTable<BoundIncrementOperator, IOperation> s_incrementValueMappings = new ConditionalWeakTable<BoundIncrementOperator, IOperation>();
 
-        IExpression IAssignmentExpression.Value => s_incrementValueMappings.GetValue(this, (increment) => new BoundLiteral(this.Syntax, Semantics.Expression.SynthesizeNumeric(increment.Type, 1), increment.Type));
+        IOperation IAssignmentExpression.Value => s_incrementValueMappings.GetValue(this, (increment) => new BoundLiteral(this.Syntax, Semantics.Expression.SynthesizeNumeric(increment.Type, 1), increment.Type));
 
-        bool IHasOperatorExpression.UsesOperatorMethod => (this.OperatorKind & UnaryOperatorKind.TypeMask) == UnaryOperatorKind.UserDefined;
+        bool IHasOperatorMethodExpression.UsesOperatorMethod => (this.OperatorKind & UnaryOperatorKind.TypeMask) == UnaryOperatorKind.UserDefined;
 
-        IMethodSymbol IHasOperatorExpression.Operator => this.MethodOpt;
+        IMethodSymbol IHasOperatorMethodExpression.OperatorMethod => this.MethodOpt;
 
         protected override OperationKind ExpressionKind => OperationKind.IncrementExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitIncrementExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitIncrementExpression(this, argument);
         }
     }
 
-    partial class BoundBadExpression
+    internal partial class BoundBadExpression : IInvalidExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.InvalidExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitInvalidExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitInvalidExpression(this, argument);
         }
     }
 
-    partial class BoundNewT
+    internal partial class BoundNewT : ITypeParameterObjectCreationExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.TypeParameterObjectCreationExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitTypeParameterObjectCreationExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitTypeParameterObjectCreationExpression(this, argument);
         }
     }
 
-    partial class BoundUnaryOperator : IUnaryOperatorExpression
+    internal partial class BoundUnaryOperator : IUnaryOperatorExpression
     {
         UnaryOperationKind IUnaryOperatorExpression.UnaryOperationKind => Expression.DeriveUnaryOperationKind(this.OperatorKind);
 
-        IExpression IUnaryOperatorExpression.Operand => this.Operand;
+        IOperation IUnaryOperatorExpression.Operand => this.Operand;
 
-        bool IHasOperatorExpression.UsesOperatorMethod => (this.OperatorKind & UnaryOperatorKind.TypeMask) == UnaryOperatorKind.UserDefined;
+        bool IHasOperatorMethodExpression.UsesOperatorMethod => (this.OperatorKind & UnaryOperatorKind.TypeMask) == UnaryOperatorKind.UserDefined;
 
-        IMethodSymbol IHasOperatorExpression.Operator => this.MethodOpt;
+        IMethodSymbol IHasOperatorMethodExpression.OperatorMethod => this.MethodOpt;
 
         protected override OperationKind ExpressionKind => OperationKind.UnaryOperatorExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitUnaryOperatorExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitUnaryOperatorExpression(this, argument);
         }
     }
 
-    partial class BoundBinaryOperator : IBinaryOperatorExpression
+    internal partial class BoundBinaryOperator : IBinaryOperatorExpression
     {
         BinaryOperationKind IBinaryOperatorExpression.BinaryOperationKind => Expression.DeriveBinaryOperationKind(this.OperatorKind);
 
-        IExpression IBinaryOperatorExpression.Left => this.Left;
+        IOperation IBinaryOperatorExpression.LeftOperand => this.Left;
 
-        IExpression IBinaryOperatorExpression.Right => this.Right;
-   
-        bool IHasOperatorExpression.UsesOperatorMethod => (this.OperatorKind & BinaryOperatorKind.TypeMask) == BinaryOperatorKind.UserDefined;
+        IOperation IBinaryOperatorExpression.RightOperand => this.Right;
 
-        IMethodSymbol IHasOperatorExpression.Operator => this.MethodOpt;
+        bool IHasOperatorMethodExpression.UsesOperatorMethod => (this.OperatorKind & BinaryOperatorKind.TypeMask) == BinaryOperatorKind.UserDefined;
+
+        IMethodSymbol IHasOperatorMethodExpression.OperatorMethod => this.MethodOpt;
 
         protected override OperationKind ExpressionKind
         {
@@ -1173,166 +1124,181 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitBinaryOperatorExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitBinaryOperatorExpression(this, argument);
         }
     }
 
-    partial class BoundConditionalOperator : IConditionalChoiceExpression
+    internal partial class BoundConditionalOperator : IConditionalChoiceExpression
     {
-        IExpression IConditionalChoiceExpression.Condition => this.Condition;
+        IOperation IConditionalChoiceExpression.Condition => this.Condition;
 
-        IExpression IConditionalChoiceExpression.IfTrue => this.Consequence;
+        IOperation IConditionalChoiceExpression.IfTrueValue => this.Consequence;
 
-        IExpression IConditionalChoiceExpression.IfFalse => this.Alternative;
+        IOperation IConditionalChoiceExpression.IfFalseValue => this.Alternative;
 
         protected override OperationKind ExpressionKind => OperationKind.ConditionalChoiceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitConditionalChoiceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitConditionalChoiceExpression(this, argument);
         }
     }
 
-    partial class BoundNullCoalescingOperator : INullCoalescingExpression
+    internal partial class BoundNullCoalescingOperator : INullCoalescingExpression
     {
-        IExpression INullCoalescingExpression.Primary => this.LeftOperand;
+        IOperation INullCoalescingExpression.PrimaryOperand => this.LeftOperand;
 
-        IExpression INullCoalescingExpression.Secondary => this.RightOperand;
+        IOperation INullCoalescingExpression.SecondaryOperand => this.RightOperand;
 
         protected override OperationKind ExpressionKind => OperationKind.NullCoalescingExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitNullCoalescingExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitNullCoalescingExpression(this, argument);
         }
     }
 
-    partial class BoundAwaitExpression : IAwaitExpression
+    internal partial class BoundAwaitExpression : IAwaitExpression
     {
-        IExpression IAwaitExpression.Upon => this.Expression;
+        IOperation IAwaitExpression.AwaitedValue => this.Expression;
 
         protected override OperationKind ExpressionKind => OperationKind.AwaitExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitAwaitExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitAwaitExpression(this, argument);
         }
     }
 
-    partial class BoundArrayAccess : IArrayElementReferenceExpression
+    internal partial class BoundArrayAccess : IArrayElementReferenceExpression
     {
-        IExpression IArrayElementReferenceExpression.ArrayReference => this.Expression;
+        IOperation IArrayElementReferenceExpression.ArrayReference => this.Expression;
 
-        ImmutableArray<IExpression> IArrayElementReferenceExpression.Indices => this.Indices.As<IExpression>();
-        
+        ImmutableArray<IOperation> IArrayElementReferenceExpression.Indices => this.Indices.As<IOperation>();
+
         protected override OperationKind ExpressionKind => OperationKind.ArrayElementReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitArrayElementReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitArrayElementReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundPointerIndirectionOperator : IPointerIndirectionReferenceExpression
+    internal partial class BoundPointerIndirectionOperator : IPointerIndirectionReferenceExpression
     {
-        IExpression IPointerIndirectionReferenceExpression.Pointer => this.Operand;
-        
+        IOperation IPointerIndirectionReferenceExpression.Pointer => this.Operand;
+
         protected override OperationKind ExpressionKind => OperationKind.PointerIndirectionReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitPointerIndirectionReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitPointerIndirectionReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundAddressOfOperator : IAddressOfExpression
+    internal partial class BoundAddressOfOperator : IAddressOfExpression
     {
-        IReferenceExpression IAddressOfExpression.Addressed => (IReferenceExpression)this.Operand;
+        IReferenceExpression IAddressOfExpression.Reference => (IReferenceExpression)this.Operand;
 
         protected override OperationKind ExpressionKind => OperationKind.AddressOfExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitAddressOfExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitAddressOfExpression(this, argument);
         }
     }
 
-    partial class BoundImplicitReceiver : IInstanceReferenceExpression
+    internal partial class BoundImplicitReceiver : IInstanceReferenceExpression
     {
-        bool IInstanceReferenceExpression.IsExplicit => false;
-
-        IParameterSymbol IParameterReferenceExpression.Parameter => (IParameterSymbol)this.ExpressionSymbol;
-
+        InstanceReferenceKind IInstanceReferenceExpression.InstanceReferenceKind => InstanceReferenceKind.Implicit;
+        
         protected override OperationKind ExpressionKind => OperationKind.InstanceReferenceExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitInstanceReferenceExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitInstanceReferenceExpression(this, argument);
         }
     }
 
-    partial class BoundConditionalAccess : IConditionalAccessExpression
+    internal partial class BoundConditionalAccess : IConditionalAccessExpression
     {
-        IExpression IConditionalAccessExpression.Access => this.AccessExpression;
+        IOperation IConditionalAccessExpression.ConditionalValue => this.AccessExpression;
+
+        IOperation IConditionalAccessExpression.ConditionalInstance => this.Receiver;
 
         protected override OperationKind ExpressionKind => OperationKind.ConditionalAccessExpression;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitConditionalAccessExpression(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitConditionalAccessExpression(this, argument);
         }
     }
 
-    partial class BoundEqualsValue : ISymbolInitializer
+    internal partial class BoundConditionalReceiver : IConditionalAccessInstanceExpression
     {
-        IExpression ISymbolInitializer.Value => this.Value;
+        protected override OperationKind ExpressionKind => OperationKind.ConditionalAccessInstanceExpression;
+
+        public override void Accept(OperationVisitor visitor)
+        {
+            visitor.VisitConditionalAccessInstanceExpression(this);
+        }
+
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        {
+            return visitor.VisitConditionalAccessInstanceExpression(this, argument);
+        }
+    }
+
+    internal partial class BoundEqualsValue : ISymbolInitializer
+    {
+        IOperation ISymbolInitializer.Value => this.Value;
 
         SyntaxNode IOperation.Syntax => this.Syntax;
 
@@ -1342,779 +1308,753 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected abstract OperationKind OperationKind { get; }
 
-        public abstract void Accept(IOperationVisitor visitor);
+        ITypeSymbol IOperation.Type => null;
 
-        public abstract TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument);
+        Optional<object> IOperation.ConstantValue => default(Optional<object>);
+
+        public abstract void Accept(OperationVisitor visitor);
+
+        public abstract TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument);
     }
 
-    partial class BoundFieldEqualsValue : IFieldInitializer
+    internal partial class BoundFieldEqualsValue : IFieldInitializer
     {
         ImmutableArray<IFieldSymbol> IFieldInitializer.InitializedFields => ImmutableArray.Create<IFieldSymbol>(this.Field);
-        
+
         protected override OperationKind OperationKind => OperationKind.FieldInitializerAtDeclaration;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitFieldInitializer(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitFieldInitializer(this, argument);
         }
     }
 
-    partial class BoundPropertyEqualsValue : IPropertyInitializer
+    internal partial class BoundPropertyEqualsValue : IPropertyInitializer
     {
         IPropertySymbol IPropertyInitializer.InitializedProperty => this.Property;
 
         protected override OperationKind OperationKind => OperationKind.PropertyInitializerAtDeclaration;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitPropertyInitializer(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitPropertyInitializer(this, argument);
         }
     }
 
-    partial class BoundParameterEqualsValue : IParameterInitializer
+    internal partial class BoundParameterEqualsValue : IParameterInitializer
     {
         IParameterSymbol IParameterInitializer.Parameter => this.Parameter;
 
         protected override OperationKind OperationKind => OperationKind.ParameterInitializerAtDeclaration;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
             visitor.VisitParameterInitializer(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
             return visitor.VisitParameterInitializer(this, argument);
         }
     }
 
-    partial class BoundDynamicIndexerAccess
+    internal partial class BoundDynamicIndexerAccess
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundUserDefinedConditionalLogicalOperator
+    internal partial class BoundUserDefinedConditionalLogicalOperator
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundAnonymousObjectCreationExpression
+    internal partial class BoundAnonymousObjectCreationExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundAnonymousPropertyDeclaration
+    internal partial class BoundAnonymousPropertyDeclaration
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundAttribute
+    internal partial class BoundAttribute
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundRangeVariable
+    internal partial class BoundRangeVariable
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundLabel
+    internal partial class BoundLabel
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundObjectInitializerMember
+    internal partial class BoundObjectInitializerMember
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundQueryClause
+    internal partial class BoundQueryClause
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundArgListOperator
+    internal partial class BoundArgListOperator
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundPropertyGroup
+    internal partial class BoundPropertyGroup
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundCollectionElementInitializer
+    internal partial class BoundCollectionElementInitializer
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundNameOfOperator
+    internal partial class BoundNameOfOperator
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundMethodGroup
+    internal partial class BoundMethodGroup
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundTypeExpression
+    internal partial class BoundTypeExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundNamespaceExpression
+    internal partial class BoundNamespaceExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundIndexerAccess
+    internal partial class BoundSequencePointExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundSequencePointExpression
+    internal partial class BoundSequence
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundSequence
+    internal partial class BoundPreviousSubmissionReference
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundPreviousSubmissionReference
+    internal partial class BoundHostObjectMemberReference
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundHostObjectMemberReference
+    internal partial class BoundTypeOrValueExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundTypeOrValueExpression
+    internal partial class BoundPseudoVariable
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundPseudoVariable
+    internal partial class BoundPointerElementAccess
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundPointerElementAccess
+    internal partial class BoundRefTypeOperator
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundRefTypeOperator
+    internal partial class BoundDynamicMemberAccess
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundDynamicMemberAccess
+    internal partial class BoundMakeRefOperator
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundMakeRefOperator
+    internal partial class BoundRefValueOperator
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundRefValueOperator
+    internal partial class BoundDynamicInvocation
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundDynamicInvocation
+    internal partial class BoundArrayLength
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundArrayLength
+    internal partial class BoundMethodInfo
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundMethodInfo
+    internal partial class BoundCollectionInitializerExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundCollectionInitializerExpression
+    internal partial class BoundFieldInfo
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundFieldInfo
+    internal partial class BoundLoweredConditionalAccess
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundLoweredConditionalAccess
+    internal partial class BoundArgList
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
-
-    partial class BoundArgList
+    
+    internal partial class BoundDynamicCollectionElementInitializer
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundConditionalReceiver
+    internal partial class BoundComplexConditionalReceiver
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundDynamicCollectionElementInitializer
+    internal partial class BoundFixedLocalCollectionInitializer
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundComplexConditionalReceiver
+    internal partial class BoundStackAllocArrayCreation
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundFixedLocalCollectionInitializer
+    internal partial class BoundDynamicObjectCreationExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundStackAllocArrayCreation
+    internal partial class BoundHoistedFieldAccess
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundDynamicObjectCreationExpression
+    internal partial class BoundInterpolatedString
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundHoistedFieldAccess
+    internal partial class BoundNoPiaObjectCreationExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundInterpolatedString
+    internal partial class BoundObjectInitializerExpression
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundNoPiaObjectCreationExpression
+    internal partial class BoundStringInsert
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundObjectInitializerExpression
+    internal partial class BoundDynamicObjectInitializerMember
     {
         protected override OperationKind ExpressionKind => OperationKind.None;
 
-        public override void Accept(IOperationVisitor visitor)
+        public override void Accept(OperationVisitor visitor)
         {
-            throw ExceptionUtilities.Unreachable;
+            visitor.VisitNoneOperation(this);
         }
 
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
+        public override TResult Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument)
         {
-            throw ExceptionUtilities.Unreachable;
-        }
-    }
-
-    partial class BoundStringInsert
-    {
-        protected override OperationKind ExpressionKind => OperationKind.None;
-
-        public override void Accept(IOperationVisitor visitor)
-        {
-            throw ExceptionUtilities.Unreachable;
-        }
-
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
-        {
-            throw ExceptionUtilities.Unreachable;
+            return visitor.VisitNoneOperation(this, argument);
         }
     }
 
-    partial class BoundDynamicObjectInitializerMember
-    {
-        protected override OperationKind ExpressionKind => OperationKind.None;
-
-        public override void Accept(IOperationVisitor visitor)
-        {
-            throw ExceptionUtilities.Unreachable;
-        }
-
-        public override TResult Accept<TArgument, TResult>(IOperationVisitor<TArgument, TResult> visitor, TArgument argument)
-        {
-            throw ExceptionUtilities.Unreachable;
-        }
-    }
-
-    class Expression
+    internal class Expression
     {
         internal static BinaryOperationKind DeriveBinaryOperationKind(UnaryOperationKind incrementKind)
         {
             switch (incrementKind)
             {
-                case UnaryOperationKind.OperatorPostfixIncrement:
-                case UnaryOperationKind.OperatorPrefixIncrement:
-                    return BinaryOperationKind.OperatorAdd;
-                case UnaryOperationKind.OperatorPostfixDecrement:
-                case UnaryOperationKind.OperatorPrefixDecrement:
-                    return BinaryOperationKind.OperatorSubtract;
+                case UnaryOperationKind.OperatorMethodPostfixIncrement:
+                case UnaryOperationKind.OperatorMethodPrefixIncrement:
+                    return BinaryOperationKind.OperatorMethodAdd;
+                case UnaryOperationKind.OperatorMethodPostfixDecrement:
+                case UnaryOperationKind.OperatorMethodPrefixDecrement:
+                    return BinaryOperationKind.OperatorMethodSubtract;
                 case UnaryOperationKind.IntegerPostfixIncrement:
                 case UnaryOperationKind.IntegerPrefixIncrement:
                     return BinaryOperationKind.IntegerAdd;
@@ -2159,7 +2099,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return BinaryOperationKind.DynamicSubtract;
 
                 default:
-                    throw ExceptionUtilities.UnexpectedValue(incrementKind);
+                    return BinaryOperationKind.Invalid;
             }
         }
 
@@ -2193,7 +2133,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicPostfixIncrement;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorPostfixIncrement;
+                            return UnaryOperationKind.OperatorMethodPostfixIncrement;
                     }
 
                     break;
@@ -2224,7 +2164,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicPostfixDecrement;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorPostfixDecrement;
+                            return UnaryOperationKind.OperatorMethodPostfixDecrement;
                     }
 
                     break;
@@ -2255,7 +2195,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicPrefixIncrement;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorPrefixIncrement;
+                            return UnaryOperationKind.OperatorMethodPrefixIncrement;
                     }
 
                     break;
@@ -2286,7 +2226,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicPrefixDecrement;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorPrefixDecrement;
+                            return UnaryOperationKind.OperatorMethodPrefixDecrement;
                     }
 
                     break;
@@ -2307,7 +2247,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicPlus;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorPlus;
+                            return UnaryOperationKind.OperatorMethodPlus;
                     }
 
                     break;
@@ -2328,7 +2268,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicMinus;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorMinus;
+                            return UnaryOperationKind.OperatorMethodMinus;
                     }
 
                     break;
@@ -2341,7 +2281,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicLogicalNot;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorLogicalNot;
+                            return UnaryOperationKind.OperatorMethodLogicalNot;
                     }
 
                     break;
@@ -2358,7 +2298,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicBitwiseNegation;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorBitwiseNegation;
+                            return UnaryOperationKind.OperatorMethodBitwiseNegation;
                     }
 
                     break;
@@ -2369,7 +2309,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicTrue;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorTrue;
+                            return UnaryOperationKind.OperatorMethodTrue;
                     }
 
                     break;
@@ -2380,13 +2320,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case UnaryOperatorKind.Dynamic:
                             return UnaryOperationKind.DynamicFalse;
                         case UnaryOperatorKind.UserDefined:
-                            return UnaryOperationKind.OperatorFalse;
+                            return UnaryOperationKind.OperatorMethodFalse;
                     }
 
                     break;
             }
 
-            throw ExceptionUtilities.UnexpectedValue(operatorKind & UnaryOperatorKind.TypeMask);
+            return UnaryOperationKind.Invalid;
         }
 
         internal static BinaryOperationKind DeriveBinaryOperationKind(BinaryOperatorKind operatorKind)
@@ -2425,9 +2365,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.String:
                         case BinaryOperatorKind.StringAndObject:
                         case BinaryOperatorKind.ObjectAndString:
-                            return BinaryOperationKind.StringConcatenation;
+                            return BinaryOperationKind.StringConcatenate;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorAdd;
+                            return BinaryOperationKind.OperatorMethodAdd;
                     }
 
                     break;
@@ -2459,7 +2399,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicSubtract;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorSubtract;
+                            return BinaryOperationKind.OperatorMethodSubtract;
                     }
 
                     break;
@@ -2481,7 +2421,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicMultiply;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorMultiply;
+                            return BinaryOperationKind.OperatorMethodMultiply;
                     }
 
                     break;
@@ -2503,7 +2443,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicDivide;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorDivide;
+                            return BinaryOperationKind.OperatorMethodDivide;
                     }
 
                     break;
@@ -2523,7 +2463,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicRemainder;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorRemainder;
+                            return BinaryOperationKind.OperatorMethodRemainder;
                     }
 
                     break;
@@ -2540,7 +2480,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicLeftShift;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorLeftShift;
+                            return BinaryOperationKind.OperatorMethodLeftShift;
                     }
 
                     break;
@@ -2557,7 +2497,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicRightShift;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorRightShift;
+                            return BinaryOperationKind.OperatorMethodRightShift;
                     }
 
                     break;
@@ -2585,10 +2525,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.UserDefined:
                             if ((operatorKind & BinaryOperatorKind.Logical) != 0)
                             {
-                                return BinaryOperationKind.OperatorConditionalAnd;
+                                return BinaryOperationKind.OperatorMethodConditionalAnd;
                             }
 
-                            return BinaryOperationKind.OperatorAnd;
+                            return BinaryOperationKind.OperatorMethodAnd;
                     }
 
                     break;
@@ -2616,10 +2556,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.UserDefined:
                             if ((operatorKind & BinaryOperatorKind.Logical) != 0)
                             {
-                                return BinaryOperationKind.OperatorConditionalOr;
+                                return BinaryOperationKind.OperatorMethodConditionalOr;
                             }
 
-                            return BinaryOperationKind.OperatorOr;
+                            return BinaryOperationKind.OperatorMethodOr;
                     }
 
                     break;
@@ -2640,7 +2580,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Dynamic:
                             return BinaryOperationKind.DynamicExclusiveOr;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorExclusiveOr;
+                            return BinaryOperationKind.OperatorMethodExclusiveOr;
                     }
 
                     break;
@@ -2664,7 +2604,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Enum:
                             return BinaryOperationKind.EnumLessThan;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorLessThan;
+                            return BinaryOperationKind.OperatorMethodLessThan;
                     }
 
                     break;
@@ -2688,7 +2628,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Enum:
                             return BinaryOperationKind.EnumLessThanOrEqual;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorLessThanOrEqual;
+                            return BinaryOperationKind.OperatorMethodLessThanOrEqual;
                     }
 
                     break;
@@ -2721,7 +2661,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.NullableNull:
                             return BinaryOperationKind.NullableEquals;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorEquals;
+                            return BinaryOperationKind.OperatorMethodEquals;
                     }
 
                     break;
@@ -2754,7 +2694,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.NullableNull:
                             return BinaryOperationKind.NullableNotEquals;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorNotEquals;
+                            return BinaryOperationKind.OperatorMethodNotEquals;
                     }
 
                     break;
@@ -2778,7 +2718,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Enum:
                             return BinaryOperationKind.EnumGreaterThanOrEqual;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorGreaterThanOrEqual;
+                            return BinaryOperationKind.OperatorMethodGreaterThanOrEqual;
                     }
 
                     break;
@@ -2802,13 +2742,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                         case BinaryOperatorKind.Enum:
                             return BinaryOperationKind.EnumGreaterThan;
                         case BinaryOperatorKind.UserDefined:
-                            return BinaryOperationKind.OperatorGreaterThan;
+                            return BinaryOperationKind.OperatorMethodGreaterThan;
                     }
 
                     break;
             }
 
-            throw ExceptionUtilities.UnexpectedValue(operatorKind & BinaryOperatorKind.TypeMask);
+            return BinaryOperationKind.Invalid;
         }
     }
 }
