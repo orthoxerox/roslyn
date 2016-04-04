@@ -362,6 +362,26 @@
       <summary>Creates an PostfixUnaryExpressionSyntax node.</summary>
     </FactoryComment>
   </Node>
+  <Node Name="LiftExpressionSyntax" Base="ExpressionSyntax">
+    <Kind Name="LiftExpression"/>
+    <Field Name="Operand" Type="ExpressionSyntax">
+      <PropertyComment>
+        <summary>ExpressionSyntax representing the operand of the lift expression.</summary>
+      </PropertyComment>
+    </Field>
+    <Field Name="OperatorToken" Type="SyntaxToken">
+      <Kind Name="ExclamationToken"/>
+      <PropertyComment>
+        <summary>SyntaxToken representing the exclamation mark of the lift expression.</summary>
+      </PropertyComment>
+    </Field>
+    <TypeComment>
+      <summary>Class which represents the syntax node for lift expression.</summary>
+    </TypeComment>
+    <FactoryComment>
+      <summary>Creates an LiftExpressionSyntax node.</summary>
+    </FactoryComment>
+  </Node>
   <Node Name="MemberAccessExpressionSyntax" Base="ExpressionSyntax">
     <Kind Name="SimpleMemberAccessExpression"/>
     <Kind Name="PointerMemberAccessExpression"/>

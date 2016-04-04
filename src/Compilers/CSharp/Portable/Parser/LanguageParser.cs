@@ -8651,6 +8651,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         expr = _syntaxFactory.PostfixUnaryExpression(SyntaxFacts.GetPostfixUnaryExpression(tk), expr, this.EatToken());
                         break;
 
+                    case SyntaxKind.ExclamationToken:
+                        expr = _syntaxFactory.LiftExpression(expr, this.EatToken());
+                        break;
+
                     case SyntaxKind.ColonColonToken:
                         if (this.PeekToken(1).Kind == SyntaxKind.IdentifierToken)
                         {

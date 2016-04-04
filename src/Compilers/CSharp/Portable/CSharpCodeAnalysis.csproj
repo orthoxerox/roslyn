@@ -92,6 +92,7 @@
     <Compile Include="Binder\Binder_InterpolatedString.cs" />
     <Compile Include="Binder\Binder_Invocation.cs" />
     <Compile Include="Binder\Binder_Lambda.cs" />
+    <Compile Include="Binder\Binder_Lift.cs" />
     <Compile Include="Binder\Binder_Lookup.cs" />
     <Compile Include="Binder\Binder_NameConflicts.cs" />
     <Compile Include="Binder\Binder_Operators.cs" />
