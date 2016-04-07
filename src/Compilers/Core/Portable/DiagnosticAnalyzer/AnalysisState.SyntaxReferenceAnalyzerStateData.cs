@@ -25,7 +25,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             /// </summary>
             public OperationBlockAnalyzerStateData OperationBlockAnalysisState { get; }
 
-            public static readonly DeclarationAnalyzerStateData FullyProcessedInstance = CreateFullyProcessedInstance();
+            public new static readonly DeclarationAnalyzerStateData FullyProcessedInstance = CreateFullyProcessedInstance();
 
             public DeclarationAnalyzerStateData()
             {
@@ -150,7 +150,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// </summary>
         internal sealed class CodeBlockAnalyzerStateData : BlockAnalyzerStateData<CodeBlockAnalyzerAction, SyntaxNodeAnalyzerStateData>
         {
-            }
+        }
 
         /// <summary>
         /// Stores the partial analysis state for operation block actions executed on the declaration.

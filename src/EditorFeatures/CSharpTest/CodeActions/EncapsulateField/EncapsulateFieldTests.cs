@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.CodeRefactorings.EncapsulateField;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.Simplification;
 using Roslyn.Test.Utilities;
 using Xunit;
 
@@ -529,7 +532,7 @@ class foo
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(694057)]
+        [WorkItem(694057, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/694057")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task ConstFieldNoGetter()
         {
@@ -557,7 +560,7 @@ class Program
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(694276)]
+        [WorkItem(694276, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/694276")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task EncapsulateFieldNamedValue()
         {
@@ -585,7 +588,7 @@ class Program
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(694276)]
+        [WorkItem(694276, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/694276")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task PublicFieldNamed__()
         {
@@ -618,7 +621,7 @@ class Program
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(695046)]
+        [WorkItem(695046, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/695046")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task AvailableNotJustOnVariableName()
         {
@@ -632,7 +635,7 @@ class Program
             await TestActionCountAsync(text, 2);
         }
 
-        [WorkItem(705898)]
+        [WorkItem(705898, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/705898")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task CopyFieldAccessibility()
         {
@@ -728,7 +731,7 @@ public class D
             await TestAsync(text, expected, new CodeAnalysis.CSharp.CSharpParseOptions(), TestOptions.ReleaseExe, compareTokens: false);
         }
 
-        [WorkItem(713269)]
+        [WorkItem(713269, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/713269")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task PreserveUnsafe()
         {
@@ -761,7 +764,7 @@ class C
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(713240)]
+        [WorkItem(713240, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/713240")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task ConsiderReturnTypeAccessibility()
         {
@@ -804,7 +807,7 @@ internal enum State
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(713191)]
+        [WorkItem(713191, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/713191")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task DoNotReferToReadOnlyPropertyInConstructor()
         {
@@ -840,7 +843,7 @@ class Program
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(713191)]
+        [WorkItem(713191, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/713191")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task DoNotReferToStaticReadOnlyPropertyInConstructor()
         {
@@ -876,7 +879,7 @@ class Program
             await TestAsync(text, expected, compareTokens: false, index: 0);
         }
 
-        [WorkItem(765959)]
+        [WorkItem(765959, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/765959")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task GenerateInTheCorrectPart()
         {
@@ -909,7 +912,7 @@ partial class Program {
             await TestAsync(text, expected);
         }
 
-        [WorkItem(829178)]
+        [WorkItem(829178, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/829178")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task ErrorTolerance()
         {
@@ -925,7 +928,7 @@ partial class Program {
             }
         }
 
-        [WorkItem(834072)]
+        [WorkItem(834072, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/834072")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task DuplicateFieldErrorTolerance()
         {
@@ -944,7 +947,7 @@ class Program
             }
         }
 
-        [WorkItem(862517)]
+        [WorkItem(862517, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/862517")]
         [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
         public async Task Trivia()
         {
@@ -1163,6 +1166,94 @@ class C
 }
 ");
             }
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
+        public async Task TestEncapsulateEscapedIdentifier()
+        {
+            await TestAsync(@"
+class C
+{
+    int [|@class|];
+}
+", @"
+class C
+{
+    int @class;
+
+    public int Class
+    {
+        get
+        {
+            return @class;
+        }
+
+        set
+        {
+            @class = value;
+        }
+    }
+}
+", compareTokens: false);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
+        public async Task TestEncapsulateEscapedIdentifierAndQualifiedAccess()
+        {
+            await TestAsync(@"
+class C
+{
+    int [|@class|];
+}
+", @"
+class C
+{
+    int @class;
+
+    public int Class
+    {
+        get
+        {
+            return this.@class;
+        }
+
+        set
+        {
+            this.@class = value;
+        }
+    }
+}
+", compareTokens: false, options: Option(SimplificationOptions.QualifyFieldAccess, true));
+        }
+
+        [WorkItem(7090, "https://github.com/dotnet/roslyn/issues/7090")]
+        [Fact, Trait(Traits.Feature, Traits.Features.EncapsulateField)]
+        public async Task ApplyCurrentThisPrefixStyle()
+        {
+            await TestAsync(@"
+class C
+{
+    int [|i|];
+}
+", @"
+class C
+{
+    int i;
+
+    public int I
+    {
+        get
+        {
+            return this.i;
+        }
+        set
+        {
+            this.i = value;
+        }
+    }
+
+}
+", options: Option(SimplificationOptions.QualifyFieldAccess, true));
         }
     }
 }

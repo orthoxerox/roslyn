@@ -6,10 +6,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.CodeAnalysis.Text;
 using Roslyn.Test.Utilities;
 using Roslyn.Utilities;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Microsoft.CodeAnalysis.UnitTests
 {
@@ -120,7 +120,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
             });
         }
 
-        [Fact, WorkItem(1094411, "DevDiv")]
+        [Fact, WorkItem(1094411, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1094411")]
         public static async Task FindDeclarationsAsync_Metadata()
         {
             var solution = CreateSolution();
@@ -577,7 +577,7 @@ Inner i;
 
             // create symbol tree info from assembly
             var version = VersionStamp.Create();
-            var info = SymbolTreeInfo.Create(version, assembly, CancellationToken.None);
+            var info = SymbolTreeInfo.CreateSymbolTreeInfo(solution, version, assembly, "", CancellationToken.None);
 
             using (var writerStream = new MemoryStream())
             {
@@ -589,7 +589,7 @@ Inner i;
                 using (var readerStream = new MemoryStream(writerStream.ToArray()))
                 using (var reader = new ObjectReader(readerStream))
                 {
-                    var readInfo = SymbolTreeInfo.ReadFrom(reader);
+                    var readInfo = SymbolTreeInfo.ReadSymbolTreeInfo_ForTestingPurposesOnly(reader);
 
                     Assert.True(info.IsEquivalent(readInfo));
                 }
@@ -597,5 +597,30 @@ Inner i;
         }
 
         #endregion
+
+        [Fact, WorkItem(7941, "https://github.com/dotnet/roslyn/pull/7941")]
+        public async Task FindDeclarationsInErrorSymbolsDoesntCrash()
+        {
+            var source = @"
+' missing `Class` keyword
+Public Class1
+    Public Event MyEvent(ByVal a As String)
+End Class
+";
+
+            // create solution
+            var pid = ProjectId.CreateNewId();
+            var solution = CreateSolution()
+                .AddProject(pid, "VBProject", "VBProject", LanguageNames.VisualBasic)
+                .AddMetadataReference(pid, MscorlibRef);
+            var did = DocumentId.CreateNewId(pid);
+            solution = solution.AddDocument(did, "VBDocument.vb", SourceText.From(source));
+            var project = solution.Projects.Single();
+
+            // perform the search
+            var foundDeclarations = await SymbolFinder.FindDeclarationsAsync(project, name: "MyEvent", ignoreCase: true);
+            Assert.Equal(1, foundDeclarations.Count());
+            Assert.False(foundDeclarations.Any(decl => decl == null));
+        }
     }
 }

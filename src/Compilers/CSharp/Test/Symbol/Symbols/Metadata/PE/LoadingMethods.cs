@@ -368,8 +368,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Symbols.Metadata.PE
             Assert.False(csharpModifiers3_M4.IsOverride);
 
             var byrefReturnMethod = byrefReturn.GlobalNamespace.GetTypeMembers("ByRefReturn").Single().GetMembers("M").OfType<MethodSymbol>().Single();
-            Assert.Equal(TypeKind.Error, byrefReturnMethod.ReturnType.TypeKind);
-            Assert.IsType<ByRefReturnErrorTypeSymbol>(byrefReturnMethod.ReturnType);
+            Assert.Equal(RefKind.Ref, byrefReturnMethod.RefKind);
+            Assert.Equal(TypeKind.Struct, byrefReturnMethod.ReturnType.TypeKind);
         }
 
         [Fact]
@@ -1309,7 +1309,7 @@ class P
                 Diagnostic(ErrorCode.ERR_BindToBogus, "X").WithArguments("User.X(?)"));
         }
 
-        [WorkItem(666162, "DevDiv")]
+        [WorkItem(666162, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/666162")]
         [ClrOnlyFact(ClrOnlyReason.Ilasm)]
         public void Repro666162()
         {

@@ -29,6 +29,21 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Diagnostics.UserDiagnos
             symbolKindsWithNoCodeBlocks.Add(SymbolKind.Property);
             symbolKindsWithNoCodeBlocks.Add(SymbolKind.NamedType);
 
+            // AllInOneCSharpCode has no pattern matching.
+            var syntaxKindsPatterns = new HashSet<SyntaxKind>();
+            syntaxKindsPatterns.Add(SyntaxKind.IsPatternExpression);
+            syntaxKindsPatterns.Add(SyntaxKind.DeclarationPattern);
+            syntaxKindsPatterns.Add(SyntaxKind.WildcardPattern);
+            syntaxKindsPatterns.Add(SyntaxKind.ConstantPattern);
+            syntaxKindsPatterns.Add(SyntaxKind.RecursivePattern);
+            syntaxKindsPatterns.Add(SyntaxKind.SubRecursivePattern);
+            syntaxKindsPatterns.Add(SyntaxKind.MatchSection);
+            syntaxKindsPatterns.Add(SyntaxKind.MatchExpression);
+            syntaxKindsPatterns.Add(SyntaxKind.ThrowExpression);
+            syntaxKindsPatterns.Add(SyntaxKind.WhenClause);
+            syntaxKindsPatterns.Add(SyntaxKind.LetStatement);
+            syntaxKindsPatterns.Add(SyntaxKind.CasePatternSwitchLabel);
+
             var analyzer = new CSharpTrackingDiagnosticAnalyzer();
             using (var workspace = await TestWorkspace.CreateCSharpAsync(source, TestOptions.Regular))
             {
@@ -37,12 +52,12 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Diagnostics.UserDiagnos
                 await DiagnosticProviderTestUtilities.GetAllDiagnosticsAsync(analyzer, document, new Text.TextSpan(0, document.GetTextAsync().Result.Length));
                 analyzer.VerifyAllAnalyzerMembersWereCalled();
                 analyzer.VerifyAnalyzeSymbolCalledForAllSymbolKinds();
-                analyzer.VerifyAnalyzeNodeCalledForAllSyntaxKinds();
+                analyzer.VerifyAnalyzeNodeCalledForAllSyntaxKinds(syntaxKindsPatterns);
                 analyzer.VerifyOnCodeBlockCalledForAllSymbolAndMethodKinds(symbolKindsWithNoCodeBlocks, true);
             }
         }
 
-        [Fact, WorkItem(908658)]
+        [Fact, WorkItem(908658, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/908658")]
         public async Task DiagnosticAnalyzerDriverVsAnalyzerDriverOnCodeBlock()
         {
             var methodNames = new string[] { "Initialize", "AnalyzeCodeBlock" };
@@ -86,7 +101,7 @@ class C
         }
 
         [Fact]
-        [WorkItem(759)]
+        [WorkItem(759, "https://github.com/dotnet/roslyn/issues/759")]
         public async Task DiagnosticAnalyzerDriverIsSafeAgainstAnalyzerExceptions()
         {
             var source = TestResource.AllInOneCSharpCode;
@@ -98,7 +113,7 @@ class C
             }
         }
 
-        [WorkItem(908621)]
+        [WorkItem(908621, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/908621")]
         [Fact]
         public void DiagnosticServiceIsSafeAgainstAnalyzerExceptions_1()
         {
@@ -107,7 +122,7 @@ class C
             AccessSupportedDiagnostics(analyzer);
         }
 
-        [WorkItem(908621)]
+        [WorkItem(908621, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/908621")]
         [Fact]
         public void DiagnosticServiceIsSafeAgainstAnalyzerExceptions_2()
         {

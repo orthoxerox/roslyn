@@ -43,8 +43,8 @@ namespace Microsoft.CodeAnalysis.CompilerServer.UnitTests
         static CompilerServerUnitTests()
         {
             var basePath = Path.GetDirectoryName(typeof(CompilerServerUnitTests).Assembly.Location);
-            if (!File.Exists(Path.Combine(basePath, CompilerServerExeName)) || 
-                !File.Exists(Path.Combine(basePath, CSharpClientExeName)) || 
+            if (!File.Exists(Path.Combine(basePath, CompilerServerExeName)) ||
+                !File.Exists(Path.Combine(basePath, CSharpClientExeName)) ||
                 !File.Exists(Path.Combine(basePath, BasicClientExeName)))
             {
                 IsRunningAgainstInstallation = true;
@@ -224,12 +224,12 @@ End Module")
                 additionalEnvironmentVars: AddForLoggingEnvironmentVars(additionalEnvironmentVars));
         }
 
-        private DisposableFile GetResultFile(TempDirectory directory, string resultFileName)
+        private static DisposableFile GetResultFile(TempDirectory directory, string resultFileName)
         {
             return new DisposableFile(Path.Combine(directory.Path, resultFileName));
         }
 
-        private ProcessResult RunCompilerOutput(TempFile file)
+        private static ProcessResult RunCompilerOutput(TempFile file)
         {
             return ProcessUtilities.Run(file.Path, "", Path.GetDirectoryName(file.Path));
         }
@@ -338,7 +338,7 @@ End Module")
                 var result = ProcessUtilities.Run("cmd",
                     string.Format("/C {0} /shared:{3} /utf8output /nologo /t:library {1} > {2}",
                     BasicCompilerClientExecutable,
-                    srcFile, 
+                    srcFile,
                     tempOut.Path,
                     serverData.PipeName));
 
@@ -376,7 +376,7 @@ End Module")
         }
 
         [Fact]
-        [WorkItem(946954)]
+        [WorkItem(946954, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/946954")]
         public void CompilerBinariesAreNotX86()
         {
             Assert.NotEqual(ProcessorArchitecture.X86,
@@ -561,7 +561,7 @@ End Class"}};
             }
         }
 
-        [WorkItem(546067, "DevDiv")]
+        [WorkItem(546067, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546067")]
         [Fact]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task InvalidMetadataFileErrorCS()
@@ -604,7 +604,7 @@ End Class"}};
             }
         }
 
-        [Fact(), WorkItem(761131, "DevDiv")]
+        [Fact(), WorkItem(761131, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/761131")]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task MissingReferenceErrorVB()
         {
@@ -633,7 +633,7 @@ End Module"}};
             }
         }
 
-        [WorkItem(546067, "DevDiv")]
+        [WorkItem(546067, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546067")]
         [Fact]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task InvalidMetadataFileErrorVB()
@@ -663,7 +663,7 @@ End Module"}};
         }
 
         [Fact()]
-        [WorkItem(723280, "DevDiv")]
+        [WorkItem(723280, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/723280")]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task ReferenceCachingVB()
         {
@@ -787,7 +787,7 @@ End Module
         }
 
         [Fact()]
-        [WorkItem(723280, "DevDiv")]
+        [WorkItem(723280, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/723280")]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task ReferenceCachingCS()
         {
@@ -906,10 +906,8 @@ class Hello
             GC.KeepAlive(rootDirectory);
         }
 
-        private async Task RunCompilationAsync(RequestLanguage language, string pipeName, int i)
+        private async static Task<DisposableFile> RunCompilationAsync(RequestLanguage language, string pipeName, int i, TempDirectory compilationDir)
         {
-            var compilationDir = Temp.CreateDirectory();
-
             TempFile sourceFile;
             string exeFileName;
             string prefix;
@@ -920,7 +918,7 @@ class Hello
                 exeFileName = $"hellocs{i}.exe";
                 prefix = "CS";
                 sourceFile = compilationDir.CreateFile($"hello{i}.cs");
-                sourceText = 
+                sourceText =
 $@"using System;
 class Hello 
 {{
@@ -961,13 +959,14 @@ End Module";
             Assert.True(result.RanOnServer);
 
             // Run the EXE and verify it prints the desired output.
-            var exeFile = Temp.AddFile(GetResultFile(compilationDir, exeFileName));
+            var exeFile = GetResultFile(compilationDir, exeFileName);
             var exeResult = RunCompilerOutput(exeFile);
             Assert.Equal($"{prefix} Hello number {i}\r\n", exeResult.Output);
+            return exeFile;
         }
 
-        [WorkItem(997372)]
-        [WorkItem(761326, "DevDiv")]
+        [WorkItem(997372, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/997372")]
+        [WorkItem(761326, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/761326")]
         [Fact]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task MultipleSimultaneousCompiles()
@@ -976,17 +975,23 @@ End Module";
             {
                 // Run this many compiles simultaneously in different directories.
                 const int numberOfCompiles = 20;
-                var tasks = new Task[numberOfCompiles];
+                var tasks = new Task<DisposableFile>[numberOfCompiles];
 
                 for (int i = 0; i < numberOfCompiles; ++i)
                 {
                     var language = i % 2 == 0 ? RequestLanguage.CSharpCompile : RequestLanguage.VisualBasicCompile;
-                    tasks[i] = RunCompilationAsync(language, serverData.PipeName, i);
+                    var compilationDir = Temp.CreateDirectory();
+                    tasks[i] = RunCompilationAsync(language, serverData.PipeName, i, compilationDir);
                 }
 
                 await Task.WhenAll(tasks);
 
                 await serverData.Verify(numberOfCompiles, numberOfCompiles);
+
+                foreach (var task in tasks)
+                {
+                    Temp.AddFile(task.Result);
+                }
             }
         }
 
@@ -1093,7 +1098,7 @@ End Module
             }
         }
 
-        [WorkItem(545446, "DevDiv")]
+        [WorkItem(545446, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545446")]
         [Fact()]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task Utf8Output_WithRedirecting_Off_Shared()
@@ -1106,7 +1111,7 @@ End Module
                 var result = ProcessUtilities.Run("cmd",
                     string.Format("/C {0} /shared:{3} /nologo /t:library {1} > {2}",
                     CSharpCompilerClientExecutable,
-                    srcFile, 
+                    srcFile,
                     tempOut.Path,
                     serverData.PipeName));
 
@@ -1118,7 +1123,7 @@ End Module
             }
         }
 
-        [WorkItem(545446, "DevDiv")]
+        [WorkItem(545446, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545446")]
         [Fact()]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task Utf8Output_WithRedirecting_Off_Share()
@@ -1146,7 +1151,7 @@ End Module
             }
         }
 
-        [WorkItem(545446, "DevDiv")]
+        [WorkItem(545446, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545446")]
         [Fact()]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task Utf8Output_WithRedirecting_On_Shared_CS()
@@ -1170,7 +1175,7 @@ End Module
             }
         }
 
-        [WorkItem(545446, "DevDiv")]
+        [WorkItem(545446, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545446")]
         [Fact()]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task Utf8Output_WithRedirecting_On_Shared_VB()
@@ -1198,7 +1203,7 @@ End Module
             }
         }
 
-        [WorkItem(871477, "DevDiv")]
+        [WorkItem(871477, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/871477")]
         [Fact]
         [Trait(Traits.Environment, Traits.Environments.VSProductInstall)]
         public async Task AssemblyIdentityComparer1()
@@ -1256,7 +1261,7 @@ class Program
             }
         }
 
-        [WorkItem(979588)]
+        [WorkItem(979588, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/979588")]
         [Fact]
         public async Task Utf8OutputInRspFileCsc()
         {
@@ -1283,7 +1288,7 @@ class Program
             }
         }
 
-        [WorkItem(979588)]
+        [WorkItem(979588, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/979588")]
         [Fact]
         public async Task Utf8OutputInRspFileVbc()
         {
@@ -1312,7 +1317,7 @@ class Program
             }
         }
 
-        [Fact(Skip = "DevDiv 1095079"), WorkItem(1095079)]
+        [Fact, WorkItem(1095079, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1095079")]
         public async Task ServerRespectsAppConfig()
         {
             var exeConfigPath = Path.Combine(CompilerDirectory, CompilerServerExeName + ".config");
@@ -1381,8 +1386,8 @@ class Program
             Assert.Equal("", result.Errors);
         }
 
-        [Fact] 
-        [WorkItem(1024619, "DevDiv")]
+        [Fact]
+        [WorkItem(1024619, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1024619")]
         public async Task Bug1024619_01()
         {
             using (var serverData = ServerUtil.CreateServer())
@@ -1415,7 +1420,7 @@ class Program
         }
 
         [Fact]
-        [WorkItem(1024619, "DevDiv")]
+        [WorkItem(1024619, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1024619")]
         public async Task Bug1024619_02()
         {
             using (var serverData = ServerUtil.CreateServer())

@@ -84,7 +84,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
-        [WorkItem(543964, "DevDiv")]
+        [WorkItem(543964, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543964")]
         public void MultipleProjectsWithSameDisplayName()
         {
             var solution = CreateSolution();
@@ -303,7 +303,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
             return solution;
         }
 
-        [WorkItem(636431, "DevDiv")]
+        [WorkItem(636431, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/636431")]
         [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
         public void TestProjectDependencyLoading()
         {
@@ -621,7 +621,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [Fact, Trait(Traits.Feature, Traits.Features.Workspace)]
-        [WorkItem(542736, "DevDiv")]
+        [WorkItem(542736, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542736")]
         public void TestDocumentChangedOnDiskIsNotObserved()
         {
             var text1 = "public class A {}";
@@ -1273,7 +1273,7 @@ End Class";
         }
 
         [Fact]
-        [WorkItem(666263, "DevDiv")]
+        [WorkItem(666263, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/666263")]
         public void TestWorkspaceDiagnosticHasDebuggerText()
         {
             var solution = new AdhocWorkspace().CurrentSolution;
@@ -1299,7 +1299,7 @@ End Class";
             Assert.NotNull(diagnostic);
             var dd = diagnostic as DocumentDiagnostic;
             Assert.NotNull(dd);
-            Assert.Equal(dd.GetDebuggerDisplay(), string.Format("[{0}] {1}", dd.Kind.ToString(), dd.Message));
+            Assert.Equal(dd.ToString(), string.Format("[{0}] {1}", WorkspacesResources.Failure, dd.Message));
         }
 
         private bool WaitFor(Func<bool> condition, TimeSpan timeout)
@@ -1371,7 +1371,7 @@ public class C : A {
             Assert.Equal(pid1, projectForBaseType.Id);
         }
 
-        [WorkItem(1088127, "DevDiv")]
+        [WorkItem(1088127, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1088127")]
         [Fact]
         public void TestEncodingRetainedAfterTreeChanged()
         {
@@ -1404,8 +1404,8 @@ public class C : A {
                     projectReferences: new[] { new ProjectReference(project1.Id) }));
 
             // Nothing should have incomplete references, and everything should build
-            Assert.True(project1.HasCompleteReferencesAsync().Result);
-            Assert.True(project2.HasCompleteReferencesAsync().Result);
+            Assert.True(project1.HasSuccessfullyLoadedAsync().Result);
+            Assert.True(project2.HasSuccessfullyLoadedAsync().Result);
             Assert.Single(project2.GetCompilationAsync().Result.ExternalReferences);
         }
 
@@ -1425,8 +1425,8 @@ public class C : A {
                     LanguageNames.VisualBasic,
                     projectReferences: new[] { new ProjectReference(project1.Id) }));
 
-            Assert.True(project1.HasCompleteReferencesAsync().Result);
-            Assert.False(project2.HasCompleteReferencesAsync().Result);
+            Assert.True(project1.HasSuccessfullyLoadedAsync().Result);
+            Assert.False(project2.HasSuccessfullyLoadedAsync().Result);
             Assert.Empty(project2.GetCompilationAsync().Result.ExternalReferences);
         }
 
@@ -1450,8 +1450,103 @@ public class C : A {
             // Nothing should have incomplete references, and everything should build
             var frozenSolution = document.WithFrozenPartialSemanticsAsync(CancellationToken.None).Result.Project.Solution;
 
-            Assert.True(frozenSolution.GetProject(project1.Id).HasCompleteReferencesAsync().Result);
-            Assert.True(frozenSolution.GetProject(project2.Id).HasCompleteReferencesAsync().Result);
+            Assert.True(frozenSolution.GetProject(project1.Id).HasSuccessfullyLoadedAsync().Result);
+            Assert.True(frozenSolution.GetProject(project2.Id).HasSuccessfullyLoadedAsync().Result);
+        }
+
+        [Fact]
+        public void TestProjectCompletenessWithMultipleProjects()
+        {
+            Project csBrokenProject;
+            Project vbNormalProject;
+            Project dependsOnBrokenProject;
+            Project dependsOnVbNormalProject;
+            Project transitivelyDependsOnBrokenProjects;
+            Project transitivelyDependsOnNormalProjects;
+            GetMultipleProjects(out csBrokenProject, out vbNormalProject, out dependsOnBrokenProject, out dependsOnVbNormalProject, out transitivelyDependsOnBrokenProjects, out transitivelyDependsOnNormalProjects);
+
+            // check flag for a broken project itself
+            Assert.False(csBrokenProject.HasSuccessfullyLoadedAsync().Result);
+
+            // check flag for a normal project itself
+            Assert.True(vbNormalProject.HasSuccessfullyLoadedAsync().Result);
+
+            // check flag for normal project that directly reference a broken project
+            Assert.False(dependsOnBrokenProject.HasSuccessfullyLoadedAsync().Result);
+
+            // check flag for normal project that directly reference only normal project
+            Assert.True(dependsOnVbNormalProject.HasSuccessfullyLoadedAsync().Result);
+
+            // check flag for normal project that indirectly reference a borken project
+            // normal project -> normal project -> broken project
+            Assert.False(transitivelyDependsOnBrokenProjects.HasSuccessfullyLoadedAsync().Result);
+
+            // check flag for normal project that indirectly reference only normal project
+            // normal project -> normal project -> normal project
+            Assert.True(transitivelyDependsOnNormalProjects.HasSuccessfullyLoadedAsync().Result);
+        }
+
+        private static void GetMultipleProjects(
+            out Project csBrokenProject,
+            out Project vbNormalProject,
+            out Project dependsOnBrokenProject,
+            out Project dependsOnVbNormalProject,
+            out Project transitivelyDependsOnBrokenProjects,
+            out Project transitivelyDependsOnNormalProjects)
+        {
+            var workspace = new AdhocWorkspace();
+
+            csBrokenProject = workspace.AddProject(
+                ProjectInfo.Create(
+                    ProjectId.CreateNewId(),
+                    VersionStamp.Create(),
+                    "CSharpProject",
+                    "CSharpProject",
+                    LanguageNames.CSharp).WithHasAllInformation(hasAllInformation: false));
+
+            vbNormalProject = workspace.AddProject(
+                ProjectInfo.Create(
+                    ProjectId.CreateNewId(),
+                    VersionStamp.Create(),
+                    "VisualBasicProject",
+                    "VisualBasicProject",
+                    LanguageNames.VisualBasic));
+
+            dependsOnBrokenProject = workspace.AddProject(
+                ProjectInfo.Create(
+                    ProjectId.CreateNewId(),
+                    VersionStamp.Create(),
+                    "VisualBasicProject",
+                    "VisualBasicProject",
+                    LanguageNames.VisualBasic,
+                    projectReferences: new[] { new ProjectReference(csBrokenProject.Id), new ProjectReference(vbNormalProject.Id) }));
+
+            dependsOnVbNormalProject = workspace.AddProject(
+                ProjectInfo.Create(
+                    ProjectId.CreateNewId(),
+                    VersionStamp.Create(),
+                    "CSharpProject",
+                    "CSharpProject",
+                    LanguageNames.CSharp,
+                    projectReferences: new[] { new ProjectReference(vbNormalProject.Id) }));
+
+            transitivelyDependsOnBrokenProjects = workspace.AddProject(
+                ProjectInfo.Create(
+                    ProjectId.CreateNewId(),
+                    VersionStamp.Create(),
+                    "CSharpProject",
+                    "CSharpProject",
+                    LanguageNames.CSharp,
+                    projectReferences: new[] { new ProjectReference(dependsOnBrokenProject.Id) }));
+
+            transitivelyDependsOnNormalProjects = workspace.AddProject(
+                ProjectInfo.Create(
+                    ProjectId.CreateNewId(),
+                    VersionStamp.Create(),
+                    "VisualBasicProject",
+                    "VisualBasicProject",
+                    LanguageNames.VisualBasic,
+                    projectReferences: new[] { new ProjectReference(dependsOnVbNormalProject.Id) }));
         }
     }
 }

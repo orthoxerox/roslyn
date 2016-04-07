@@ -144,7 +144,7 @@ $$");
 using Foo;");
         }
 
-        [WpfFact(Skip = "528041"), Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
+        [WpfFact(Skip = "https://github.com/dotnet/roslyn/issues/9880"), Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
         public async Task TestNotBeforeUsing_Interactive()
         {
             await VerifyAbsenceAsync(SourceCodeKind.Script,
@@ -349,7 +349,7 @@ using Bar;"));
     readonly $$");
         }
 
-        [WorkItem(578075)]
+        [WorkItem(578075, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/578075")]
         [Fact, Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
         public async Task TestAfterAsync()
         {

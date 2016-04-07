@@ -29,9 +29,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Diagnostics.AddUsing
              string initialMarkup,
              string expected,
              bool systemSpecialCase,
-             int index = 0)
+             int index = 0,
+             object fixProviderData = null)
         {
-            await TestAsync(initialMarkup, expected, index, options: new Dictionary<OptionKey, object>
+            await TestAsync(initialMarkup, expected, index, fixProviderData: fixProviderData, options: new Dictionary<OptionKey, object>
             {
                 { new OptionKey(OrganizerOptions.PlaceSystemNamespaceFirst, LanguageNames.CSharp), systemSpecialCase }
             });
@@ -136,7 +137,7 @@ count: 1);
 @"using System.Collections; using System.Collections.Generic; class Class { IDictionary Method() { Foo(); } }");
         }
 
-        [WorkItem(541730)]
+        [WorkItem(541730, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541730")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForGenericExtensionMethod()
         {
@@ -145,7 +146,7 @@ count: 1);
 @"using System.Collections.Generic; using System.Linq; class Class { void Method(IList<int> args) { args.Where() } }");
         }
 
-        [WorkItem(541730)]
+        [WorkItem(541730, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541730")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForNormalExtensionMethod()
         {
@@ -207,7 +208,7 @@ parseOptions: Options.Regular);
 @"using System; [ObsoleteAttribute]class Class { }");
         }
 
-        [WorkItem(538018)]
+        [WorkItem(538018, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/538018")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAfterNew()
         {
@@ -248,7 +249,7 @@ parseOptions: Options.Regular);
 @"using A.B; namespace A { namespace B { class GenericClass<T> { } } } namespace C { class Class { GenericClass<int> c; } }");
         }
 
-        [WorkItem(541730)]
+        [WorkItem(541730, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541730")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestExtensionMethods()
         {
@@ -257,7 +258,7 @@ parseOptions: Options.Regular);
 @"using System . Collections . Generic ; using System . Linq ; class Foo { void Bar ( ) { var values = new List < int > ( ) ; values . Where ( i => i > 1 ) ; } } ");
         }
 
-        [WorkItem(541730)]
+        [WorkItem(541730, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541730")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestQueryPatterns()
         {
@@ -449,8 +450,8 @@ systemSpecialCase: false);
 systemSpecialCase: false);
         }
 
-        [WorkItem(538136)]
-        [WorkItem(538763)]
+        [WorkItem(538136, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/538136")]
+        [WorkItem(538763, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/538763")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForNamespace()
         {
@@ -458,7 +459,7 @@ systemSpecialCase: false);
 @"namespace A { class Class { [|C|].Test t; } } namespace B { namespace C { class Test { } } }");
         }
 
-        [WorkItem(538220)]
+        [WorkItem(538220, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/538220")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForFieldWithFormatting()
         {
@@ -470,7 +471,7 @@ class C { DateTime t; }",
 compareTokens: false);
         }
 
-        [WorkItem(539657)]
+        [WorkItem(539657, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/539657")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task BugFix5688()
         {
@@ -479,7 +480,7 @@ compareTokens: false);
 @"using System ; class Program { static void Main ( string [ ] args ) { Console . Out . NewLine = ""\r\n\r\n"" ; } } ");
         }
 
-        [WorkItem(539853)]
+        [WorkItem(539853, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/539853")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task BugFix5950()
         {
@@ -489,7 +490,7 @@ compareTokens: false);
 parseOptions: GetScriptOptions());
         }
 
-        [WorkItem(540339)]
+        [WorkItem(540339, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/540339")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddAfterDefineDirective1()
         {
@@ -522,7 +523,7 @@ class Program
 compareTokens: false);
         }
 
-        [WorkItem(540339)]
+        [WorkItem(540339, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/540339")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddAfterDefineDirective2()
         {
@@ -721,7 +722,7 @@ compilationOptions: TestOptions.ReleaseDll.WithMetadataReferenceResolver(resolve
 compareTokens: false);
         }
 
-        [WorkItem(542643)]
+        [WorkItem(542643, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542643")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAssemblyAttribute()
         {
@@ -783,7 +784,7 @@ class Program
 compareTokens: false);
         }
 
-        [WorkItem(545248)]
+        [WorkItem(545248, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545248")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestVenusGeneration1()
         {
@@ -801,7 +802,7 @@ class C
 }");
         }
 
-        [WorkItem(545774)]
+        [WorkItem(545774, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545774")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAttribute()
         {
@@ -813,7 +814,7 @@ input,
 @"using System . Runtime . InteropServices ; [ assembly : Guid ( ""9ed54f84-a89d-4fcd-a854-44251e925f09"" ) ] ");
         }
 
-        [WorkItem(546833)]
+        [WorkItem(546833, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546833")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestNotOnOverloadResolutionError()
         {
@@ -830,7 +831,7 @@ input,
 @"using System . Collections . Generic ; namespace ConsoleApplication10 { class Program { static void Main ( string [ ] args ) { var inArgument = new InArgument < IEnumerable < int > > ( new int [ ] { 1 , 2 , 3 } ) ; } } public class InArgument < T > { public InArgument ( T constValue ) { } } } ");
         }
 
-        [WorkItem(775448)]
+        [WorkItem(775448, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/775448")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task ShouldTriggerOnCS0308()
         {
@@ -857,7 +858,7 @@ class Test
 }");
         }
 
-        [WorkItem(838253)]
+        [WorkItem(838253, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/838253")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestConflictedInaccessibleType()
         {
@@ -867,7 +868,7 @@ class Test
 systemSpecialCase: true);
         }
 
-        [WorkItem(858085)]
+        [WorkItem(858085, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/858085")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestConflictedAttributeName()
         {
@@ -876,7 +877,7 @@ systemSpecialCase: true);
 @"using System.ComponentModel; [Description]class Description { }");
         }
 
-        [WorkItem(872908)]
+        [WorkItem(872908, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/872908")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestConflictedGenericName()
         {
@@ -885,7 +886,7 @@ systemSpecialCase: true);
 @"using System.Threading.Tasks; using Task = System.AccessViolationException; class X { Task<X> x; }");
         }
 
-        [WorkItem(913300)]
+        [WorkItem(913300, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/913300")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestNoDuplicateReport()
         {
@@ -907,7 +908,7 @@ systemSpecialCase: true);
 @"using System; class C { void M(P p) { Console } static void Main(string[] args) { } }");
         }
 
-        [WorkItem(938296)]
+        [WorkItem(938296, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/938296")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestNullParentInNode()
         {
@@ -923,14 +924,14 @@ class MultiDictionary<K, V> : Dictionary<K, HashSet<V>>
 }");
         }
 
-        [WorkItem(968303)]
+        [WorkItem(968303, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/968303")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestMalformedUsingSection()
         {
             await TestMissingAsync("[ class Class { [|List<|] }");
         }
 
-        [WorkItem(875899)]
+        [WorkItem(875899, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875899")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingsWithExternAlias()
         {
@@ -980,7 +981,7 @@ namespace ExternAliases
             await TestAsync(InitialWorkspace, ExpectedDocumentText);
         }
 
-        [WorkItem(875899)]
+        [WorkItem(875899, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875899")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingsWithPreExistingExternAlias()
         {
@@ -1042,7 +1043,7 @@ namespace ExternAliases
             await TestAsync(InitialWorkspace, ExpectedDocumentText);
         }
 
-        [WorkItem(875899)]
+        [WorkItem(875899, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875899")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingsNoExtern()
         {
@@ -1092,7 +1093,7 @@ namespace ExternAliases
             await TestAsync(InitialWorkspace, ExpectedDocumentText);
         }
 
-        [WorkItem(875899)]
+        [WorkItem(875899, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/875899")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingsNoExternFilterGlobalAlias()
         {
@@ -1115,7 +1116,7 @@ class Program
 }");
         }
 
-        [WorkItem(916368)]
+        [WorkItem(916368, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/916368")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForCref()
         {
@@ -1137,7 +1138,7 @@ interface MyNotifyPropertyChanged { }";
             await TestAsync(initialText, expectedText, parseOptions: options);
         }
 
-        [WorkItem(916368)]
+        [WorkItem(916368, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/916368")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForCref2()
         {
@@ -1159,7 +1160,7 @@ interface MyNotifyPropertyChanged { }";
             await TestAsync(initialText, expectedText, parseOptions: options);
         }
 
-        [WorkItem(916368)]
+        [WorkItem(916368, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/916368")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForCref3()
         {
@@ -1208,7 +1209,7 @@ public class MyClass2
             await TestAsync(initialText, expectedText, parseOptions: options);
         }
 
-        [WorkItem(916368)]
+        [WorkItem(916368, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/916368")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForCref4()
         {
@@ -1247,7 +1248,7 @@ public class MyClass
             await TestAsync(initialText, expectedText, parseOptions: options);
         }
 
-        [WorkItem(773614)]
+        [WorkItem(773614, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/773614")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddStaticType()
         {
@@ -1287,7 +1288,7 @@ class Test
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(773614)]
+        [WorkItem(773614, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/773614")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddStaticType2()
         {
@@ -1331,7 +1332,7 @@ class Test
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(773614)]
+        [WorkItem(773614, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/773614")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddStaticType3()
         {
@@ -1340,7 +1341,7 @@ class Test
              @"using System ; using static Outer . Inner ; public static class Outer { public class Inner { [ AttributeUsage ( AttributeTargets . All ) ] public class MyAttribute : Attribute { } } } [ My ] class Test { } ");
         }
 
-        [WorkItem(773614)]
+        [WorkItem(773614, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/773614")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddStaticType4()
         {
@@ -1386,7 +1387,7 @@ class Test
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(991463)]
+        [WorkItem(991463, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/991463")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideUsingDirective1()
         {
@@ -1395,7 +1396,7 @@ class Test
 @"using System; namespace ns { using B = Byte; }");
         }
 
-        [WorkItem(991463)]
+        [WorkItem(991463, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/991463")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideUsingDirective2()
         {
@@ -1404,7 +1405,7 @@ class Test
 @"using System; using System.Collections; namespace ns { using B = Byte; }");
         }
 
-        [WorkItem(991463)]
+        [WorkItem(991463, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/991463")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideUsingDirective3()
         {
@@ -1413,7 +1414,7 @@ class Test
 @"using System; namespace ns2 { namespace ns3 { namespace ns { using B = Byte; namespace ns4 { } } } }");
         }
 
-        [WorkItem(991463)]
+        [WorkItem(991463, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/991463")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideUsingDirective4()
         {
@@ -1422,7 +1423,7 @@ class Test
 @"namespace ns2 { using System; using System.Collections; namespace ns3 { namespace ns { using System.IO; using B = Byte; } } }");
         }
 
-        [WorkItem(991463)]
+        [WorkItem(991463, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/991463")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideUsingDirective5()
         {
@@ -1431,7 +1432,7 @@ class Test
 @"using System.IO; namespace ns2 { using System.Diagnostics; namespace ns3 { using System; using System.Collections; namespace ns { using B = Byte; } } }");
         }
 
-        [WorkItem(991463)]
+        [WorkItem(991463, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/991463")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideUsingDirective6()
         {
@@ -1439,7 +1440,7 @@ class Test
 @"using B = [|Byte|];");
         }
 
-        [WorkItem(1064748)]
+        [WorkItem(1064748, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1064748")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddConditionalAccessExpression()
         {
@@ -1479,7 +1480,7 @@ public class C
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(1064748)]
+        [WorkItem(1064748, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1064748")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddConditionalAccessExpression2()
         {
@@ -1531,7 +1532,7 @@ public class C
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(1089138)]
+        [WorkItem(1089138, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1089138")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAmbiguousUsingName()
         {
@@ -1670,7 +1671,7 @@ namespace N2
             await TestMissingAsync(initial);
         }
 
-        [WorkItem(1116011)]
+        [WorkItem(1116011, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1116011")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForProperty()
         {
@@ -1679,7 +1680,7 @@ namespace N2
 @"using System ; using System . Collections . Generic ; using System . Linq ; using System . Reflection ; using System . Threading . Tasks ; class Program { public BindingFlags BindingFlags { get { return BindingFlags . Instance ; } } } ");
         }
 
-        [WorkItem(1116011)]
+        [WorkItem(1116011, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1116011")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddUsingForField()
         {
@@ -1953,7 +1954,7 @@ namespace N
 @"using System ; class A { System . Action a = ( ) => { try { } catch ( Exception ");
         }
 
-        [WorkItem(1033612)]
+        [WorkItem(1033612, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1033612")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideLambda()
         {
@@ -1976,7 +1977,7 @@ static void Main(string[] args)
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(1033612)]
+        [WorkItem(1033612, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1033612")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideLambda2()
         {
@@ -1999,7 +2000,7 @@ static void Main(string[] args)
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(1033612)]
+        [WorkItem(1033612, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1033612")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideLambda3()
         {
@@ -2030,7 +2031,7 @@ static void Main(string[] args)
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(1033612)]
+        [WorkItem(1033612, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1033612")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestAddInsideLambda4()
         {
@@ -2061,8 +2062,8 @@ static void Main(string[] args)
             await TestAsync(initialText, expectedText);
         }
 
-        [WorkItem(860648)]
-        [WorkItem(902014)]
+        [WorkItem(860648, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/860648")]
+        [WorkItem(902014, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/902014")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
         public async Task TestIncompleteParenthesizedLambdaExpression()
         {
@@ -2144,6 +2145,45 @@ namespace Namespace2
 }");
         }
 
+        [WorkItem(5499, "https://github.com/dotnet/roslyn/issues/5499")]
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
+        public async Task TestFormattingForNamespaceUsings()
+        {
+            await TestAsync(
+@"namespace N
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    class Program
+    {
+        void Main()
+        {
+            [|Task<int>|]
+        }
+    }
+}",
+@"namespace N
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    class Program
+    {
+        void Main()
+        {
+            Task<int>
+        }
+    }
+}",
+compareTokens: false);
+        }
+
         public partial class AddUsingTestsWithAddImportDiagnosticProvider : AbstractCSharpDiagnosticProviderBasedUserDiagnosticTest
         {
             internal override Tuple<DiagnosticAnalyzer, CodeFixProvider> CreateDiagnosticProviderAndFixer(Workspace workspace)
@@ -2183,8 +2223,8 @@ namespace Namespace2
     @"using System ; using System . Linq ; class C { C ( ) { """" . Select ( ( ) => { new Byte ( ) } ");
             }
 
-            [WorkItem(860648)]
-            [WorkItem(902014)]
+            [WorkItem(860648, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/860648")]
+            [WorkItem(902014, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/902014")]
             [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
             public async Task TestIncompleteSimpleLambdaExpression()
             {
@@ -2212,7 +2252,7 @@ class Program
 }");
             }
 
-            [WorkItem(829970)]
+            [WorkItem(829970, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/829970")]
             [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
             public async Task TestUnknownIdentifierGenericName()
             {
@@ -2221,7 +2261,7 @@ class Program
     @"using System.Collections.Generic; class C { private List<int> } ");
             }
 
-            [WorkItem(829970)]
+            [WorkItem(829970, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/829970")]
             [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
             public async Task TestUnknownIdentifierInAttributeSyntaxWithoutTarget()
             {
@@ -2238,7 +2278,7 @@ class Program
     @"using System ; using System . Reflection . Emit ; class Program { Func < FlowControl x } ");
             }
 
-            [WorkItem(752640)]
+            [WorkItem(752640, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/752640")]
             [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
             public async Task TestUnknownIdentifierWithSyntaxError()
             {
@@ -2247,7 +2287,7 @@ class Program
     @"using System . IO ; class C { Directory private int i ; } ");
             }
 
-            [WorkItem(855748)]
+            [WorkItem(855748, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/855748")]
             [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
             public async Task TestGenericNameWithBrackets()
             {
@@ -2264,7 +2304,7 @@ class Program
     @"using System.Collections.Generic; class Class { List<> }");
             }
 
-            [WorkItem(867496)]
+            [WorkItem(867496, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/867496")]
             [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddUsing)]
             public async Task TestMalformedGenericParameters()
             {

@@ -1284,7 +1284,7 @@ class Test
         }
 
         [Fact]
-        [WorkItem(638261, "DevDiv")]
+        [WorkItem(638261, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/638261")]
         public void Await15()
         {
             var source = @"
@@ -1921,7 +1921,7 @@ class Driver
         }
 
         [Fact]
-        [WorkItem(625282, "DevDiv")]
+        [WorkItem(625282, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/625282")]
         public void Generic05()
         {
             var source = @"
@@ -2134,7 +2134,7 @@ class Test
             var expected = @"
 42
 ";
-            var c = CompileAndVerify(source, options: TestOptions.ReleaseDebugExe ,expectedOutput: expected);
+            var c = CompileAndVerify(source, options: TestOptions.ReleaseDebugExe, expectedOutput: expected);
 
             c.VerifyIL("Test.F", @"
 {
@@ -2709,7 +2709,7 @@ class Test
         }
 
         [Fact]
-        [WorkItem(564036, "DevDiv")]
+        [WorkItem(564036, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/564036")]
         public void InferFromAsyncLambda()
         {
             var source =
@@ -2745,7 +2745,7 @@ class Program
         }
 
         [Fact]
-        [WorkItem(620987, "DevDiv")]
+        [WorkItem(620987, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/620987")]
         public void PrematureNull()
         {
             var source =
@@ -2810,7 +2810,7 @@ done!";
         }
 
         [Fact]
-        [WorkItem(621705, "DevDiv")]
+        [WorkItem(621705, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/621705")]
         public void GenericAsyncLambda()
         {
             var source =
@@ -2863,7 +2863,7 @@ class Test
         }
 
         [Fact]
-        [WorkItem(602028, "DevDiv")]
+        [WorkItem(602028, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/602028")]
         public void BetterConversionFromAsyncLambda()
         {
             var source =
@@ -2886,7 +2886,7 @@ class TestCase
         }
 
         [Fact]
-        [WorkItem(602206, "DevDiv")]
+        [WorkItem(602206, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/602206")]
         public void ExtensionAddMethod()
         {
             var source =
@@ -2938,7 +2938,7 @@ Add 3";
         }
 
         [Fact]
-        [WorkItem(748527, "DevDiv")]
+        [WorkItem(748527, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/748527")]
         public void Bug748527()
         {
             var source = @"using System.Threading.Tasks;
@@ -2976,7 +2976,7 @@ namespace A
         }
 
         [Fact]
-        [WorkItem(602216, "DevDiv")]
+        [WorkItem(602216, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/602216")]
         public void AsyncMethodOnlyWritesToEnclosingStruct()
         {
             var source =
@@ -3004,7 +3004,7 @@ public class Test
         }
 
         [Fact]
-        [WorkItem(602246, "DevDiv")]
+        [WorkItem(602246, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/602246")]
         public void Bug602246()
         {
             var source =
@@ -3032,7 +3032,7 @@ public class TestCase
             CompileAndVerify(source, expectedOutput: expected);
         }
 
-        [WorkItem(628654, "DevDiv")]
+        [WorkItem(628654, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/628654")]
         [Fact]
         public void AsyncWithDynamic01()
         {
@@ -3058,7 +3058,7 @@ System.Int32[]
             CompileAndVerify(source, expectedOutput: expected);
         }
 
-        [WorkItem(640282, "DevDiv")]
+        [WorkItem(640282, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/640282")]
         [Fact]
         public void CustomAsyncWithDynamic01()
         {
@@ -3122,7 +3122,7 @@ class Driver
             CompileAndVerify(source, expectedOutput: expected);
         }
 
-        [WorkItem(840843, "DevDiv")]
+        [WorkItem(840843, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/840843")]
         [Fact]
         public void MissingAsyncMethodBuilder()
         {
@@ -3138,15 +3138,24 @@ class C
             // CONSIDER: It would be nice if we didn't squiggle the whole method body, but this is a corner case.
             comp.VerifyEmitDiagnostics(
                 // (4,16): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-                Diagnostic(ErrorCode.WRN_AsyncLacksAwaits, "M"),
-                // (5,5): error CS0518: Predefined type 'System.Runtime.CompilerServices.AsyncVoidMethodBuilder' is not defined or imported
-                Diagnostic(ErrorCode.ERR_PredefinedTypeNotFound, @"{}").WithArguments("System.Runtime.CompilerServices.AsyncVoidMethodBuilder"),
-                // (5,5): error CS0656: Missing compiler required member 'System.Runtime.CompilerServices.AsyncVoidMethodBuilder.SetException'
-                Diagnostic(ErrorCode.ERR_MissingPredefinedMember, @"{}").WithArguments("System.Runtime.CompilerServices.AsyncVoidMethodBuilder", "SetException"));
+                //     async void M() {}
+                Diagnostic(ErrorCode.WRN_AsyncLacksAwaits, "M").WithLocation(4, 16),
+                // (4,20): error CS0518: Predefined type 'System.Runtime.CompilerServices.AsyncVoidMethodBuilder' is not defined or imported
+                //     async void M() {}
+                Diagnostic(ErrorCode.ERR_PredefinedTypeNotFound, "{}").WithArguments("System.Runtime.CompilerServices.AsyncVoidMethodBuilder").WithLocation(4, 20),
+                // (4,20): error CS0656: Missing compiler required member 'System.Runtime.CompilerServices.AsyncVoidMethodBuilder.SetException'
+                //     async void M() {}
+                Diagnostic(ErrorCode.ERR_MissingPredefinedMember, "{}").WithArguments("System.Runtime.CompilerServices.AsyncVoidMethodBuilder", "SetException").WithLocation(4, 20),
+                // (4,20): error CS0656: Missing compiler required member 'System.Runtime.CompilerServices.IAsyncStateMachine.MoveNext'
+                //     async void M() {}
+                Diagnostic(ErrorCode.ERR_MissingPredefinedMember, "{}").WithArguments("System.Runtime.CompilerServices.IAsyncStateMachine", "MoveNext").WithLocation(4, 20),
+                // (4,20): error CS0656: Missing compiler required member 'System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine'
+                //     async void M() {}
+                Diagnostic(ErrorCode.ERR_MissingPredefinedMember, "{}").WithArguments("System.Runtime.CompilerServices.IAsyncStateMachine", "SetStateMachine").WithLocation(4, 20));
         }
 
         [Fact]
-        [WorkItem(868822, "DevDiv")]
+        [WorkItem(868822, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/868822")]
         public void AsyncDelegates()
         {
             var source =
@@ -3593,7 +3602,7 @@ System.Console.WriteLine(x);";
         /// since the static initialization of the class must be
         /// handled synchronously in the .cctor.
         /// </summary>
-        [WorkItem(5787)]
+        [WorkItem(5787, "https://github.com/dotnet/roslyn/issues/5787")]
         [Fact]
         public void AwaitInScriptStaticInitializer()
         {
@@ -3948,5 +3957,84 @@ result";
             CompileAndVerify(comp.WithOptions(TestOptions.ReleaseExe), expectedOutput: expectedOutput);
         }
 
+        [Fact, WorkItem(9463, "https://github.com/dotnet/roslyn/issues/9463")]
+        public void AsyncIteratorReportsDiagnosticsWhenCoreTypesAreMissing()
+        {
+            // Note that IAsyncStateMachine.MoveNext and IAsyncStateMachine.SetStateMachine are missing
+            var source = @"
+using System.Threading.Tasks;
+
+namespace System
+{
+    public class Object { }
+    public struct Int32 { }
+    public struct Boolean { }
+    public class String { }
+    public class Exception { }
+    public class ValueType { }
+    public class Enum { }
+    public struct Void { }
+}
+
+namespace System.Threading.Tasks
+{
+    public class Task
+    {
+        public TaskAwaiter GetAwaiter() { return null; }
+    }
+
+    public class TaskAwaiter : System.Runtime.CompilerServices.INotifyCompletion
+    {
+        public bool IsCompleted { get { return true; } }
+        public void GetResult() {  }
+    }
+}
+
+namespace System.Runtime.CompilerServices
+{
+    public interface INotifyCompletion { }
+    public interface ICriticalNotifyCompletion { }
+    public interface IAsyncStateMachine { }
+
+    public class AsyncTaskMethodBuilder
+    {
+        public System.Threading.Tasks.Task Task { get { return null; } }
+        public void SetException(System.Exception e) { }
+        public void SetResult() { }
+
+        public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
+            where TAwaiter : INotifyCompletion
+            where TStateMachine : IAsyncStateMachine
+        { }
+
+        public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
+            where TAwaiter : ICriticalNotifyCompletion
+            where TStateMachine : IAsyncStateMachine
+        { }
+
+        public void Start<TStateMachine>(ref TStateMachine stateMachine)
+            where TStateMachine : IAsyncStateMachine
+        { }
+
+        public void SetStateMachine(IAsyncStateMachine stateMachine) { }
+    }
+}
+
+class C
+{
+    async Task GetNumber(Task task) { await task; }
+}";
+            var compilation = CreateCompilation(new[] { Parse(source) });
+
+            compilation.VerifyEmitDiagnostics(
+                // warning CS8021: No value for RuntimeMetadataVersion found. No assembly containing System.Object was found nor was a value for RuntimeMetadataVersion specified through options.
+                Diagnostic(ErrorCode.WRN_NoRuntimeMetadataVersion).WithLocation(1, 1),
+                // (62,37): error CS0656: Missing compiler required member 'System.Runtime.CompilerServices.IAsyncStateMachine.MoveNext'
+                //     async Task GetNumber(Task task) { await task; }
+                Diagnostic(ErrorCode.ERR_MissingPredefinedMember, "{ await task; }").WithArguments("System.Runtime.CompilerServices.IAsyncStateMachine", "MoveNext").WithLocation(62, 37),
+                // (62,37): error CS0656: Missing compiler required member 'System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine'
+                //     async Task GetNumber(Task task) { await task; }
+                Diagnostic(ErrorCode.ERR_MissingPredefinedMember, "{ await task; }").WithArguments("System.Runtime.CompilerServices.IAsyncStateMachine", "SetStateMachine").WithLocation(62, 37));
+        }
     }
 }

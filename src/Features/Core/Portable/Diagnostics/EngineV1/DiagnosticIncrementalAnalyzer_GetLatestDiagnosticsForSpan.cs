@@ -55,14 +55,16 @@ namespace Microsoft.CodeAnalysis.Diagnostics.EngineV1
 
                 // Share the diagnostic analyzer driver across all analyzers.
                 var fullSpan = root?.FullSpan;
-                
+
                 // We are computing diagnostics for a single document/span, so we don't need to enable concurrent analysis.
                 const bool concurrentAnalysis = false;
                 const bool reportSuppressedDiagnostics = true;
 
-                _spanBasedDriver = new DiagnosticAnalyzerDriver(_document, _range, root, _owner, concurrentAnalysis, reportSuppressedDiagnostics, _cancellationToken);
-                _documentBasedDriver = new DiagnosticAnalyzerDriver(_document, fullSpan, root, _owner, concurrentAnalysis, reportSuppressedDiagnostics, _cancellationToken);
-                _projectDriver = new DiagnosticAnalyzerDriver(_document.Project, _owner, concurrentAnalysis, reportSuppressedDiagnostics, _cancellationToken);
+                var analyzers = _owner._stateManager.GetOrCreateAnalyzers(_document.Project);
+
+                _spanBasedDriver = new DiagnosticAnalyzerDriver(_document, _range, root, _owner, analyzers, concurrentAnalysis, reportSuppressedDiagnostics, _cancellationToken);
+                _documentBasedDriver = new DiagnosticAnalyzerDriver(_document, fullSpan, root, _owner, analyzers, concurrentAnalysis, reportSuppressedDiagnostics, _cancellationToken);
+                _projectDriver = new DiagnosticAnalyzerDriver(_document.Project, _owner, analyzers, concurrentAnalysis, reportSuppressedDiagnostics, _cancellationToken);
             }
 
             public List<DiagnosticData> Diagnostics { get; }

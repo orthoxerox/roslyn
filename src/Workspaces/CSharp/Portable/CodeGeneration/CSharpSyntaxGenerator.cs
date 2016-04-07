@@ -162,7 +162,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
             if (kind == OperatorKind.ImplicitConversion || kind == OperatorKind.ExplicitConversion)
             {
                 return SyntaxFactory.ConversionOperatorDeclaration(
-                    attributes, modifierList, SyntaxFactory.Token(GetTokenKind(kind)), 
+                    attributes, modifierList, SyntaxFactory.Token(GetTokenKind(kind)),
                     SyntaxFactory.Token(SyntaxKind.OperatorKeyword),
                     returnTypeNode, parameterList, body, semicolon);
             }
@@ -184,7 +184,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                 case OperatorKind.ExplicitConversion: return SyntaxKind.ExplicitKeyword;
                 case OperatorKind.Addition: return SyntaxKind.PlusToken;
                 case OperatorKind.BitwiseAnd: return SyntaxKind.AmpersandToken;
-                case OperatorKind.BitwiseOr:return SyntaxKind.BarToken;
+                case OperatorKind.BitwiseOr: return SyntaxKind.BarToken;
                 case OperatorKind.Decrement: return SyntaxKind.MinusMinusToken;
                 case OperatorKind.Division: return SyntaxKind.SlashToken;
                 case OperatorKind.Equality: return SyntaxKind.EqualsEqualsToken;
@@ -198,10 +198,10 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
                 case OperatorKind.LessThan: return SyntaxKind.LessThanToken;
                 case OperatorKind.LessThanOrEqual: return SyntaxKind.LessThanEqualsToken;
                 case OperatorKind.LogicalNot: return SyntaxKind.ExclamationToken;
-                case OperatorKind.Modulus:return SyntaxKind.PercentToken;
-                case OperatorKind.Multiply:return SyntaxKind.AsteriskToken;
-                case OperatorKind.OnesComplement:return SyntaxKind.TildeToken;
-                case OperatorKind.RightShift:return SyntaxKind.GreaterThanGreaterThanToken;
+                case OperatorKind.Modulus: return SyntaxKind.PercentToken;
+                case OperatorKind.Multiply: return SyntaxKind.AsteriskToken;
+                case OperatorKind.OnesComplement: return SyntaxKind.TildeToken;
+                case OperatorKind.RightShift: return SyntaxKind.GreaterThanGreaterThanToken;
                 case OperatorKind.Subtraction: return SyntaxKind.MinusToken;
                 case OperatorKind.True: return SyntaxKind.TrueKeyword;
                 case OperatorKind.UnaryNegation: return SyntaxKind.MinusToken;
@@ -3390,6 +3390,13 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGeneration
         public override SyntaxNode AwaitExpression(SyntaxNode expression)
         {
             return SyntaxFactory.AwaitExpression((ExpressionSyntax)expression);
+        }
+
+        public override SyntaxNode NameOfExpression(SyntaxNode expression)
+        {
+            return InvocationExpression(
+                IdentifierName(SyntaxFacts.GetText(SyntaxKind.NameOfKeyword)),
+                expression);
         }
 
         public override SyntaxNode ReturnStatement(SyntaxNode expressionOpt = null)

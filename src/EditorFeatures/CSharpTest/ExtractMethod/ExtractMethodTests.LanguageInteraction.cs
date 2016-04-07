@@ -169,7 +169,7 @@ class Program
                 await TestExtractMethodAsync(code, expected, allowMovingDeclaration: false);
             }
 
-            [WorkItem(528198)]
+            [WorkItem(528198, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/528198")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task BugFix6794()
             {
@@ -218,7 +218,7 @@ class Program
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(528198)]
+            [WorkItem(528198, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/528198")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task BugFix6794_1()
             {
@@ -816,6 +816,34 @@ class TestClass
 
             #endregion
 
+            #region Patterns
+
+            [WorkItem(9244, "https://github.com/dotnet/roslyn/issues/9244")]
+            [Fact]
+            public async Task PatternIsDisabled()
+            {
+                var code = @"
+using System;
+class Program
+{
+    static void Main()
+    {
+        object o = null;
+        if (o is Program [|p|])
+        {
+
+        }
+    }
+}
+
+";
+
+                var patterns = MessageID.IDS_FeaturePatternMatching.RequiredFeature();
+                await ExpectExtractMethodToFailAsync(code, features: new[] { patterns });
+            }
+
+            #endregion
+
             [WorkItem(11155, "DevDiv_Projects/Roslyn")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task AnonymousTypeMember1()
@@ -834,7 +862,7 @@ class Program
                 await ExpectExtractMethodToFailAsync(code);
             }
 
-            [WorkItem(544259)]
+            [WorkItem(544259, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544259")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExtractMethod_ConstructorInitializer()
             {
@@ -861,7 +889,7 @@ class Program
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(543984)]
+            [WorkItem(543984, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543984")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExtractMethod_UnsafeAddressTaken()
             {
@@ -890,7 +918,7 @@ class Program
                 await ExpectExtractMethodToFailAsync(code, expected);
             }
 
-            [WorkItem(544387)]
+            [WorkItem(544387, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544387")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExtractMethod_PointerType()
             {
@@ -925,7 +953,7 @@ class Program
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(544514)]
+            [WorkItem(544514, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544514")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExtractMethod_AnonymousType()
             {
@@ -958,7 +986,7 @@ class Program
                 await ExpectExtractMethodToFailAsync(code, expected);
             }
 
-            [WorkItem(544920)]
+            [WorkItem(544920, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544920")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExtractMethod_StackAllocExpression()
             {
@@ -989,7 +1017,7 @@ unsafe class C
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(539310)]
+            [WorkItem(539310, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/539310")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task Readonly_Field_WrittenTo()
             {
@@ -1005,7 +1033,7 @@ unsafe class C
                 await ExpectExtractMethodToFailAsync(code);
             }
 
-            [WorkItem(539310)]
+            [WorkItem(539310, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/539310")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task Readonly_Field()
             {
@@ -1037,7 +1065,7 @@ unsafe class C
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545180)]
+            [WorkItem(545180, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545180")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task NodeHasSyntacticErrors()
             {
@@ -1059,7 +1087,7 @@ class Program
                 await ExpectExtractMethodToFailAsync(code);
             }
 
-            [WorkItem(545292)]
+            [WorkItem(545292, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545292")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task LocalConst()
             {
@@ -1073,7 +1101,7 @@ class Program
                 await ExpectExtractMethodToFailAsync(code);
             }
 
-            [WorkItem(545315)]
+            [WorkItem(545315, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545315")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task Nullable()
             {
@@ -1104,7 +1132,7 @@ class Program
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545263)]
+            [WorkItem(545263, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545263")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task SyntacticErrorInSelection()
             {
@@ -1126,7 +1154,7 @@ class Program
                 await ExpectExtractMethodToFailAsync(code);
             }
 
-            [WorkItem(544497)]
+            [WorkItem(544497, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544497")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task StackAllocExpression()
             {
@@ -1154,7 +1182,7 @@ class Test
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545503)]
+            [WorkItem(545503, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545503")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task MethodBodyInScript()
             {
@@ -1210,7 +1238,7 @@ void NewMethod(string query, string[,] labelKeys)
                 await TestExtractMethodAsync(code, expected, parseOptions: new CSharpParseOptions(kind: SourceCodeKind.Script));
             }
 
-            [WorkItem(544920)]
+            [WorkItem(544920, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544920")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task NoSimplificationForStackAlloc()
             {
@@ -1243,7 +1271,7 @@ unsafe class C
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545553)]
+            [WorkItem(545553, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545553")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task CheckStatementContext1()
             {
@@ -1292,7 +1320,7 @@ class X
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545553)]
+            [WorkItem(545553, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545553")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task CheckStatementContext2()
             {
@@ -1338,7 +1366,7 @@ class X
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545553)]
+            [WorkItem(545553, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545553")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task CheckStatementContext3()
             {
@@ -1389,7 +1417,7 @@ class X
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(545553)]
+            [WorkItem(545553, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545553")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task CheckExpressionContext1()
             {
@@ -1777,7 +1805,7 @@ class X
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(1064798)]
+            [WorkItem(1064798, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1064798")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExpressionInStringInterpolation()
             {
@@ -1807,7 +1835,7 @@ class X
                 await TestExtractMethodAsync(code, expected);
             }
 
-            [WorkItem(859493)]
+            [WorkItem(859493, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/859493")]
             [Fact, Trait(Traits.Feature, Traits.Features.ExtractMethod)]
             public async Task ExpressionInYieldReturnStatement()
             {

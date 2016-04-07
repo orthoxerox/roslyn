@@ -16,13 +16,14 @@ namespace Microsoft.CodeAnalysis.CSharp
     /// <summary>
     /// Represents symbols imported to the binding scope via using namespace, using alias, and extern alias.
     /// </summary>
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     internal sealed class Imports
     {
         internal static readonly Imports Empty = new Imports(
             null,
             ImmutableDictionary<string, AliasAndUsingDirective>.Empty,
-            ImmutableArray<NamespaceOrTypeAndUsingDirective>.Empty, 
-            ImmutableArray<AliasAndExternAliasDirective>.Empty, 
+            ImmutableArray<NamespaceOrTypeAndUsingDirective>.Empty,
+            ImmutableArray<AliasAndExternAliasDirective>.Empty,
             null);
 
         private readonly CSharpCompilation _compilation;
@@ -51,6 +52,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             this.Usings = usings;
             _diagnostics = diagnostics;
             this.ExternAliases = externs;
+        }
+
+        internal string GetDebuggerDisplay()
+        {
+            return string.Join("; ", 
+                UsingAliases.OrderBy(x => x.Value.UsingDirective.Location.SourceSpan.Start).Select(ua => $"{ua.Key} = {ua.Value.Alias.Target}").Concat(
+                Usings.Select(u => u.NamespaceOrType.ToString())).Concat(
+                ExternAliases.Select(ea => $"extern alias {ea.Alias.Name}")));
+
         }
 
         public static Imports FromSyntax(
@@ -416,13 +426,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return this;
             }
 
-            Debug.Assert(this._compilation == otherImports._compilation);
+            Debug.Assert(_compilation == otherImports._compilation);
 
             var usingAliases = this.UsingAliases.SetItems(otherImports.UsingAliases); // NB: SetItems, rather than AddRange
             var usings = this.Usings.AddRange(otherImports.Usings).Distinct(UsingTargetComparer.Instance);
             var externAliases = ConcatExternAliases(this.ExternAliases, otherImports.ExternAliases);
 
-            return new Imports(this._compilation, usingAliases, usings, externAliases, diagnostics: null);
+            return new Imports(_compilation, usingAliases, usings, externAliases, diagnostics: null);
         }
 
         private static ImmutableArray<AliasAndExternAliasDirective> ConcatExternAliases(ImmutableArray<AliasAndExternAliasDirective> externs1, ImmutableArray<AliasAndExternAliasDirective> externs2)
@@ -730,7 +740,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             ArrayBuilder<MethodSymbol> methods,
             string name,
             int arity,
-            LookupOptions options, 
+            LookupOptions options,
             Binder originalBinder)
         {
             var binderFlags = originalBinder.Flags;

@@ -110,7 +110,7 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics.AddImport
             Await TestAsync(input, expected)
         End Function
 
-        <WorkItem(1083419)>
+        <WorkItem(1083419, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1083419")>
         <Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddImport)>
         Public Async Function TestExtensionMethods1() As Task
             Dim input =
@@ -168,7 +168,7 @@ namespace CSAssembly1
             Await TestAsync(input, expected, codeActionIndex:=1)
         End Function
 
-        <WorkItem(1083419)>
+        <WorkItem(1083419, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1083419")>
         <Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddImport)>
         Public Async Function TestExtensionMethods2() As Task
             Dim input =
@@ -223,7 +223,7 @@ End Namespace
         End Function
 
         <Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddImport)>
-        Public Async Function TestAddProjectReference_CSharpToCSharp() As Task
+        Public Async Function AddProjectReference_CSharpToCSharp_Test() As Task
             Dim input =
                 <Workspace>
                     <Project Language='C#' AssemblyName='CSAssembly1' CommonReferences='true'>
@@ -265,6 +265,57 @@ namespace CSAssembly2
                 </text>.Value.Trim()
 
             Await TestAsync(input, expected, codeActionIndex:=0, addedReference:="CSAssembly1", onAfterWorkspaceCreated:=AddressOf WaitForSolutionCrawler)
+        End Function
+
+        <Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddImport)>
+        Public Async Function TestAddProjectReference_CSharpToCSharp_WithProjectRenamed() As Task
+            Dim input =
+                <Workspace>
+                    <Project Language='C#' AssemblyName='CSAssembly1' CommonReferences='true'>
+                        <Document FilePath='Test1.cs'>
+using System.Collections.Generic;
+namespace CSAssembly1
+{
+    public class Class1
+    {
+    }
+}
+                        </Document>
+                    </Project>
+                    <Project Language='C#' AssemblyName='CSAssembly2' CommonReferences='true'>
+                        <CompilationOptions></CompilationOptions>
+                        <Document FilePath="Test2.cs">
+namespace CSAssembly2
+{
+    public class Class2
+    {
+        $$Class1 c;
+    }
+}
+                        </Document>
+                    </Project>
+                </Workspace>
+
+            Dim expected =
+                <text>
+using CSAssembly1;
+
+namespace CSAssembly2
+{
+    public class Class2
+    {
+        Class1 c;
+    }
+}
+                </text>.Value.Trim()
+
+            Await TestAsync(input, expected, codeActionIndex:=0, addedReference:="NewName", onAfterWorkspaceCreated:=
+                            Sub(workspace As TestWorkspace)
+                                WaitForSolutionCrawler(workspace)
+                                Dim project = workspace.CurrentSolution.Projects.Single(Function(p) p.AssemblyName = "CSAssembly1")
+                                workspace.OnProjectNameChanged(project.Id, "NewName", "NewFilePath")
+                                WaitForSolutionCrawler(workspace)
+                            End Sub)
         End Function
 
         <Fact, Trait(Traits.Feature, Traits.Features.CodeActionsAddImport)>

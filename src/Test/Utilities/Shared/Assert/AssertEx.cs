@@ -441,10 +441,13 @@ namespace Roslyn.Test.Utilities
                 }
             }
 
+            var expectedString = string.Join(itemSeparator, expected.Select(itemInspector));
             var actualString = string.Join(itemSeparator, actual.Select(itemInspector));
 
             var message = new StringBuilder();
             message.AppendLine();
+            message.AppendLine("Expected:");
+            message.AppendLine(expectedString);
             message.AppendLine("Actual:");
             message.AppendLine(actualString);
             message.AppendLine("Differences:");
@@ -488,6 +491,16 @@ namespace Roslyn.Test.Utilities
             File.WriteAllText(compareCmd, string.Format("\"{0}\" \"{1}\" \"{2}\"", s_diffToolPath, actualFilePath, expectedFilePath));
 
             return "file://" + compareCmd;
+        }
+
+        public static void Empty<T>(IEnumerable<T> items, string message = "")
+        {
+            // realize the list in case it can't be traversed twice via .Count()/.Any() and .Select()
+            var list = items.ToList();
+            if (list.Count != 0)
+            {
+                Fail($"Expected 0 items but found {list.Count}: {message}\r\nItems:\r\n    {string.Join("\r\n    ", list)}");
+            }
         }
     }
 }

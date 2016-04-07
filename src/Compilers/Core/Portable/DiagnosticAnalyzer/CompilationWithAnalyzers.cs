@@ -104,7 +104,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// <param name="options">Options that are passed to analyzers.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to abort analysis.</param>
         public CompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
-            : this(compilation, analyzers, new CompilationWithAnalyzersOptions(options, onAnalyzerException: null, analyzerExceptionFilter: null, concurrentAnalysis: true, logAnalyzerExecutionTime: true), cancellationToken)
+            : this(compilation, analyzers, new CompilationWithAnalyzersOptions(options, onAnalyzerException: null, analyzerExceptionFilter: null, concurrentAnalysis: true, logAnalyzerExecutionTime: true, reportSuppressedDiagnostics: false), cancellationToken)
         {
         }
 
@@ -559,6 +559,9 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                             {
                                 try
                                 {
+                                    // Fetch the cancellation token here to avoid capturing linkedCts in the getComputeTask lambda as the task may run after linkedCts has been disposed due to cancellation.
+                                    var linkedCancellationToken = linkedCts.Token;
+
                                     // Core task to compute analyzer diagnostics.
                                     Func<Tuple<Task, CancellationTokenSource>> getComputeTask = () => Tuple.Create(
                                         Task.Run(async () =>
@@ -571,8 +574,10 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                                                     // Get event queue with pending events to analyze.
                                                     eventQueue = getEventQueue();
 
+                                                    linkedCancellationToken.ThrowIfCancellationRequested();
+
                                                     // Execute analyzer driver on the given analysis scope with the given event queue.
-                                                    await ComputeAnalyzerDiagnosticsCoreAsync(driver, eventQueue, analysisScope, cancellationToken: linkedCts.Token).ConfigureAwait(false);
+                                                    await ComputeAnalyzerDiagnosticsCoreAsync(driver, eventQueue, analysisScope, cancellationToken: linkedCancellationToken).ConfigureAwait(false);
                                                 }
                                                 finally
                                                 {
@@ -584,7 +589,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                                                 throw ExceptionUtilities.Unreachable;
                                             }
                                         },
-                                            linkedCts.Token),
+                                            linkedCancellationToken),
                                         cts);
 
                                     // Wait for higher priority tree document tasks to complete.
@@ -626,40 +631,28 @@ namespace Microsoft.CodeAnalysis.Diagnostics
 
         private async Task<AnalyzerDriver> GetAnalyzerDriverAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Get instance of analyzer driver from the driver pool.
+            AnalyzerDriver driver = _driverPool.Allocate();
+
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // Get instance of analyzer driver from the driver pool.
-                AnalyzerDriver driver = _driverPool.Allocate();
-
-                try
+                // Start the initialization task, if required.
+                if (driver.WhenInitializedTask == null)
                 {
-                    // Start the initialization task, if required.
-                    if (driver.WhenInitializedTask == null)
-                    {
-                        driver.Initialize(_compilation, _analysisOptions, _compilationData, categorizeDiagnostics: true, cancellationToken: cancellationToken);
-                    }
+                    driver.Initialize(_compilation, _analysisOptions, _compilationData, categorizeDiagnostics: true, cancellationToken: cancellationToken);
+                }
 
-                    // Wait for driver initialization to complete: this executes the Initialize and CompilationStartActions to compute all registered actions per-analyzer.
-                    await driver.WhenInitializedTask.ConfigureAwait(false);
-                }
-                finally
-                {
-                    if (driver.WhenInitializedTask.IsCanceled)
-                    {
-                        // If the initialization task was cancelled, we retry again with our own cancellation token.
-                        // This can happen if the task that started the initialization was cancelled by the callee, and the new request picked up this driver instance.
-                        _driverPool.ForgetTrackedObject(driver);
-                        driver = await GetAnalyzerDriverAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                }
+                // Wait for driver initialization to complete: this executes the Initialize and CompilationStartActions to compute all registered actions per-analyzer.
+                await driver.WhenInitializedTask.ConfigureAwait(false);
 
                 return driver;
             }
-            catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+            catch (OperationCanceledException)
             {
-                throw ExceptionUtilities.Unreachable;
+                FreeDriver(driver);
+                throw;
             }
         }
 
@@ -667,7 +660,8 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             if (driver != null)
             {
-                if (driver.WhenInitializedTask.IsCanceled)
+                // Throw away the driver instance if the initialization didn't succeed.
+                if (driver.WhenInitializedTask == null || driver.WhenInitializedTask.IsCanceled)
                 {
                     _driverPool.ForgetTrackedObject(driver);
                 }
@@ -915,7 +909,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
 
             foreach (var compilationEvent in _analysisState.GetPendingEvents(analyzers, tree))
             {
-                eventQueue.Enqueue(compilationEvent);
+                eventQueue.TryEnqueue(compilationEvent);
             }
 
             return eventQueue;
@@ -931,7 +925,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
 
             foreach (var compilationEvent in _analysisState.GetPendingEvents(analyzers, includeSourceEvents, includeNonSourceEvents))
             {
-                eventQueue.Enqueue(compilationEvent);
+                eventQueue.TryEnqueue(compilationEvent);
             }
 
             return eventQueue;
@@ -1032,9 +1026,16 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             VerifyAnalyzerArgument(analyzer);
 
-            var actionCounts = await GetAnalyzerActionCountsAsync(analyzer, cancellationToken).ConfigureAwait(false);
-            var executionTime = GetAnalyzerExecutionTime(analyzer);
-            return new AnalyzerTelemetryInfo(actionCounts, executionTime);
+            try
+            {
+                var actionCounts = await GetAnalyzerActionCountsAsync(analyzer, cancellationToken).ConfigureAwait(false);
+                var executionTime = GetAnalyzerExecutionTime(analyzer);
+                return new AnalyzerTelemetryInfo(actionCounts, executionTime);
+            }
+            catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+            {
+                throw ExceptionUtilities.Unreachable;
+            }
         }
 
         /// <summary>

@@ -21,6 +21,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             return node != null && CodeAnalysis.CSharpExtensions.IsKind(node.Parent, kind);
         }
 
+        public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2)
+        {
+            return node != null && IsKind(node.Parent, kind1, kind2);
+        }
+
+        public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
+        {
+            return node != null && IsKind(node.Parent, kind1, kind2, kind3);
+        }
+
         public static bool IsKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2)
         {
             if (node == null)
@@ -63,6 +73,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
             var csharpKind = node.Kind();
             return csharpKind == kind1 || csharpKind == kind2 || csharpKind == kind3 || csharpKind == kind4 || csharpKind == kind5;
+        }
+
+        public static bool IsKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5, SyntaxKind kind6)
+        {
+            if (node == null)
+            {
+                return false;
+            }
+
+            var csharpKind = node.Kind();
+            return csharpKind == kind1 || csharpKind == kind2 || csharpKind == kind3 || csharpKind == kind4 || csharpKind == kind5 || csharpKind == kind6;
         }
 
         /// <summary>
@@ -111,7 +132,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                     return memberDeclaration.GetModifiers().Any(SyntaxKind.StaticKeyword);
 
                 case SyntaxKind.PropertyDeclaration:
-                    return node.IsFoundUnder((PropertyDeclarationSyntax p) => p.Initializer);
+                    return memberDeclaration.GetModifiers().Any(SyntaxKind.StaticKeyword) ||
+                        node.IsFoundUnder((PropertyDeclarationSyntax p) => p.Initializer);
 
                 case SyntaxKind.FieldDeclaration:
                 case SyntaxKind.EventFieldDeclaration:
@@ -842,6 +864,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             if (initializeExpressionNode != null)
             {
                 return ValueTuple.Create(initializeExpressionNode.OpenBraceToken, initializeExpressionNode.CloseBraceToken);
+            }
+
+            var propertyList = node as SubPropertyPatternListSyntax;
+            if (propertyList != null)
+            {
+                return ValueTuple.Create(propertyList.OpenBraceToken, propertyList.CloseBraceToken);
             }
 
             return new ValueTuple<SyntaxToken, SyntaxToken>();

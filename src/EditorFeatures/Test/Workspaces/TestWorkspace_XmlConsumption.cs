@@ -51,7 +51,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
 
             public override bool Equals(object obj)
             {
-                return ReferenceEquals(this, obj);
+                return (object)this == obj;
             }
 
             public override int GetHashCode()
@@ -91,9 +91,9 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
 
             var workspace = new TestWorkspace(exportProvider, workspaceKind);
 
-            var projectMap = new Dictionary<string, TestHostProject>();
+            var projectNameToTestHostProject = new Dictionary<string, TestHostProject>();
             var documentElementToFilePath = new Dictionary<XElement, string>();
-            var projectElementToAssemblyName = new Dictionary<XElement, string>();
+            var projectElementToProjectName = new Dictionary<XElement, string>();
             var filePathToTextBufferMap = new Dictionary<string, ITextBuffer>();
             int projectIdentifier = 0;
             int documentIdentifier = 0;
@@ -105,18 +105,18 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                     projectElement,
                     exportProvider,
                     workspace,
-                    projectElementToAssemblyName,
                     documentElementToFilePath,
                     filePathToTextBufferMap,
                     ref projectIdentifier,
                     ref documentIdentifier);
-                Assert.False(projectMap.ContainsKey(project.AssemblyName));
-                projectMap.Add(project.AssemblyName, project);
+                Assert.False(projectNameToTestHostProject.ContainsKey(project.Name), $"The workspace XML already contains a project with name {project.Name}");
+                projectNameToTestHostProject.Add(project.Name, project);
+                projectElementToProjectName.Add(projectElement, project.Name);
                 workspace.Projects.Add(project);
             }
 
             var documentFilePaths = new HashSet<string>();
-            foreach (var project in projectMap.Values)
+            foreach (var project in projectNameToTestHostProject.Values)
             {
                 foreach (var document in project.Documents)
                 {
@@ -128,21 +128,21 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
 
             foreach (var submission in submissions)
             {
-                projectMap.Add(submission.AssemblyName, submission);
+                projectNameToTestHostProject.Add(submission.Name, submission);
             }
 
-            var solution = new TestHostSolution(projectMap.Values.ToArray());
+            var solution = new TestHostSolution(projectNameToTestHostProject.Values.ToArray());
             workspace.AddTestSolution(solution);
 
             foreach (var projectElement in workspaceElement.Elements(ProjectElementName))
             {
                 foreach (var projectReference in projectElement.Elements(ProjectReferenceElementName))
                 {
-                    var fromName = projectElementToAssemblyName[projectElement];
+                    var fromName = projectElementToProjectName[projectElement];
                     var toName = projectReference.Value;
 
-                    var fromProject = projectMap[fromName];
-                    var toProject = projectMap[toName];
+                    var fromProject = projectNameToTestHostProject[fromName];
+                    var toProject = projectNameToTestHostProject[toName];
 
                     var aliases = projectReference.Attributes(AliasAttributeName).Select(a => a.Value).ToImmutableArray();
 
@@ -167,7 +167,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                 }
             }
 
-            foreach (var project in projectMap.Values)
+            foreach (var project in projectNameToTestHostProject.Values)
             {
                 foreach (var document in project.Documents)
                 {
@@ -223,6 +223,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                             compilationOptions: null,
                             parseOptions: null,
                             assemblyName: submissionName,
+                            projectName: submissionName,
                             references: null,
                             documents: documents,
                             isSubmission: true));
@@ -242,6 +243,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                     compilationOptions,
                     parseOptions,
                     submissionName,
+                    submissionName,
                     references,
                     documents,
                     isSubmission: true);
@@ -257,7 +259,6 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             XElement projectElement,
             ExportProvider exportProvider,
             TestWorkspace workspace,
-            Dictionary<XElement, string> projectElementToAssemblyName,
             Dictionary<XElement, string> documentElementToFilePath,
             Dictionary<string, ITextBuffer> filePathToTextBufferMap,
             ref int projectId,
@@ -266,9 +267,10 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             var language = GetLanguage(workspace, projectElement);
 
             var assemblyName = GetAssemblyName(workspace, projectElement, ref projectId);
-            projectElementToAssemblyName.Add(projectElement, assemblyName);
 
             string filePath;
+
+            string projectName = projectElement.Attribute(ProjectNameAttribute)?.Value ?? assemblyName;
 
             if (projectElement.Attribute(FilePathAttributeName) != null)
             {
@@ -281,7 +283,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             }
             else
             {
-                filePath = assemblyName +
+                filePath = projectName +
                     (language == LanguageNames.CSharp ? ".csproj" :
                      language == LanguageNames.VisualBasic ? ".vbproj" : ("." + language));
             }
@@ -313,7 +315,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                 documentElementToFilePath.Add(documentElement, document.FilePath);
             }
 
-            return new TestHostProject(languageServices, compilationOptions, parseOptions, assemblyName, references, documents, filePath: filePath, analyzerReferences: analyzers);
+            return new TestHostProject(languageServices, compilationOptions, parseOptions, assemblyName, projectName, references, documents, filePath: filePath, analyzerReferences: analyzers);
         }
 
         private static ParseOptions GetParseOptions(XElement projectElement, string language, HostLanguageServices languageServices)
@@ -342,6 +344,12 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                 parseOptions = GetParseOptionsWithLanguageVersion(language, parseOptions, languageVersionAttribute);
             }
 
+            var featuresAttribute = projectElement.Attribute(FeaturesAttributeName);
+            if (featuresAttribute != null)
+            {
+                parseOptions = GetParseOptionsWithFeatures(parseOptions, featuresAttribute);
+            }
+
             var documentationMode = GetDocumentationMode(projectElement);
             if (documentationMode != null)
             {
@@ -366,6 +374,22 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             {
                 throw new ArgumentException("Unexpected language '{0}' for generating custom parse options.", language);
             }
+        }
+
+        private static ParseOptions GetParseOptionsWithFeatures(ParseOptions parseOptions, XAttribute featuresAttribute)
+        {
+            var entries = featuresAttribute.Value.Split(';');
+            var features = entries.Select(x =>
+            {
+                var split = x.Split('=');
+
+                var key = split[0];
+                var value = split.Length == 2 ? split[1] : "true";
+
+                return new KeyValuePair<string, string>(key, value);
+            });
+
+            return parseOptions.WithFeatures(features);
         }
 
         private static ParseOptions GetParseOptionsWithLanguageVersion(string language, ParseOptions parseOptions, XAttribute languageVersionAttribute)
@@ -521,47 +545,58 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             {
                 // This is a linked file. Use the filePath and markup from the referenced document.
 
-                var originalProjectName = documentElement.Attribute(LinkAssemblyNameAttributeName);
-                var originalDocumentPath = documentElement.Attribute(LinkFilePathAttributeName);
+                var originalAssemblyName = documentElement.Attribute(LinkAssemblyNameAttributeName)?.Value;
+                var originalProjectName = documentElement.Attribute(LinkProjectNameAttributeName)?.Value;
 
-                if (originalProjectName == null || originalDocumentPath == null)
+                if (originalAssemblyName == null && originalProjectName == null)
                 {
-                    throw new ArgumentException("Linked file specified without LinkAssemblyName or LinkFilePath.");
+                    throw new ArgumentException($"Linked files must specify either a {LinkAssemblyNameAttributeName} or {LinkProjectNameAttributeName}");
                 }
 
-                var originalProjectNameStr = originalProjectName.Value;
-                var originalDocumentPathStr = originalDocumentPath.Value;
-
-                var originalProject = workspaceElement.Elements(ProjectElementName).First(p =>
+                var originalProject = workspaceElement.Elements(ProjectElementName).FirstOrDefault(p =>
                 {
-                    var assemblyName = p.Attribute(AssemblyNameAttributeName);
-                    return assemblyName != null && assemblyName.Value == originalProjectNameStr;
+                    if (originalAssemblyName != null)
+                    {
+                        return p.Attribute(AssemblyNameAttributeName)?.Value == originalAssemblyName;
+                    }
+                    else
+                    {
+                        return p.Attribute(ProjectNameAttribute)?.Value == originalProjectName;
+                    }
                 });
 
                 if (originalProject == null)
                 {
-                    throw new ArgumentException("Linked file's LinkAssemblyName '{0}' project not found.", originalProjectNameStr);
+                    if (originalProjectName != null)
+                    {
+                        throw new ArgumentException($"Linked file's {LinkProjectNameAttributeName} '{originalProjectName}' project not found.");
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"Linked file's {LinkAssemblyNameAttributeName} '{originalAssemblyName}' project not found.");
+                    }
                 }
 
-                var originalDocument = originalProject.Elements(DocumentElementName).First(d =>
+                var originalDocumentPath = documentElement.Attribute(LinkFilePathAttributeName)?.Value;
+
+                if (originalDocumentPath == null)
                 {
-                    var documentPath = d.Attribute(FilePathAttributeName);
-                    return documentPath != null && documentPath.Value == originalDocumentPathStr;
+                    throw new ArgumentException($"Linked files must specify a {LinkFilePathAttributeName}");
+                }
+
+                documentElement = originalProject.Elements(DocumentElementName).FirstOrDefault(d =>
+                {
+                    return d.Attribute(FilePathAttributeName)?.Value == originalDocumentPath;
                 });
 
-                if (originalDocument == null)
+                if (documentElement == null)
                 {
-                    throw new ArgumentException("Linked file's LinkFilePath '{0}' file not found.", originalDocumentPathStr);
+                    throw new ArgumentException($"Linked file's LinkFilePath '{originalDocumentPath}' file not found.");
                 }
+            }
 
-                markupCode = originalDocument.NormalizedValue();
-                filePath = GetFilePath(workspace, originalDocument, ref documentId);
-            }
-            else
-            {
-                markupCode = documentElement.NormalizedValue();
-                filePath = GetFilePath(workspace, documentElement, ref documentId);
-            }
+            markupCode = documentElement.NormalizedValue();
+            filePath = GetFilePath(workspace, documentElement, ref documentId);
 
             var folders = GetFolders(documentElement);
             var optionsElement = documentElement.Element(ParseOptionsElementName);

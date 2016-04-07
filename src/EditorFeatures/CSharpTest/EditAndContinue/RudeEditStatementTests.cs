@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.CodeAnalysis.EditAndContinue;
 using Microsoft.CodeAnalysis.EditAndContinue.UnitTests;
+using Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.EditAndContinue;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
@@ -363,7 +364,7 @@ F(y => y + 1, G(), x => x + 1, (int x) => x, u => u, async (u, v) => u + v);
             expected.AssertEqual(actual);
         }
 
-        [Fact, WorkItem(830419)]
+        [Fact, WorkItem(830419, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/830419")]
         public void MatchLambdas2b()
         {
             var src1 = @"
@@ -2601,7 +2602,7 @@ class C
                 Diagnostic(RudeEditKind.CapturingVariable, "F", "this"));
         }
 
-        [Fact, WorkItem(1291)]
+        [Fact, WorkItem(1291, "https://github.com/dotnet/roslyn/issues/1291")]
         public void Lambdas_Insert_ThisOnly_Top2()
         {
             var src1 = @"
@@ -6425,6 +6426,81 @@ class C
                 Diagnostic(RudeEditKind.Insert, "yield return 2;", CSharpFeaturesResources.YieldStatement));
         }
 
+        [Fact]
+        public void MissingIteratorStateMachineAttribute()
+        {
+            var src1 = @"
+using System.Collections.Generic;
+
+class C
+{
+    static IEnumerable<int> F()
+    {
+        yield return 1;
+    }
+}
+";
+            var src2 = @"
+using System.Collections.Generic;
+
+class C
+{
+    static IEnumerable<int> F()
+    {
+        yield return 2;
+    }
+}
+";
+            var edits = GetTopEdits(src1, src2);
+
+            CSharpEditAndContinueTestHelpers.Instance40.VerifySemantics(
+                edits,
+                ActiveStatementsDescription.Empty, 
+                null,
+                null,
+                null, 
+                new[] 
+                {
+                    Diagnostic(RudeEditKind.UpdatingStateMachineMethodMissingAttribute, "static IEnumerable<int> F()", "System.Runtime.CompilerServices.IteratorStateMachineAttribute")
+                });
+        }
+
+        [Fact]
+        public void MissingIteratorStateMachineAttribute2()
+        {
+            var src1 = @"
+using System.Collections.Generic;
+
+class C
+{
+    static IEnumerable<int> F()
+    {
+        return null;
+    }
+}
+";
+            var src2 = @"
+using System.Collections.Generic;
+
+class C
+{
+    static IEnumerable<int> F()
+    {
+        yield return 2;
+    }
+}
+";
+            var edits = GetTopEdits(src1, src2);
+
+            CSharpEditAndContinueTestHelpers.Instance40.VerifySemantics(
+                edits,
+                ActiveStatementsDescription.Empty,
+                null,
+                null,
+                null,
+                null);
+        }
+
         #endregion
 
         #region Await
@@ -6808,6 +6884,84 @@ class C
             var edits = GetTopEdits(src1, src2);
 
             edits.VerifyRudeDiagnostics();
+        }
+
+        [Fact]
+        public void MissingAsyncStateMachineAttribute1()
+        {
+            var src1 = @"
+using System.Threading.Tasks;
+
+class C
+{
+    static async Task<int> F()
+    {
+        await new Task();
+        return 1;
+    }
+}
+";
+            var src2 = @"
+using System.Threading.Tasks;
+
+class C
+{
+    static async Task<int> F()
+    {
+        await new Task();
+        return 2;
+    }
+}
+";
+            var edits = GetTopEdits(src1, src2);
+
+            CSharpEditAndContinueTestHelpers.InstanceMinAsync.VerifySemantics(
+                edits,
+                ActiveStatementsDescription.Empty,
+                null,
+                null,
+                null,
+                new[]
+                {
+                    Diagnostic(RudeEditKind.UpdatingStateMachineMethodMissingAttribute, "static async Task<int> F()", "System.Runtime.CompilerServices.AsyncStateMachineAttribute")
+                });
+        }
+
+        [Fact]
+        public void MissingAsyncStateMachineAttribute2()
+        {
+            var src1 = @"
+using System.Threading.Tasks;
+
+class C
+{
+    static Task<int> F()
+    {
+        return null;
+    }
+}
+";
+            var src2 = @"
+using System.Threading.Tasks;
+
+class C
+{
+    static async Task<int> F()
+    {
+        await new Task();
+        return 2;
+    }
+}
+";
+            var edits = GetTopEdits(src1, src2);
+
+            CSharpEditAndContinueTestHelpers.InstanceMinAsync.VerifySemantics(
+                edits,
+                ActiveStatementsDescription.Empty,
+                null,
+                null,
+                null,
+                null);
         }
 
         #endregion
