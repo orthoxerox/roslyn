@@ -8595,6 +8595,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             Assignment,
             Lambda = Assignment, // "The => operator has the same precedence as assignment (=) and is right-associative."
             Ternary,
+            Pipe,
             Coalescing,
             ConditionalOr,
             ConditionalAnd,
@@ -8629,6 +8630,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 case SyntaxKind.LeftShiftAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
                     return Precedence.Assignment;
+                case SyntaxKind.ForwardPipeExpression:
+                    return Precedence.Pipe;
                 case SyntaxKind.CoalesceExpression:
                     return Precedence.Coalescing;
                 case SyntaxKind.LogicalOrExpression:
@@ -9785,6 +9788,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                 case SyntaxKind.DotToken:
                 case SyntaxKind.MinusGreaterThanToken:
                 case SyntaxKind.QuestionQuestionToken:
+                case SyntaxKind.BarGreaterThanToken:
                 case SyntaxKind.EndOfFileToken:
                     return false;
                 default:

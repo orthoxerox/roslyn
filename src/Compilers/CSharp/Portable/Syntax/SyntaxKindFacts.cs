@@ -601,6 +601,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return SyntaxKind.LogicalAndExpression;
                 case SyntaxKind.BarBarToken:
                     return SyntaxKind.LogicalOrExpression;
+                case SyntaxKind.BarGreaterThanToken:
+                    return SyntaxKind.ForwardPipeExpression;
                 default:
                     return SyntaxKind.None;
             }
@@ -1293,6 +1295,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return ">=";
                 case SyntaxKind.GreaterThanGreaterThanToken:
                     return ">>";
+                case SyntaxKind.BarGreaterThanToken:
+                    return "|>";
                 case SyntaxKind.GreaterThanGreaterThanEqualsToken:
                     return ">>=";
                 case SyntaxKind.SlashEqualsToken:

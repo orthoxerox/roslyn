@@ -349,6 +349,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case PreIncrementExpression:
                 case PreDecrementExpression:
                 case AwaitExpression:
+                case ForwardPipeExpression:
                     return true;
 
                 case ConditionalAccessExpression:

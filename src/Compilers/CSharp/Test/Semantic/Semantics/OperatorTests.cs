@@ -8811,5 +8811,24 @@ class MainClass
 
             compilation.VerifyDiagnostics();
         }
+
+        [Fact]
+        public void ForwardPipe()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      ""hello"" |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello");
+        }
     }
 }

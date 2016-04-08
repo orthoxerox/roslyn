@@ -492,6 +492,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.AsExpression:
                     return BindAsOperator((BinaryExpressionSyntax)node, diagnostics);
 
+                case SyntaxKind.ForwardPipeExpression:
+                    return BindForwardPipeOperator((BinaryExpressionSyntax)node, diagnostics);
+
                 case SyntaxKind.UnaryPlusExpression:
                 case SyntaxKind.UnaryMinusExpression:
                 case SyntaxKind.LogicalNotExpression:

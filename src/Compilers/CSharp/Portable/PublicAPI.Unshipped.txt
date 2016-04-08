@@ -197,9 +197,11 @@ Microsoft.CodeAnalysis.CSharp.Syntax.WildcardPatternSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.WildcardPatternSyntax.AsteriskToken.get -> Microsoft.CodeAnalysis.SyntaxToken
 Microsoft.CodeAnalysis.CSharp.Syntax.WildcardPatternSyntax.Update(Microsoft.CodeAnalysis.SyntaxToken asteriskToken) -> Microsoft.CodeAnalysis.CSharp.Syntax.WildcardPatternSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.WildcardPatternSyntax.WithAsteriskToken(Microsoft.CodeAnalysis.SyntaxToken asteriskToken) -> Microsoft.CodeAnalysis.CSharp.Syntax.WildcardPatternSyntax
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.BarGreaterThanToken = 8284 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.CasePatternSwitchLabel = 9009 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstantPattern = 9002 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.DeclarationPattern = 9000 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.ForwardPipeExpression = 8692 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.IsPatternExpression = 8657 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.LetStatement = 9014 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.LocalFunctionStatement = 8830 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind

@@ -667,6 +667,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                         TextWindow.AdvanceChar();
                         info.Kind = SyntaxKind.BarBarToken;
                     }
+                    else if (TextWindow.PeekChar() == '>') 
+                    {
+                        TextWindow.AdvanceChar();
+                        info.Kind = SyntaxKind.BarGreaterThanToken;
+                    } 
                     else
                     {
                         info.Kind = SyntaxKind.BarToken;

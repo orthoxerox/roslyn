@@ -74,6 +74,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         MinusEqualsToken = 8281,
         CaretEqualsToken = 8282,
         PercentEqualsToken = 8283,
+        BarGreaterThanToken = 8284,
 
         // Keywords
         BoolKeyword = 8304,
@@ -356,6 +357,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         SimpleMemberAccessExpression = 8689,  // dot access:   a.b
         PointerMemberAccessExpression = 8690,  // arrow access:   a->b
         ConditionalAccessExpression = 8691,    // question mark access:   a?.b , a?[1]
+        ForwardPipeExpression = 8692,
 
         // binding expressions
         MemberBindingExpression = 8707,
