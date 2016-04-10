@@ -8830,5 +8830,73 @@ namespace ForwardPipeTest
 }";
             CompileAndVerify(source: source, expectedOutput: "hello");
         }
+
+        [Fact]
+        public void ForwardPipeToDelegate()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> louder = (s) => s + ""!"";
+      Action<string> echo = (s) => Console.WriteLine(s);
+      ""hello"" |> louder |> echo;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeGeneric()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    static T Helper<T>(T value) {
+        return value;
+    }
+
+    public static void Main(string[] args)
+    {
+      var x = ""hello"" |> Helper;
+      Console.WriteLine(x);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello");
+        }
+
+        [Fact]
+        public void ForwardPipeFromCall()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    static string Helper(string value) {
+        return value + ""!"";
+    }
+
+    public static void Main(string[] args)
+    {
+      Console.WriteLine(Helper(""hello"") |> Helper);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!!");
+        }
     }
 }
