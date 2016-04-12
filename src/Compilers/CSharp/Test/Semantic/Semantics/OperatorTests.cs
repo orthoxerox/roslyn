@@ -8898,5 +8898,51 @@ namespace ForwardPipeTest
 }";
             CompileAndVerify(source: source, expectedOutput: "hello!!");
         }
+
+        [Fact]
+        public void ForwardPipeToConditionalAccessOfMethodGroup()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  class Foo
+  {
+    public string Bar(int i) => i.ToString() + i.ToString();
+    public string Bar(string s) => s + ""!"";
+  }
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      var foo = new Foo();
+      Console.WriteLine(""hello"" |> foo?.Bar);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeToConditionalAccessOfDelegate()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t?.Item1 |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
     }
 }

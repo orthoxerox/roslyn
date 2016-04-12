@@ -21,11 +21,25 @@ namespace Microsoft.CodeAnalysis.CSharp
             var arg = node.Left;
             var func = node.Right;
 
-            AnalyzedArguments analyzedArguments = AnalyzedArguments.GetInstance();
+            //first we have to check for the ugly case of  `arg |> obj?.Method`
+            if (func.Kind() == SyntaxKind.ConditionalAccessExpression) 
+            {
+                var ca = (ConditionalAccessExpressionSyntax)func;
+                if (ca.WhenNotNull.Kind() == SyntaxKind.MemberBindingExpression) 
+                {
+                    ca = ca.WithWhenNotNull(
+                        SyntaxFactory.InvocationExpression(
+                            ca.WhenNotNull,
+                            SyntaxFactory.ArgumentList(
+                                SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(arg) }))));
+                    return BindConditionalAccessExpression(ca, diagnostics);
+                }
+            }
 
+            var analyzedArguments = AnalyzedArguments.GetInstance();
             analyzedArguments.Arguments.Add(BindExpression(arg, diagnostics));
 
-            BoundExpression boundExpression = BindMethodGroup(func, invoked: true, indexed: false, diagnostics: diagnostics);
+            var boundExpression = BindMethodGroup(func, invoked: true, indexed: false, diagnostics: diagnostics);
             boundExpression = CheckValue(boundExpression, BindValueKind.RValueOrMethodGroup, diagnostics);
             string name = boundExpression.Kind == BoundKind.MethodGroup ? GetName(func) : null;
             var result = BindInvocationExpression(node, func, name, boundExpression, analyzedArguments, diagnostics);
