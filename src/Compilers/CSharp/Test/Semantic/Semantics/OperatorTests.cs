@@ -8944,5 +8944,53 @@ namespace ForwardPipeTest
 }";
             CompileAndVerify(source: source, expectedOutput: "hello!");
         }
+        
+        [Fact]
+        public void ForwardPipeToConditionalAccessOfNestedMethodGroup()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t?.Item1.Invoke |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+        
+        [Fact]
+        public void ForwardPipeToConstuctor()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  class Foo
+  {
+    public string Bar { get; }
+    public Foo(string s) {
+      Bar = s;
+    }
+  }
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Action<Foo> print = f => Console.WriteLine(f.Bar);
+      ""hello"" |> new Foo |> print;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello");
+        }
     }
 }
