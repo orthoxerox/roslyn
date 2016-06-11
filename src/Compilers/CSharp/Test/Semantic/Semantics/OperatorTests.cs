@@ -8965,7 +8965,49 @@ namespace ForwardPipeTest
 }";
             CompileAndVerify(source: source, expectedOutput: "hello!");
         }
-        
+
+        [Fact]
+        public void ForwardPipeToConditionalAccessInsideAnotherMember()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t.Item1?.Invoke |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeToNestedConditionalAccess()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t?.Item1?.Invoke |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
         [Fact]
         public void ForwardPipeToConstuctor()
         {
@@ -8986,7 +9028,9 @@ namespace ForwardPipeTest
     public static void Main(string[] args)
     {
       Action<Foo> print = f => Console.WriteLine(f.Bar);
-      ""hello"" |> new Foo |> print;
+      ""hello"" 
+      |> new Foo 
+      |> print;
     }
   }
 }";

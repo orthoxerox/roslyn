@@ -2842,6 +2842,11 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected BoundExpression BindObjectCreationExpression(ObjectCreationExpressionSyntax node, DiagnosticBag diagnostics)
         {
+            if (node.ArgumentList?.OpenParenToken.IsMissing ?? false) //no argument list or initializer are present
+            {
+                diagnostics.Add(ErrorCode.ERR_BadNewExpr, node.Location);
+            }
+
             var type = BindType(node.Type, diagnostics);
 
             BoundExpression boundInitializerOpt = node.Initializer == null ?

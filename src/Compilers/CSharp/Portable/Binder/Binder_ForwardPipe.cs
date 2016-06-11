@@ -21,18 +21,25 @@ namespace Microsoft.CodeAnalysis.CSharp
             var arg = node.Left;
             var func = node.Right;
 
+            
             //first we have to check for the ugly case of  `arg |> obj?.Method`
-            if (func.Kind() == SyntaxKind.ConditionalAccessExpression) 
-            {
+            if (func.Kind() == SyntaxKind.ConditionalAccessExpression) {
                 var ca = (ConditionalAccessExpressionSyntax)func;
-                if (ca.WhenNotNull.Kind() == SyntaxKind.MemberBindingExpression) 
+                //we cannot just replace its WhenNotNull with an invocation expression,
+                //since it might be another conditional access expression
+                ca = InsertInvocationIntoConditionalAccessExpression(ca, arg);
+                return BindConditionalAccessExpression(ca, diagnostics);
+            }
+
+            if (func.Kind() == SyntaxKind.ObjectCreationExpression)
+            {
+                var oc = (ObjectCreationExpressionSyntax)func;
+                if (oc.ArgumentList.OpenParenToken.IsMissing) //no argument list is present
                 {
-                    ca = ca.WithWhenNotNull(
-                        SyntaxFactory.InvocationExpression(
-                            ca.WhenNotNull,
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(arg) }))));
-                    return BindConditionalAccessExpression(ca, diagnostics);
+                    oc = oc.WithArgumentList(
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(arg) })));
+                    return BindObjectCreationExpression(oc, diagnostics);
                 }
             }
 
@@ -46,6 +53,27 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             analyzedArguments.Free();
             return result;
+        }
+
+        private ConditionalAccessExpressionSyntax InsertInvocationIntoConditionalAccessExpression(
+            ConditionalAccessExpressionSyntax ca, 
+            ExpressionSyntax arg)
+        {
+            var wnn = ca.WhenNotNull;
+            if (wnn.Kind() == SyntaxKind.ConditionalAccessExpression) 
+            {
+                return ca.WithWhenNotNull(InsertInvocationIntoConditionalAccessExpression(
+                    (ConditionalAccessExpressionSyntax)wnn,
+                    arg));
+            } 
+            else 
+            {
+                return ca.WithWhenNotNull(
+                    SyntaxFactory.InvocationExpression(
+                        ca.WhenNotNull,
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(arg) }))));
+            }
         }
     }
 }
