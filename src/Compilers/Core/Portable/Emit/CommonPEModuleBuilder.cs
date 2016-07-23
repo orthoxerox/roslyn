@@ -27,6 +27,7 @@ namespace Microsoft.CodeAnalysis.Emit
         internal abstract ImmutableDictionary<Cci.ITypeDefinition, ImmutableArray<Cci.ITypeDefinitionMember>> GetSynthesizedMembers();
         internal abstract CommonEmbeddedTypesManager CommonEmbeddedTypesManagerOpt { get; }
         internal abstract Cci.ITypeReference EncTranslateType(ITypeSymbol type, DiagnosticBag diagnostics);
+        internal abstract Cci.DebugSourceDocument GetSourceDocumentFromIndex(uint index);
     }
 
     /// <summary>
@@ -53,7 +54,8 @@ namespace Microsoft.CodeAnalysis.Emit
         private readonly ConcurrentCache<ValueTuple<string, string>, string> _normalizedPathsCache = new ConcurrentCache<ValueTuple<string, string>, string>(16);
 
         private readonly TokenMap<Cci.IReference> _referencesInILMap = new TokenMap<Cci.IReference>();
-        private readonly StringTokenMap _stringsInILMap = new StringTokenMap();
+        private readonly ItemTokenMap<string> _stringsInILMap = new ItemTokenMap<string>();
+        private readonly ItemTokenMap<Cci.DebugSourceDocument> _sourceDocumentsInILMap = new ItemTokenMap<Cci.DebugSourceDocument>();
         private readonly ConcurrentDictionary<TMethodSymbol, Cci.IMethodBody> _methodBodyMap =
             new ConcurrentDictionary<TMethodSymbol, Cci.IMethodBody>(ReferenceEqualityComparer.Instance);
 
@@ -85,6 +87,25 @@ namespace Microsoft.CodeAnalysis.Emit
 
         private ImmutableArray<Cci.AssemblyReferenceAlias> _lazyAssemblyReferenceAliases;
 
+        // Only set when running tests to allow realized IL for a given method to be looked up by method.
+        internal ConcurrentDictionary<IMethodSymbol, CompilationTestData.MethodData> TestData { get; private set; }
+
+        internal bool SaveTestData
+        {
+            get { return TestData != null; }
+        }
+
+        internal void SetMethodTestData(IMethodSymbol method, ILBuilder builder)
+        {
+            TestData.Add(method, new CompilationTestData.MethodData(builder, method));
+        }
+
+        internal void SetMethodTestData(ConcurrentDictionary<IMethodSymbol, CompilationTestData.MethodData> methods)
+        {
+            Debug.Assert(TestData == null);
+            TestData = methods;
+        }
+
         protected PEModuleBuilder(
             TCompilation compilation,
             TSourceModuleSymbol sourceModule,
@@ -104,15 +125,10 @@ namespace Microsoft.CodeAnalysis.Emit
             _outputKind = outputKind;
             _emitOptions = emitOptions;
             this.CompilationState = compilationState;
-
-            if (compilation.IsCaseSensitive)
-            {
-                _debugDocuments = new ConcurrentDictionary<string, Cci.DebugSourceDocument>(StringComparer.Ordinal);
-            }
-            else
-            {
-                _debugDocuments = new ConcurrentDictionary<string, Cci.DebugSourceDocument>(StringComparer.OrdinalIgnoreCase);
-            }
+            _debugDocuments = new ConcurrentDictionary<string, Cci.DebugSourceDocument>(
+                compilation.IsCaseSensitive ?
+                StringComparer.Ordinal :
+                StringComparer.OrdinalIgnoreCase);
         }
 
         internal sealed override void CompilationFinished()
@@ -313,6 +329,33 @@ namespace Microsoft.CodeAnalysis.Emit
 
             return result.ToImmutableAndFree();
         }
+
+
+        internal Cci.IFieldReference GetModuleVersionId(Cci.ITypeReference mvidType, TSyntaxNode syntaxOpt, DiagnosticBag diagnostics)
+        {
+            PrivateImplementationDetails details = GetPrivateImplClass(syntaxOpt, diagnostics);
+            EnsurePrivateImplementationDetailsStaticConstructor(details, syntaxOpt, diagnostics);
+
+            return details.GetModuleVersionId(mvidType);
+        }
+
+        internal Cci.IFieldReference GetInstrumentationPayloadRoot(int analysisKind, Cci.ITypeReference payloadType, TSyntaxNode syntaxOpt, DiagnosticBag diagnostics)
+        {
+            PrivateImplementationDetails details = GetPrivateImplClass(syntaxOpt, diagnostics);
+            EnsurePrivateImplementationDetailsStaticConstructor(details, syntaxOpt, diagnostics);
+
+            return details.GetOrAddInstrumentationPayloadRoot(analysisKind, payloadType);
+        }
+
+        private void EnsurePrivateImplementationDetailsStaticConstructor(PrivateImplementationDetails details, TSyntaxNode syntaxOpt, DiagnosticBag diagnostics)
+        {
+            if (details.GetMethod(WellKnownMemberNames.StaticConstructorName) == null)
+            {
+                details.TryAddSynthesizedMethod(CreatePrivateImplementationDetailsStaticConstructor(details, syntaxOpt, diagnostics));
+            }
+        }
+
+        protected abstract Cci.IMethodDefinition CreatePrivateImplementationDetailsStaticConstructor(PrivateImplementationDetails details, TSyntaxNode syntaxOpt, DiagnosticBag diagnostics);
 
         #region Synthesized Members
 
@@ -558,6 +601,16 @@ namespace Microsoft.CodeAnalysis.Emit
             return token;
         }
 
+        public uint GetSourceDocumentIndexForIL(Cci.DebugSourceDocument document)
+        {
+            return _sourceDocumentsInILMap.GetOrAddTokenFor(document);
+        }
+
+        internal override Cci.DebugSourceDocument GetSourceDocumentFromIndex(uint token)
+        {
+            return _sourceDocumentsInILMap.GetItem(token);
+        }
+
         public Cci.IReference GetReferenceFromToken(uint token)
         {
             return _referencesInILMap.GetItem(token);
@@ -663,7 +716,7 @@ namespace Microsoft.CodeAnalysis.Emit
             return GetTopLevelTypes(context);
         }
 
-        public abstract IEnumerable<Cci.ITypeReference> GetExportedTypes(EmitContext context);
+        public abstract ImmutableArray<Cci.ExportedType> GetExportedTypes(DiagnosticBag diagnostics);
 
         Cci.ITypeReference Cci.IModule.GetPlatformType(Cci.PlatformType platformType, EmitContext context)
         {
@@ -765,11 +818,11 @@ namespace Microsoft.CodeAnalysis.Emit
 
         protected abstract IEnumerable<Cci.IAssemblyReference> GetAssemblyReferencesFromAddedModules(DiagnosticBag diagnostics);
 
-        private IEnumerable<Cci.ManagedResource> _lazyManagedResources;
+        private ImmutableArray<Cci.ManagedResource> _lazyManagedResources;
 
-        IEnumerable<Cci.ManagedResource> Cci.IModule.GetResources(EmitContext context)
+        ImmutableArray<Cci.ManagedResource> Cci.IModule.GetResources(EmitContext context)
         {
-            if (_lazyManagedResources == null)
+            if (_lazyManagedResources.IsDefault)
             {
                 var builder = ArrayBuilder<Cci.ManagedResource>.GetInstance();
 
@@ -859,6 +912,8 @@ namespace Microsoft.CodeAnalysis.Emit
                 return _methodBodyMap.Count;
             }
         }
+
+        int Cci.IModule.DebugDocumentCount => _debugDocuments.Count;
 
         #endregion
 

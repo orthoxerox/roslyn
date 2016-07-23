@@ -109,9 +109,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             string runtimeMetadataVersion = null;
             bool errorEndLocation = false;
             bool reportAnalyzer = false;
+            string instrument = "";
             CultureInfo preferredUILang = null;
             string touchedFilesPath = null;
-            var sqmSessionGuid = Guid.Empty;
             bool optionsEnded = false;
             bool interactiveMode = false;
             bool publicSign = false;
@@ -250,6 +250,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             continue;
 
                         case "codepage":
+                            value = RemoveQuotesAndSlashes(value);
                             if (value == null)
                             {
                                 AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, "<text>", name);
@@ -300,17 +301,33 @@ namespace Microsoft.CodeAnalysis.CSharp
                             checkOverflow = false;
                             continue;
 
+                        case "instrument":
+                            value = RemoveQuotesAndSlashes(value);
+                            if (string.IsNullOrEmpty(value))
+                            {
+                                AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, "<text>", name);
+                            }
+                            else
+                            {
+                                instrument = value;
+                            }
+
+                            continue;
+
                         case "noconfig":
                             // It is already handled (see CommonCommandLineCompiler.cs).
                             continue;
 
                         case "sqmsessionguid":
+                            // The use of SQM is deprecated in the compiler but we still support the parsing of the option for
+                            // back compat reasons.
                             if (value == null)
                             {
                                 AddDiagnostic(diagnostics, ErrorCode.ERR_MissingGuidForOption, "<text>", name);
                             }
                             else
                             {
+                                Guid sqmSessionGuid;
                                 if (!Guid.TryParse(value, out sqmSessionGuid))
                                 {
                                     AddDiagnostic(diagnostics, ErrorCode.ERR_InvalidFormatForGuidForOption, value, name);
@@ -410,6 +427,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             continue;
 
                         case "platform":
+                            value = RemoveQuotesAndSlashes(value);
                             if (string.IsNullOrEmpty(value))
                             {
                                 AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, "<string>", arg);
@@ -540,6 +558,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             emitPdb = true;
 
                             // unused, parsed for backward compat only
+                            value = RemoveQuotesAndSlashes(value);
                             if (value != null)
                             {
                                 if (value.IsEmpty())
@@ -697,6 +716,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                         case "w":
                         case "warn":
+                            value = RemoveQuotesAndSlashes(value);
                             if (value == null)
                             {
                                 AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsNumber, name);
@@ -752,6 +772,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             continue;
 
                         case "langversion":
+                            value = RemoveQuotesAndSlashes(value);
                             if (string.IsNullOrEmpty(value))
                             {
                                 AddDiagnostic(diagnostics, ErrorCode.ERR_SwitchNeedsString, MessageID.IDS_Text.Localize(), "/langversion:");
@@ -980,6 +1001,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             continue;
 
                         case "pdb":
+                            value = RemoveQuotesAndSlashes(value);
                             if (string.IsNullOrEmpty(value))
                             {
                                 AddDiagnostic(diagnostics, ErrorCode.ERR_NoFileSpec, arg);
@@ -1118,6 +1140,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                 keyFileSearchPaths.Add(outputDirectory);
             }
 
+            // Public sign doesn't use the legacy search path settings
+            if (publicSign && !string.IsNullOrWhiteSpace(keyFileSetting))
+            {
+                keyFileSetting = ParseGenericPathToFile(keyFileSetting, diagnostics, baseDirectory);
+            }
+
             var parsedFeatures = CompilerOptionParseUtilities.ParseFeatures(features);
 
             string compilationName;
@@ -1176,7 +1204,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                 highEntropyVirtualAddressSpace: highEntropyVA,
                 fileAlignment: fileAlignment,
                 subsystemVersion: subsystemVersion,
-                runtimeMetadataVersion: runtimeMetadataVersion
+                runtimeMetadataVersion: runtimeMetadataVersion,
+                instrument: instrument
             );
 
             // add option incompatibility errors if any
@@ -1222,7 +1251,6 @@ namespace Microsoft.CodeAnalysis.CSharp
                 PrintFullPaths = printFullPaths,
                 ShouldIncludeErrorEndLocation = errorEndLocation,
                 PreferredUILang = preferredUILang,
-                SqmSessionGuid = sqmSessionGuid,
                 ReportAnalyzer = reportAnalyzer
             };
         }
@@ -1722,11 +1750,6 @@ namespace Microsoft.CodeAnalysis.CSharp
         private static void UnimplementedSwitch(IList<Diagnostic> diagnostics, string switchName)
         {
             AddDiagnostic(diagnostics, ErrorCode.WRN_UnimplementedCommandLineSwitch, "/" + switchName);
-        }
-
-        private static void UnimplementedSwitchValue(IList<Diagnostic> diagnostics, string switchName, string value)
-        {
-            AddDiagnostic(diagnostics, ErrorCode.WRN_UnimplementedCommandLineSwitch, "/" + switchName + ":" + value);
         }
 
         internal override void GenerateErrorForNoFilesFoundInRecurse(string path, IList<Diagnostic> diagnostics)

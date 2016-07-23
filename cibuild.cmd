@@ -2,11 +2,8 @@
 
 REM Parse Arguments.
 
-set NugetZipUrlRoot=https://dotnetci.blob.core.windows.net/roslyn
-set NugetZipUrl=%NuGetZipUrlRoot%/nuget.54.zip
 set RoslynRoot=%~dp0
 set BuildConfiguration=Debug
-set BuildRestore=false
 
 REM Because override the C#/VB toolset to build against our LKG package, it is important
 REM that we do not reuse MSBuild nodes from other jobs/builds on the machine. Otherwise, 
@@ -21,33 +18,53 @@ if /I "%1" == "/release" set BuildConfiguration=Release&&shift&& goto :ParseArgu
 if /I "%1" == "/test32" set Test64=false&&shift&& goto :ParseArguments
 if /I "%1" == "/test64" set Test64=true&&shift&& goto :ParseArguments
 if /I "%1" == "/testDeterminism" set TestDeterminism=true&&shift&& goto :ParseArguments
-if /I "%1" == "/restore" set BuildRestore=true&&shift&& goto :ParseArguments
+if /I "%1" == "/testPerfCorrectness" set TestPerfCorrectness=true&&shift&& goto :ParseArguments
+
+REM /buildTimeLimit is the time limit, measured in minutes, for the Jenkins job that runs
+REM the build. The Jenkins script netci.groovy passes the time limit to this script.
+if /I "%1" == "/buildTimeLimit" set BuildTimeLimit=%2&&shift&&shift&& goto :ParseArguments
+
 call :Usage && exit /b 1
 :DoneParsing
 
-call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\VsDevCmd.bat" || goto :BuildFailed
+REM This script takes the presence of the /buildTimeLimit option as an indication that it
+REM should run the tests under the control of the ProcessWatchdog, which, if the tests
+REM exceed the time limit, will take a screenshot, obtain memory dumps from the test
+REM process and all its descendants, and shut those processes down.
+REM
+REM Developers building from the command line will presumably not pass /buildTimeLimit,
+REM and so the tests will not run under the ProcessWatchdog.
+if not "%BuildTimeLimit%" == "" (
+    set CurrentDate=%date%
+    set CurrentTime=%time: =0%
+    set BuildStartTime=!CurrentDate:~-4!-!CurrentDate:~-10,2!-!CurrentDate:~-7,2!T!CurrentTime!
+    set RunProcessWatchdog=true
+) else (
+    set RunProcessWatchdog=false
+)
+
+call "%RoslynRoot%SetDevCommandPrompt.cmd" || goto :BuildFailed
 
 powershell -noprofile -executionPolicy RemoteSigned -file "%RoslynRoot%\build\scripts\check-branch.ps1" || goto :BuildFailed
 
+REM Output the commit that we're building, for reference in Jenkins logs
+echo Building this commit:
+git show --no-patch --pretty=raw HEAD
+
 REM Restore the NuGet packages 
-if "%BuildRestore%" == "true" (
-    call "%RoslynRoot%\Restore.cmd" || goto :BuildFailed
-) else (
-    powershell -noprofile -executionPolicy RemoteSigned -file "%RoslynRoot%\build\scripts\restore.ps1" "%NugetZipUrl%" || goto :BuildFailed
-)
+call "%RoslynRoot%\Restore.cmd" || goto :BuildFailed
 
 REM Ensure the binaries directory exists because msbuild can fail when part of the path to LogFile isn't present.
 set bindir=%RoslynRoot%Binaries
 if not exist "%bindir%" mkdir "%bindir%" || goto :BuildFailed
 
-REM Set the build version only so the assembly version is set to the semantic version,
-REM which allows analyzers to load because the compiler has binding redirects to the
-REM semantic version
-msbuild %MSBuildAdditionalCommandLineArgs% /p:BuildVersion=0.0.0.0 "%RoslynRoot%build\Toolset.sln" /p:NuGetRestorePackages=false /p:Configuration=%BuildConfiguration% /fileloggerparameters:LogFile="%bindir%\Bootstrap.log" || goto :BuildFailed
+REM Build with the real assembly version, since that's what's contained in the bootstrap compiler redirects
+msbuild %MSBuildAdditionalCommandLineArgs% /p:UseShippingAssemblyVersion=true "%RoslynRoot%build\Toolset.sln" /p:NuGetRestorePackages=false /p:Configuration=%BuildConfiguration% /fileloggerparameters:LogFile="%bindir%\Bootstrap.log" || goto :BuildFailed
+powershell -noprofile -executionPolicy RemoteSigned -file "%RoslynRoot%\build\scripts\check-msbuild.ps1" "%bindir%\Bootstrap.log" || goto :BuildFailed
 
 if not exist "%bindir%\Bootstrap" mkdir "%bindir%\Bootstrap" || goto :BuildFailed
 move "Binaries\%BuildConfiguration%\*" "%bindir%\Bootstrap" || goto :BuildFailed
-copy "build\scripts\*" "%bindir%\Bootstrap" || goto :BuildFailed
+copy "build\bootstrap\*" "%bindir%\Bootstrap" || goto :BuildFailed
 
 REM Clean the previous build
 msbuild %MSBuildAdditionalCommandLineArgs% /t:Clean build/Toolset.sln /p:Configuration=%BuildConfiguration%  /fileloggerparameters:LogFile="%bindir%\BootstrapClean.log" || goto :BuildFailed
@@ -60,7 +77,14 @@ if defined TestDeterminism (
     exit /b 0
 )
 
-msbuild %MSBuildAdditionalCommandLineArgs% /p:BootstrapBuildPath="%bindir%\Bootstrap" BuildAndTest.proj /p:Configuration=%BuildConfiguration% /p:Test64=%Test64% /fileloggerparameters:LogFile="%bindir%\Build.log";verbosity=diagnostic || goto :BuildFailed
+if defined TestPerfCorrectness (
+    msbuild %MSBuildAdditionalCommandLineArgs% Roslyn.sln /p:Configuration=%BuildConfiguration% /p:DeployExtension=false || goto :BuildFailed
+    .\Binaries\%BuildConfiguration%\Roslyn.Test.Performance.Runner.exe --ci-test || goto :BuildFailed
+    exit /b 0
+)
+
+msbuild %MSBuildAdditionalCommandLineArgs% /p:BootstrapBuildPath="%bindir%\Bootstrap" BuildAndTest.proj /p:Configuration=%BuildConfiguration% /p:Test64=%Test64% /p:RunProcessWatchdog=%RunProcessWatchdog% /p:BuildStartTime=%BuildStartTime% /p:"ProcDumpExe=%ProcDumpExe%" /p:BuildTimeLimit=%BuildTimeLimit% /p:PathMap="%RoslynRoot%=q:\roslyn" /p:Feature=pdb-path-determinism /fileloggerparameters:LogFile="%bindir%\Build.log";verbosity=diagnostic || goto :BuildFailed
+powershell -noprofile -executionPolicy RemoteSigned -file "%RoslynRoot%\build\scripts\check-msbuild.ps1" "%bindir%\Build.log" || goto :BuildFailed
 
 call :TerminateBuildProcesses
 
@@ -84,7 +108,6 @@ exit /b 0
 @echo   /release Perform release build.
 @echo   /test32  Run unit tests in the 32-bit runner.  This is the default.
 @echo   /test64  Run units tests in the 64-bit runner.
-@echo   /restore Perform actual nuget restore instead of using zip drops.
 @echo.
 @goto :eof
 

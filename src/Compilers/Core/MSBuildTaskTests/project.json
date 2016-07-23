@@ -1,13 +1,9 @@
 ﻿{
   "dependencies": {
-    
-    "Microsoft.DiaSymReader": "1.0.7",
-    "Moq": "4.2.1402.2112",
-    "xunit": "2.1.0",
-    "xunit.runner.console": "2.1.0"
+    "Roslyn.Microsoft.Build": "0.0.2"
   },
   "frameworks": {
-    "net45": {}
+    "net46": {}
   },
   "runtimes": {
     "win7": { }

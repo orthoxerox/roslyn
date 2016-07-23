@@ -15,7 +15,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Library.FindRes
     {
         private IList<AbstractTreeItem> CreateNavigableItemTreeItems(IEnumerable<INavigableItem> items)
         {
-            var itemsList = items.ToList();
+            var itemsList = items.Where(i => i.Document != null).ToList();
             if (itemsList.Count == 0)
             {
                 return new List<AbstractTreeItem>();
@@ -94,7 +94,10 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Library.FindRes
 
         private AbstractTreeItem CreateTreeItem(INavigableItem item, int commonPathElements)
         {
-            var result = new SourceReferenceTreeItem(item.Document, item.SourceSpan, item.Glyph.GetGlyphIndex(), commonPathElements, displayText: item.DisplayString, includeFileLocation: item.DisplayFileLocation);
+            var result = new SourceReferenceTreeItem(
+                item.Document, item.SourceSpan, item.Glyph.GetGlyphIndex(), commonPathElements,
+                displayText: item.DisplayTaggedParts.JoinText(),
+                includeFileLocation: item.DisplayFileLocation);
 
             if (!item.ChildItems.IsEmpty)
             {

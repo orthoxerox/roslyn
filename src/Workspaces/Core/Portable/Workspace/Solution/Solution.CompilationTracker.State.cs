@@ -1,12 +1,8 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Host;
-using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis
@@ -39,10 +35,10 @@ namespace Microsoft.CodeAnalysis
                 public ValueSource<Compilation> Compilation { get; }
 
                 /// <summary>
-                /// Specifies if there are references that got dropped in the production of <see cref="FinalCompilation"/>. This can return
+                /// Specifies whether <see cref="FinalCompilation"/> and all compilations it depends on contain full information or not. This can return
                 /// null if the state isn't at the point where it would know, and it's necessary to transition to <see cref="FinalState"/> to figure that out.
                 /// </summary>
-                public virtual bool? HasCompleteReferences => null;
+                public virtual bool? HasSuccessfullyLoadedTransitively => null;
 
                 /// <summary>
                 /// The final compilation if available, otherwise an empty <see cref="ValueSource{Compilation}"/>.
@@ -135,19 +131,15 @@ namespace Microsoft.CodeAnalysis
             /// </summary>
             private sealed class FinalState : State
             {
-                private readonly bool _hasCompleteReferences;
+                private readonly bool _hasSuccessfullyLoadedTransitively;
 
-                public override ValueSource<Compilation> FinalCompilation
-                {
-                    get { return this.Compilation; }
-                }
+                public override bool? HasSuccessfullyLoadedTransitively => _hasSuccessfullyLoadedTransitively;
+                public override ValueSource<Compilation> FinalCompilation => this.Compilation;
 
-                public override bool? HasCompleteReferences => _hasCompleteReferences;
-
-                public FinalState(ValueSource<Compilation> finalCompilationSource, bool hasCompleteReferences)
+                public FinalState(ValueSource<Compilation> finalCompilationSource, bool hasSuccessfullyLoadedTransitively)
                     : base(finalCompilationSource, finalCompilationSource.GetValue().Clone().RemoveAllReferences())
                 {
-                    _hasCompleteReferences = hasCompleteReferences;
+                    _hasSuccessfullyLoadedTransitively = hasSuccessfullyLoadedTransitively;
                 }
             }
         }

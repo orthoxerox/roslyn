@@ -100,7 +100,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim parseDocumentationComments As Boolean = False ' Don't just null check documentationFileName because we want to do this even if the file name is invalid.
             Dim outputKind As OutputKind = OutputKind.ConsoleApplication
             Dim ssVersion As SubsystemVersion = SubsystemVersion.None
-            Dim languageVersion As LanguageVersion = LanguageVersion.VisualBasic14
+            Dim languageVersion As LanguageVersion = LanguageVersion.VisualBasic15
             Dim mainTypeName As String = Nothing
             Dim win32ManifestFile As String = Nothing
             Dim win32ResourceFile As String = Nothing
@@ -146,12 +146,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim delaySignSetting As Boolean? = Nothing
             Dim moduleAssemblyName As String = Nothing
             Dim moduleName As String = Nothing
-            Dim sqmsessionguid As Guid = Nothing
             Dim touchedFilesPath As String = Nothing
             Dim features = New List(Of String)()
             Dim reportAnalyzer As Boolean = False
             Dim publicSign As Boolean = False
             Dim interactiveMode As Boolean = False
+            Dim instrument As String = ""
 
             ' Process ruleset files first so that diagnostic severity settings specified on the command line via
             ' /nowarn and /warnaserror can override diagnostic severity settings specified in the ruleset file.
@@ -350,10 +350,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Continue For
 
                     Case "sqmsessionguid"
+                        ' The use of SQM is deprecated in the compiler but we still support the command line parsing for 
+                        ' back compat reasons.
                         value = RemoveQuotesAndSlashes(value)
                         If String.IsNullOrWhiteSpace(value) = True Then
                             AddDiagnostic(diagnostics, ERRID.ERR_MissingGuidForOption, value, name)
                         Else
+                            Dim sqmsessionguid As Guid
                             If Not Guid.TryParse(value, sqmsessionguid) Then
                                 AddDiagnostic(diagnostics, ERRID.ERR_InvalidFormatForGuidForOption, value, name)
                             End If
@@ -535,6 +538,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                             sdkPaths.Clear()
                             sdkPaths.AddRange(ParseSeparatedPaths(value))
+                            Continue For
+
+                        Case "instrument"
+                            value = RemoveQuotesAndSlashes(value)
+                            If String.IsNullOrEmpty(value) Then
+                                AddDiagnostic(diagnostics, ERRID.ERR_ArgumentRequired, "instrument", ":<string>")
+                                Continue For
+                            End If
+
+                            instrument = value
                             Continue For
 
                         Case "recurse"
@@ -778,6 +791,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                         languageVersion = LanguageVersion.VisualBasic12
                                     Case "14", "14.0"
                                         languageVersion = LanguageVersion.VisualBasic14
+                                    Case "15", "15.0"
+                                        languageVersion = LanguageVersion.VisualBasic15
                                     Case Else
                                         AddDiagnostic(diagnostics, ERRID.ERR_InvalidSwitchValue, "langversion", value)
                                 End Select
@@ -1138,7 +1153,7 @@ lVbRuntimePlus:
                 specificDiagnosticOptions(item.Key) = item.Value
             Next
 
-            If Not IsScriptRunner AndAlso Not hasSourceFiles AndAlso managedResources.IsEmpty() AndAlso outputKind.IsApplication Then
+            If Not IsScriptRunner AndAlso Not hasSourceFiles AndAlso managedResources.IsEmpty() Then
                 ' VB displays help when there is nothing specified on the command line
                 If flattenedArgs.Any Then
                     AddDiagnostic(diagnostics, ERRID.ERR_NoSources)
@@ -1190,6 +1205,11 @@ lVbRuntimePlus:
 
             ' Build search path
             Dim searchPaths As ImmutableArray(Of String) = BuildSearchPaths(baseDirectory, sdkPaths, responsePaths, libPaths)
+
+            ' Public sign doesn't use legacy search path settings
+            If publicSign AndAlso Not String.IsNullOrWhiteSpace(keyFileSetting) Then
+                keyFileSetting = ParseGenericPathToFile(keyFileSetting, diagnostics, baseDirectory)
+            End If
 
             ValidateWin32Settings(noWin32Manifest, win32ResourceFile, win32IconFile, win32ManifestFile, outputKind, diagnostics)
 
@@ -1273,7 +1293,8 @@ lVbRuntimePlus:
                 baseAddress:=baseAddress,
                 highEntropyVirtualAddressSpace:=highEntropyVA,
                 subsystemVersion:=ssVersion,
-                runtimeMetadataVersion:=Nothing)
+                runtimeMetadataVersion:=Nothing,
+                instrument:=instrument)
 
             ' add option incompatibility errors if any
             diagnostics.AddRange(options.Errors)
@@ -1325,7 +1346,6 @@ lVbRuntimePlus:
                 .EmitPdb = emitPdb,
                 .DefaultCoreLibraryReference = defaultCoreLibraryReference,
                 .PreferredUILang = preferredUILang,
-                .SqmSessionGuid = sqmsessionguid,
                 .ReportAnalyzer = reportAnalyzer
             }
         End Function

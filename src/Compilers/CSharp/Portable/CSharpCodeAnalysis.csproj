@@ -12,30 +12,18 @@
     <RootNamespace>Microsoft.CodeAnalysis.CSharp</RootNamespace>
     <AssemblyName>Microsoft.CodeAnalysis.CSharp</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CSharpSyntaxGeneratorToolPath>$(OutDir)CSharpSyntaxGenerator.exe</CSharpSyntaxGeneratorToolPath>
-    <BoundTreeGeneratorToolPath>$(OutDir)BoundTreeGenerator.exe</BoundTreeGeneratorToolPath>
-    <CSharpErrorFactsGeneratorToolPath>$(OutDir)CSharpErrorFactsGenerator.exe</CSharpErrorFactsGeneratorToolPath>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">..\..\..\..\</SolutionDir>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <RestorePackages>true</RestorePackages>
+    <ServiceablePackage>true</ServiceablePackage>
   </PropertyGroup>
   <ItemGroup Label="Project References">
-    <ProjectReference Include="..\..\..\Tools\Source\CompilerGeneratorTools\Source\CSharpSyntaxGenerator\CSharpSyntaxGenerator.csproj">
-      <Project>{288089C5-8721-458E-BE3E-78990DAB5E2D}</Project>
-      <Name>CSharpSyntaxGenerator</Name>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Tools\Source\CompilerGeneratorTools\Source\BoundTreeGenerator\CompilersBoundTreeGenerator.csproj">
-      <Project>{02459936-CD2C-4F61-B671-5C518F2A3DDC}</Project>
-      <Name>CompilersBoundTreeGenerator</Name>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Tools\Source\CompilerGeneratorTools\Source\CSharpErrorFactsGenerator\CSharpErrorFactsGenerator.csproj">
-      <Project>{288089C5-8721-458E-BE3E-78990DAB5E2E}</Project>
-      <Name>CSharpErrorFactsGenerator</Name>
+    <ProjectReference Include="..\..\..\Tools\Source\CompilerGeneratorTools\DeployCompilerGeneratorToolsRuntime\DeployCompilerGeneratorToolsRuntime.csproj">
+      <Project>{6da08f12-32f2-4dd9-bbad-982eb71a2c9b}</Project>
+      <Name>DeployCompilerGeneratorToolsRuntime</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="..\..\Core\Portable\CodeAnalysis.csproj">
@@ -57,7 +45,6 @@
     <DebugSymbols>true</DebugSymbols>
     <OutDir>..\..\..\..\Binaries\Debug\amd64</OutDir>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <NoWarn>1591</NoWarn>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>..\CSharpCodeAnalysisRules.ruleset</CodeAnalysisRuleSet>
@@ -66,7 +53,6 @@
     <OutDir>..\..\..\..\Binaries\Release\amd64</OutDir>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <NoWarn>1591</NoWarn>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>..\CSharpCodeAnalysisRules.ruleset</CodeAnalysisRuleSet>
@@ -95,8 +81,10 @@
     <Compile Include="Binder\Binder_Lookup.cs" />
     <Compile Include="Binder\Binder_NameConflicts.cs" />
     <Compile Include="Binder\Binder_Operators.cs" />
+    <Compile Include="Binder\Binder_Patterns.cs" />
     <Compile Include="Binder\Binder_Query.cs" />
     <Compile Include="Binder\Binder_QueryErrors.cs" />
+    <Compile Include="Binder\Binder_Deconstruct.cs" />
     <Compile Include="Binder\Binder_Statements.cs" />
     <Compile Include="Binder\Binder_Symbols.cs" />
     <Compile Include="Binder\Binder_Unsafe.cs" />
@@ -139,7 +127,9 @@
     <Compile Include="Binder\MethodGroupResolution.cs" />
     <Compile Include="Binder\NameofBinder.cs" />
     <Compile Include="Binder\NamespaceOrTypeAndUsingDirective.cs" />
+    <Compile Include="Binder\PatternVariableFinder.cs" />
     <Compile Include="Binder\ScriptLocalScopeBinder.cs" />
+    <Compile Include="Binder\PatternVariableBinder.cs" />
     <Compile Include="Binder\Semantics\AccessCheck.cs" />
     <Compile Include="Binder\Semantics\BestTypeInferrer.cs" />
     <Compile Include="Binder\Semantics\Conversions\BestIndex.cs" />
@@ -185,6 +175,7 @@
     <Compile Include="Binder\SingleLookupResult.cs" />
     <Compile Include="Binder\SwitchBinder.cs" />
     <Compile Include="Binder\SimpleLocalScopeBinder.cs" />
+    <Compile Include="Binder\SwitchBinder_BindPatternSwitch.cs" />
     <Compile Include="Binder\TypeofBinder.cs" />
     <Compile Include="Binder\UsingStatementBinder.cs" />
     <Compile Include="Binder\WhileBinder.cs" />
@@ -208,7 +199,11 @@
     <Compile Include="BoundTree\BoundTreeVisitors.cs" />
     <Compile Include="BoundTree\BoundTreeWalker.cs" />
     <Compile Include="BoundTree\Constructors.cs" />
+    <Compile Include="BoundTree\DecisionTree.cs" />
     <Compile Include="BoundTree\Expression.cs" />
+    <Compile Include="BoundTree\DeconstructionLocalPendingInference.cs" />
+    <Compile Include="BoundTree\OutVarLocalPendingInference.cs" />
+    <Compile Include="BoundTree\OutDeconstructVarPendingInference.cs" />
     <Compile Include="BoundTree\PseudoVariableExpressions.cs" />
     <Compile Include="BoundTree\Formatting.cs" />
     <Compile Include="BoundTree\NoOpStatementFlavor.cs" />
@@ -327,6 +322,7 @@
     <Compile Include="Emitter\Model\SpecializedMethodReference.cs" />
     <Compile Include="Emitter\Model\SpecializedNestedTypeReference.cs" />
     <Compile Include="Emitter\Model\SymbolAdapter.cs" />
+    <Compile Include="Emitter\Model\SynthesizedPrivateImplementationDetailsStaticConstructor.cs" />
     <Compile Include="Emitter\Model\TypeMemberReference.cs" />
     <Compile Include="Emitter\Model\TypeParameterSymbolAdapter.cs" />
     <Compile Include="Emitter\NoPia\EmbeddedEvent.cs" />
@@ -366,12 +362,14 @@
     <Compile Include="FlowAnalysis\FlowAnalysisPass.cs" />
     <Compile Include="FlowAnalysis\PreciseAbstractFlowPass.AbstractLocalState.cs" />
     <Compile Include="FlowAnalysis\PreciseAbstractFlowPass.cs" />
+    <Compile Include="FlowAnalysis\PreciseAbstractFlowPass_Switch.cs" />
     <Compile Include="FlowAnalysis\ReadWriteWalker.cs" />
     <Compile Include="FlowAnalysis\RegionAnalysisContext.cs" />
     <Compile Include="FlowAnalysis\RegionReachableWalker.cs" />
     <Compile Include="FlowAnalysis\UnassignedAddressTakenVariablesWalker.cs" />
     <Compile Include="FlowAnalysis\UnassignedVariablesWalker.cs" />
     <Compile Include="FlowAnalysis\VariablesDeclaredWalker.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LanguageVersion.cs" />
     <Compile Include="Lowering\AsyncRewriter\AsyncConstructor.cs" />
     <Compile Include="Lowering\AsyncRewriter\AsyncExceptionHandlerRewriter.cs" />
@@ -384,6 +382,11 @@
     <Compile Include="Lowering\DiagnosticsPass_Warnings.cs" />
     <Compile Include="Lowering\Extensions.cs" />
     <Compile Include="Lowering\InitializerRewriter.cs" />
+    <Compile Include="Lowering\Instrumentation\CompoundInstrumenter.cs" />
+    <Compile Include="Lowering\Instrumentation\DebugInfoInjector.cs" />
+    <Compile Include="Lowering\Instrumentation\DebugInfoInjector_SequencePoints.cs" />
+    <Compile Include="Lowering\Instrumentation\DynamicAnalysisInjector.cs" />
+    <Compile Include="Lowering\Instrumentation\Instrumenter.cs" />
     <Compile Include="Lowering\IteratorRewriter\IteratorConstructor.cs" />
     <Compile Include="Lowering\IteratorRewriter\IteratorFinallyMethodSymbol.cs" />
     <Compile Include="Lowering\IteratorRewriter\IteratorMethodToStateMachineRewriter.IteratorFinallyFrame.cs" />
@@ -414,6 +417,7 @@
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_ConditionalOperator.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_ContinueStatement.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Conversion.cs" />
+    <Compile Include="Lowering\LocalRewriter\LocalRewriter_DeconstructionAssignmentOperator.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_DelegateCreationExpression.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_DoStatement.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Event.cs" />
@@ -428,6 +432,8 @@
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_IndexerAccess.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_IsOperator.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_LabeledStatement.cs" />
+    <Compile Include="Lowering\LocalRewriter\LocalRewriter_PatternSwitchStatement.cs" />
+    <Compile Include="Lowering\LocalRewriter\LocalRewriter_TupleCreationExpression.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Literal.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_LocalDeclaration.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_LockStatement.cs" />
@@ -435,12 +441,12 @@
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_NullCoalescingOperator.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_ObjectCreationExpression.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_ObjectOrCollectionInitializerExpression.cs" />
+    <Compile Include="Lowering\LocalRewriter\LocalRewriter_Patterns.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_PointerElementAccess.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_PreviousSubmissionReference.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_PropertyAccess.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_Query.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_ReturnStatement.cs" />
-    <Compile Include="Lowering\LocalRewriter\LocalRewriter_SequencePoints.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_StackAlloc.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_StringConcat.cs" />
     <Compile Include="Lowering\LocalRewriter\LocalRewriter_StringInterpolation.cs" />
@@ -477,6 +483,7 @@
     <Compile Include="Parser\Directives.cs" />
     <Compile Include="Parser\DocumentationCommentParser.cs" />
     <Compile Include="Parser\DocumentationCommentXmlTokens.cs" />
+    <Compile Include="Parser\LanguageParser_Patterns.cs" />
     <Compile Include="Parser\LanguageParser.cs" />
     <Compile Include="Parser\LanguageParser_InterpolatedString.cs" />
     <Compile Include="Parser\Lexer.cs" />
@@ -515,6 +522,14 @@
     <Compile Include="Symbols\AnonymousTypes\SynthesizedSymbols\AnonymousType.TemplateSymbol.cs" />
     <Compile Include="Symbols\AnonymousTypes\SynthesizedSymbols\AnonymousType.ToStringMethodSymbol.cs" />
     <Compile Include="Symbols\AnonymousTypes\SynthesizedSymbols\AnonymousType.TypeParameterSymbol.cs" />
+    <Compile Include="Symbols\Metadata\PE\TupleTypeDecoder.cs" />
+    <Compile Include="Symbols\Tuples\TupleEventSymbol.cs" />
+    <Compile Include="Symbols\Tuples\TupleFieldSymbol.cs" />
+    <Compile Include="Symbols\Tuples\TupleMethodSymbol.cs" />
+    <Compile Include="Symbols\Tuples\TupleParameterSymbol.cs" />
+    <Compile Include="Symbols\Tuples\TupleErrorFieldSymbol.cs" />
+    <Compile Include="Symbols\Tuples\TuplePropertySymbol.cs" />
+    <Compile Include="Symbols\Tuples\TupleTypeSymbol.cs" />
     <Compile Include="Symbols\ArrayTypeSymbol.cs" />
     <Compile Include="Symbols\AssemblySymbol.cs" />
     <Compile Include="Symbols\Attributes\AttributeData.cs" />
@@ -625,6 +640,7 @@
     <Compile Include="Symbols\Source\ImplicitNamedTypeSymbol.cs" />
     <Compile Include="Symbols\Source\IndexedTypeParameterSymbol.cs" />
     <Compile Include="Symbols\Source\LambdaSymbol.cs" />
+    <Compile Include="Symbols\Source\LocalFunctionSymbol.cs" />
     <Compile Include="Symbols\Source\ModifierUtils.cs" />
     <Compile Include="Symbols\Source\ParameterHelpers.cs" />
     <Compile Include="Symbols\Source\SourceAssemblySymbol.cs" />
@@ -660,6 +676,7 @@
     <Compile Include="Symbols\Source\SourcePropertyAccessorSymbol.cs" />
     <Compile Include="Symbols\Source\SourcePropertySymbol.cs" />
     <Compile Include="Symbols\Source\SourceSimpleParameterSymbol.cs" />
+    <Compile Include="Symbols\Source\SourceStrictComplexParameterSymbol.cs" />
     <Compile Include="Symbols\Source\SourceTypeParameterSymbol.cs" />
     <Compile Include="Symbols\Source\SourceUserDefinedConversionSymbol.cs" />
     <Compile Include="Symbols\Source\SourceUserDefinedOperatorSymbol.cs" />
@@ -726,7 +743,13 @@
     <Compile Include="Symbols\UnboundGenericType.cs" />
     <Compile Include="Symbols\UnsupportedMetadataTypeSymbol.cs" />
     <Compile Include="Symbols\VarianceSafety.cs" />
-    <Compile Include="Symbols\WrappedParameterSymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedParameterSymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedNamedTypeSymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedEventSymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedFieldSymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedMethodSymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedPropertySymbol.cs" />
+    <Compile Include="Symbols\Wrapped\WrappedTypeParameterSymbol.cs" />
     <Compile Include="Syntax\AliasedQualifiedNameSyntax.cs" />
     <Compile Include="Syntax\ArrayRankSpecifierSyntax.cs" />
     <Compile Include="Syntax\AttributeSyntax.cs" />
@@ -744,10 +767,19 @@
     <Compile Include="Syntax\DeclarationStatementSyntax.cs" />
     <Compile Include="Syntax\DelegateDeclarationSyntax.cs" />
     <Compile Include="Syntax\DirectiveTriviaSyntax.cs" />
+    <Compile Include="Syntax\EventFieldDeclarationSyntax.cs" />
     <Compile Include="Syntax\ExpressionStatementSyntax.cs" />
+    <Compile Include="Syntax\FieldDeclarationSyntax.cs" />
+    <Compile Include="Syntax\FixedStatementSyntax.cs" />
+    <Compile Include="Syntax\ForEachStatementSyntax.cs" />
     <Compile Include="Syntax\GenericNameSyntax.cs" />
     <Compile Include="Syntax\InternalSyntax\BinaryExpressionSyntax.cs" />
     <Compile Include="Syntax\CSharpSyntaxTree.DebuggerSyntaxTree.cs" />
+    <Compile Include="Syntax\ForStatementSyntax.cs" />
+    <Compile Include="Syntax\LocalDeclarationStatementSyntax.cs" />
+    <Compile Include="Syntax\ParenthesizedLambdaExpressionSyntax.cs" />
+    <Compile Include="Syntax\ReturnStatementSyntax.cs" />
+    <Compile Include="Syntax\SimpleLambdaExpressionSyntax.cs" />
     <Compile Include="Syntax\IdentifierNameSyntax.cs" />
     <Compile Include="Syntax\PropertyDeclarationSyntax.cs" />
     <Compile Include="Syntax\InternalSyntax\ChildSyntaxList.cs" />
@@ -797,6 +829,9 @@
     <Compile Include="Syntax\ParameterListSyntax.cs" />
     <Compile Include="Syntax\ParameterSyntax.cs" />
     <Compile Include="Syntax\QualifiedNameSyntax.cs" />
+    <Compile Include="Syntax\ArrowExpressionClauseSyntax.cs" />
+    <Compile Include="Syntax\EqualsValueClauseSyntax.cs" />
+    <Compile Include="Syntax\IncompleteMemberSyntax.cs" />
     <Compile Include="Syntax\SeparatedSyntaxListBuilder.cs" />
     <Compile Include="Syntax\SimpleNameSyntax.cs" />
     <Compile Include="Syntax\SimpleSyntaxReference.cs" />
@@ -831,6 +866,7 @@
     <Compile Include="Syntax\SyntaxTriviaListBuilder.cs" />
     <Compile Include="Syntax\TypeDeclarationSyntax.cs" />
     <Compile Include="Syntax\TypeSyntax.cs" />
+    <Compile Include="Syntax\VariableDeclarationSyntax.cs" />
     <Compile Include="Syntax\XmlNameAttributeElementKind.cs" />
     <Compile Include="Utilities\EnumExtensions.cs" />
     <Compile Include="Utilities\FirstAmongEqualsSet.cs" />
@@ -886,6 +922,7 @@
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Symbol.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Syntax.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Test.Utilities" />
+    <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Test.Utilities.Desktop" />
     <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.CSharp.ExpressionCompiler.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities.Desktop" />
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities.FX45" />

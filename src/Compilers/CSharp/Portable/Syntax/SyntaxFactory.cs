@@ -723,15 +723,15 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         /// <summary>
-        /// Creates a threadsafty element within an xml documentation comment.
+        /// Creates a threadsafety element within an xml documentation comment.
         /// </summary>
-        /// <param name="static">Indicates whether static member of this class are safe for multi-threaded operations.</param>
-        /// <param name="instance">Indicates whether members of instances of this type are safe for multi-threaded operations.</param>
-        public static XmlEmptyElementSyntax XmlThreadSafetyElement(bool @static, bool instance)
+        /// <param name="isStatic">Indicates whether static member of this type are safe for multi-threaded operations.</param>
+        /// <param name="isInstance">Indicates whether instance members of this type are safe for multi-threaded operations.</param>
+        public static XmlEmptyElementSyntax XmlThreadSafetyElement(bool isStatic, bool isInstance)
         {
             return XmlEmptyElement(DocumentationCommentXmlNames.ThreadSafetyElementName).AddAttributes(
-                XmlTextAttribute(DocumentationCommentXmlNames.StaticAttributeName, @static.ToString().ToLowerInvariant()),
-                XmlTextAttribute(DocumentationCommentXmlNames.InstanceAttributeName, instance.ToString().ToLowerInvariant()));
+                XmlTextAttribute(DocumentationCommentXmlNames.StaticAttributeName, isStatic.ToString().ToLowerInvariant()),
+                XmlTextAttribute(DocumentationCommentXmlNames.InstanceAttributeName, isInstance.ToString().ToLowerInvariant()));
         }
 
         /// <summary>
@@ -1047,7 +1047,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <param name="textTokens">A list of tokens used for the value of the xml text attribute.</param>
         public static XmlTextAttributeSyntax XmlTextAttribute(string name, SyntaxKind quoteKind, SyntaxTokenList textTokens)
         {
-            return XmlTextAttribute(XmlName(name), SyntaxKind.DoubleQuoteToken, textTokens);
+            return XmlTextAttribute(XmlName(name), quoteKind, textTokens);
         }
 
         /// <summary>
@@ -2459,32 +2459,6 @@ namespace Microsoft.CodeAnalysis.CSharp
                 default(EqualsValueClauseSyntax));
         }
 
-        public static MethodDeclarationSyntax MethodDeclaration(
-            SyntaxList<AttributeListSyntax> attributeLists,
-            SyntaxTokenList modifiers,
-            TypeSyntax returnType,
-            ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier,
-            SyntaxToken identifier,
-            TypeParameterListSyntax typeParameterList,
-            ParameterListSyntax parameterList,
-            SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses,
-            BlockSyntax body,
-            SyntaxToken semicolonToken)
-        {
-            return SyntaxFactory.MethodDeclaration(
-                attributeLists,
-                modifiers,
-                returnType,
-                explicitInterfaceSpecifier,
-                identifier,
-                typeParameterList,
-                parameterList,
-                constraintClauses,
-                body,
-                default(ArrowExpressionClauseSyntax),
-                semicolonToken);
-        }
-
         public static ConversionOperatorDeclarationSyntax ConversionOperatorDeclaration(
             SyntaxList<AttributeListSyntax> attributeLists,
             SyntaxTokenList modifiers,
@@ -2529,22 +2503,33 @@ namespace Microsoft.CodeAnalysis.CSharp
                 semicolonToken: semicolonToken);
         }
 
-        public static IndexerDeclarationSyntax IndexerDeclaration(
-            SyntaxList<AttributeListSyntax> attributeLists,
-            SyntaxTokenList modifiers,
-            TypeSyntax type,
-            ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier,
-            BracketedParameterListSyntax parameterList,
-            AccessorListSyntax accessorList)
+        /// <summary>Creates a new VariableDeclarationSyntax instance.</summary>
+        public static VariableDeclarationSyntax VariableDeclaration(TypeSyntax type)
         {
-            return SyntaxFactory.IndexerDeclaration(
-                attributeLists: attributeLists,
-                modifiers: modifiers,
-                type: type,
-                explicitInterfaceSpecifier: explicitInterfaceSpecifier,
-                parameterList: parameterList,
-                accessorList: accessorList,
-                expressionBody: default(ArrowExpressionClauseSyntax));
+            return SyntaxFactory.VariableDeclaration(type, default(SeparatedSyntaxList<VariableDeclaratorSyntax>));
+        }
+
+        /// <summary>Creates a new VariableDeclarationSyntax instance, such as `int x`.</summary>
+        public static VariableDeclarationSyntax VariableDeclaration(TypeSyntax type, SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
+        {
+            return SyntaxFactory.VariableDeclaration(type, variables, default(VariableDeconstructionDeclaratorSyntax));
+        }
+
+        /// <summary>Creates a new VariableDeclarationSyntax instance, such as `(int x, int y)`.</summary>
+        public static VariableDeclarationSyntax VariableDeclaration(VariableDeconstructionDeclaratorSyntax deconstructionDeclaration)
+        {
+            return SyntaxFactory.VariableDeclaration(null, default(SeparatedSyntaxList<VariableDeclaratorSyntax>), deconstructionDeclaration);
+        }
+
+        /// <summary>Creates a new VariableDeclarationSyntax instance, such as `var (x, y)`.</summary>
+        public static VariableDeclarationSyntax VariableDeclaration(TypeSyntax type, VariableDeconstructionDeclaratorSyntax deconstructionDeclaration)
+        {
+            if (!type.IsVar)
+            {
+                throw new ArgumentException(CSharpResources.TypeMustBeVar, nameof(type));
+            }
+
+            return SyntaxFactory.VariableDeclaration(type, default(SeparatedSyntaxList<VariableDeclaratorSyntax>), deconstructionDeclaration);
         }
 
         /// <summary>Creates a new UsingDirectiveSyntax instance.</summary>
@@ -2556,6 +2541,21 @@ namespace Microsoft.CodeAnalysis.CSharp
                 alias: alias,
                 name: name,
                 semicolonToken: Token(SyntaxKind.SemicolonToken));
+        }
+
+        public static ForEachStatementSyntax ForEachStatement(TypeSyntax type, SyntaxToken identifier, ExpressionSyntax expression, StatementSyntax statement)
+        {
+            return ForEachStatement(Token(SyntaxKind.ForEachKeyword), Token(SyntaxKind.OpenParenToken), type, identifier, Token(SyntaxKind.InKeyword), expression, Token(SyntaxKind.CloseParenToken), statement);
+        }
+
+        public static ForEachStatementSyntax ForEachStatement(TypeSyntax type, string identifier, ExpressionSyntax expression, StatementSyntax statement)
+        {
+            return ForEachStatement(type, Identifier(identifier), expression, statement);
+        }
+
+        public static ForEachStatementSyntax ForEachStatement(SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        {
+            return ForEachStatement(forEachKeyword, openParenToken, type, identifier, null, inKeyword, expression, closeParenToken, statement);
         }
     }
 }

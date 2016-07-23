@@ -188,7 +188,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
             var metadataDecoder = new MetadataDecoder((PEModuleSymbol)currentFrame.ContainingModule, currentFrame);
             var localInfo = metadataDecoder.GetLocalInfo(localSignatureHandle);
 
-            var typedSymReader = (ISymUnmanagedReader)symReader;
+            var typedSymReader = (ISymUnmanagedReader3)symReader;
             var inScopeHoistedLocals = InScopeHoistedLocals.Empty;
 
             var debugInfo = MethodDebugInfo<TypeSymbol, LocalSymbol>.ReadMethodDebugInfo(typedSymReader, symbolProvider, methodToken, methodVersion, ilOffset, isVisualBasicMethod: false);
@@ -258,7 +258,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                     nativePdbWriterOpt: null,
                     pdbPathOpt: null,
                     allowMissingMethodBodies: false,
-                    deterministic: false,
+                    isDeterministic: false,
                     cancellationToken: default(CancellationToken));
 
                 if (diagnostics.HasAnyErrors())
@@ -347,7 +347,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                     nativePdbWriterOpt: null,
                     pdbPathOpt: null,
                     allowMissingMethodBodies: false,
-                    deterministic: false,
+                    isDeterministic: false,
                     cancellationToken: default(CancellationToken));
 
                 if (diagnostics.HasAnyErrors())
@@ -390,7 +390,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                         nativePdbWriterOpt: null,
                         pdbPathOpt: null,
                         allowMissingMethodBodies: false,
-                        deterministic: false,
+                        isDeterministic: false,
                         cancellationToken: default(CancellationToken));
 
                     if (!diagnostics.HasAnyErrors())
@@ -415,6 +415,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
             switch ((ErrorCode)diagnostic.Code)
             {
                 case ErrorCode.ERR_DuplicateImport:
+                case ErrorCode.ERR_DuplicateImportSimple:
                 case ErrorCode.ERR_SameFullNameAggAgg:
                 case ErrorCode.ERR_AmbigCall:
                     return true;

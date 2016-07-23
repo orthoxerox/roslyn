@@ -74,6 +74,47 @@ namespace Microsoft.CodeAnalysis.BuildTasks.UnitTests
         }
 
         [Fact]
+        public void RuntimeMetadataVersionFlag()
+        {
+            var vbc = new Vbc();
+            vbc.Sources = MSBuildUtil.CreateTaskItems("test.vb");
+            vbc.RuntimeMetadataVersion = "v1234";
+            Assert.Equal("/optionstrict:custom /out:test.exe /runtimemetadataversion:v1234 test.vb", vbc.GenerateResponseFileContents());
+
+            vbc = new Vbc();
+            vbc.Sources = MSBuildUtil.CreateTaskItems("test.vb");
+            vbc.RuntimeMetadataVersion = null;
+            Assert.Equal("/optionstrict:custom /out:test.exe test.vb", vbc.GenerateResponseFileContents());
+        }
+
+        [Fact]
+        public void ChecksumAlgorithmOption()
+        {
+            var vbc = new Vbc();
+            vbc.Sources = MSBuildUtil.CreateTaskItems("test.vb");
+            vbc.ChecksumAlgorithm = "sha256";
+            Assert.Equal("/optionstrict:custom /out:test.exe /checksumalgorithm:sha256 test.vb", vbc.GenerateResponseFileContents());
+
+            vbc = new Vbc();
+            vbc.Sources = MSBuildUtil.CreateTaskItems("test.vb");
+            vbc.ChecksumAlgorithm = null;
+            Assert.Equal("/optionstrict:custom /out:test.exe test.vb", vbc.GenerateResponseFileContents());
+
+            vbc = new Vbc();
+            vbc.Sources = MSBuildUtil.CreateTaskItems("test.vb");
+            vbc.ChecksumAlgorithm = "";
+            Assert.Equal("/optionstrict:custom /out:test.exe /checksumalgorithm: test.vb", vbc.GenerateResponseFileContents());
+        }
+        
+        [Fact]
+        public void InstrumentTestNamesFlag()
+        {
+            var vbc = new Vbc();
+            vbc.Instrument = "Instrument.This.Flag";
+            Assert.Equal("/optionstrict:custom /instrument:Instrument.This.Flag", vbc.GenerateResponseFileContents());
+        }
+
+        [Fact]
         public void TargetTypeDll()
         {
             var vbc = new Vbc();

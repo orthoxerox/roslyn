@@ -32,6 +32,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private readonly ImmutableArray<PropertySymbol> _explicitInterfaceImplementations;
         private readonly bool _isExpressionBodied;
         private readonly bool _isAutoProperty;
+        private readonly RefKind refKind;
 
         private SymbolCompletionState _state;
         private ImmutableArray<ParameterSymbol> _lazyParameters;
@@ -105,6 +106,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             _name = isIndexer ? ExplicitInterfaceHelpers.GetMemberName(WellKnownMemberNames.Indexer, _explicitInterfaceType, aliasQualifierOpt) : _sourceName;
             _isExpressionBodied = false;
 
+            var refKeyword = default(SyntaxToken);
+            switch (syntax.Kind())
+            {
+                case SyntaxKind.PropertyDeclaration:
+                    refKeyword = ((PropertyDeclarationSyntax)syntax).RefKeyword;
+                    break;
+
+                case SyntaxKind.IndexerDeclaration:
+                    refKeyword = ((IndexerDeclarationSyntax)syntax).RefKeyword;
+                    break;
+            }
+            this.refKind = refKeyword.Kind().GetRefKind();
+
             bool hasAccessorList = syntax.AccessorList != null;
             var propertySyntax = syntax as PropertyDeclarationSyntax;
             var arrowExpression = propertySyntax != null
@@ -148,7 +162,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
             if (hasInitializer)
             {
-                CheckInitializer(hasExpressionBody, notRegularProperty, location, diagnostics);
+                CheckInitializer(notRegularProperty, location, diagnostics);
             }
 
             if (notRegularProperty || hasInitializer)
@@ -164,6 +178,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         //issue a diagnostic if the compiler generated attribute ctor is not found.
                         Binder.ReportUseSiteDiagnosticForSynthesizedAttribute(bodyBinder.Compilation,
                         WellKnownMember.System_Runtime_CompilerServices_CompilerGeneratedAttribute__ctor, diagnostics, syntax: syntax);
+
+                        if (this.refKind != RefKind.None && !_containingType.IsInterface)
+                        {
+                            diagnostics.Add(ErrorCode.ERR_AutoPropertyCannotBeRefReturning, location, this);
+                        }
                     }
 
                     string fieldName = GeneratedNames.MakeBackingFieldName(_sourceName);
@@ -277,6 +296,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                     {
                         diagnostics.Add(ErrorCode.ERR_PropertyWithNoAccessors, location, this);
                     }
+                    else if (refKind != RefKind.None)
+                    {
+                        if (getSyntax == null)
+                        {
+                            diagnostics.Add(ErrorCode.ERR_RefPropertyMustHaveGetAccessor, location, this);
+                        }
+                    }
                     else if (notRegularProperty)
                     {
                         var accessor = _getMethod ?? _setMethod;
@@ -293,10 +319,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
                 if (((object)_getMethod != null) && ((object)_setMethod != null))
                 {
-                    // Check accessibility is set on at most one accessor.
-                    if ((_getMethod.LocalAccessibility != Accessibility.NotApplicable) &&
-                        (_setMethod.LocalAccessibility != Accessibility.NotApplicable))
+                    if (refKind != RefKind.None)
                     {
+                        diagnostics.Add(ErrorCode.ERR_RefPropertyCannotHaveSetAccessor, _setMethod.Locations[0], _setMethod);
+                    }
+                    else if ((_getMethod.LocalAccessibility != Accessibility.NotApplicable) &&
+                             (_setMethod.LocalAccessibility != Accessibility.NotApplicable))
+                    {
+                        // Check accessibility is set on at most one accessor.
                         diagnostics.Add(ErrorCode.ERR_DuplicatePropertyAccessMods, location, this);
                     }
                     else if (this.IsAbstract)
@@ -350,7 +380,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         }
 
         private void CheckInitializer(
-            bool hasExpressionBody,
             bool isAutoProperty,
             Location location,
             DiagnosticBag diagnostics)
@@ -376,6 +405,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         {
             var location = syntax.ThisKeyword.GetLocation();
             return new SourcePropertySymbol(containingType, bodyBinder, syntax, DefaultIndexerName, location, diagnostics);
+        }
+
+        internal override RefKind RefKind
+        {
+            get
+            {
+                return this.refKind;
+            }
         }
 
         public override TypeSymbol Type
@@ -721,7 +758,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
 
             SyntaxToken arglistToken;
-            var parameters = ParameterHelpers.MakeParameters(binder, owner, parameterSyntaxOpt, false, out arglistToken, diagnostics);
+            var parameters = ParameterHelpers.MakeParameters(binder, owner, parameterSyntaxOpt, false, out arglistToken, diagnostics, false);
 
             if (arglistToken.Kind() != SyntaxKind.None)
             {
@@ -1020,10 +1057,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         {
             base.AddSynthesizedAttributes(compilationState, ref attributes);
 
-            if (this.Type.ContainsDynamic())
+            if (Type.ContainsDynamic())
             {
-                var compilation = this.DeclaringCompilation;
-                AddSynthesizedAttribute(ref attributes, compilation.SynthesizeDynamicAttribute(this.Type, this.TypeCustomModifiers.Length));
+                AddSynthesizedAttribute(ref attributes,
+                    DeclaringCompilation.SynthesizeDynamicAttribute(Type, TypeCustomModifiers.Length));
+            }
+
+            if (Type.ContainsTuple())
+            {
+                AddSynthesizedAttribute(ref attributes,
+                    DeclaringCompilation.SynthesizeTupleNamesAttributeOpt(Type));
             }
         }
 
@@ -1120,6 +1163,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 // DynamicAttribute should not be set explicitly.
                 arguments.Diagnostics.Add(ErrorCode.ERR_ExplicitDynamicAttr, arguments.AttributeSyntaxOpt.Location);
+            }
+            else if (attribute.IsTargetAttribute(this, AttributeDescription.TupleElementNamesAttribute))
+            {
+                arguments.Diagnostics.Add(ErrorCode.ERR_ExplicitTupleElementNames, arguments.AttributeSyntaxOpt.Location);
             }
         }
 
@@ -1300,7 +1347,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             var syntaxTree = _syntaxRef.SyntaxTree;
             var syntax = (BasePropertyDeclarationSyntax)_syntaxRef.GetSyntax();
             var binderFactory = compilation.GetBinderFactory(syntaxTree);
-            var binder = binderFactory.GetBinder(syntax);
+            var binder = binderFactory.GetBinder(syntax, syntax, this);
             SyntaxTokenList modifiers = syntax.Modifiers;
             binder = binder.WithUnsafeRegionIfNecessary(modifiers);
             return binder.WithAdditionalFlagsAndContainingMemberOrLambda(BinderFlags.SuppressConstraintChecks, this);
