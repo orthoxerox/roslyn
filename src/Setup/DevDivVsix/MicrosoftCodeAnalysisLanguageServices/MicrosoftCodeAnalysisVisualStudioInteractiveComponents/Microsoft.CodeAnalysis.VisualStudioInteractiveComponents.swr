@@ -2,7 +2,6 @@ use vs
 
 package name=Microsoft.CodeAnalysis.VisualStudio.InteractiveComponents
         version=$(Version)
-        vs.package.chip=neutral
         vs.package.language=en-us
         vs.package.type=vsix
         vs.package.vsixId=500fff63-afcf-4195-8db4-3fa8a5180e79
@@ -17,8 +16,8 @@ vs.payloads
 
 vs.dependencies
   vs.dependency id=Microsoft.CodeAnalysis.VisualStudio.Setup
-                version=[$(Version),$(NextVersion))
+                version=$(Version)
                 type=Required
-  vs.dependency id=Microsoft.CodeAnalysis.VisualStudio.InteractiveWindow
-                version=[$(Version),$(NextVersion))
+  vs.dependency id=Microsoft.VisualStudio.InteractiveWindow
+                version=$(Version)
                 type=Required

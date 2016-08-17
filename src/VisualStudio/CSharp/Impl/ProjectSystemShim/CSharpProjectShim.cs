@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
@@ -51,7 +50,8 @@ namespace Microsoft.VisualStudio.LanguageServices.CSharp.ProjectSystemShim
             IVsHierarchy hierarchy,
             IServiceProvider serviceProvider,
             VisualStudioWorkspaceImpl visualStudioWorkspaceOpt,
-            HostDiagnosticUpdateSource hostDiagnosticUpdateSourceOpt)
+            HostDiagnosticUpdateSource hostDiagnosticUpdateSourceOpt,
+            ICommandLineParserService commandLineParserServiceOpt)
             : base(projectTracker,
                    reportExternalErrorCreatorOpt,
                    projectSystemName,
@@ -59,7 +59,8 @@ namespace Microsoft.VisualStudio.LanguageServices.CSharp.ProjectSystemShim
                    LanguageNames.CSharp,
                    serviceProvider,
                    visualStudioWorkspaceOpt,
-                   hostDiagnosticUpdateSourceOpt)
+                   hostDiagnosticUpdateSourceOpt,
+                   commandLineParserServiceOpt)
         {
             _projectRoot = projectRoot;
             _warningNumberArrayPointer = Marshal.AllocHGlobal(0);
@@ -191,11 +192,6 @@ namespace Microsoft.VisualStudio.LanguageServices.CSharp.ProjectSystemShim
                 .WithWarningLevel(warningLevel);
         }
 
-        protected override CommandLineArguments ParseCommandLineArguments(IEnumerable<string> arguments)
-        {
-            return CSharpCommandLineParser.Default.Parse(arguments, this.ContainingDirectoryPathOpt, sdkDirectory: null);
-        }
-
         private IEnumerable<string> ParseWarningCodes(CompilerOptions compilerOptions)
         {
             Contract.ThrowIfFalse(compilerOptions == CompilerOptions.OPTID_NOWARNLIST || compilerOptions == CompilerOptions.OPTID_WARNASERRORLIST || compilerOptions == CompilerOptions.OPTID_WARNNOTASERRORLIST);
@@ -291,15 +287,15 @@ namespace Microsoft.VisualStudio.LanguageServices.CSharp.ProjectSystemShim
             }
         }
 
-        internal bool CanCreateFileCodeModelThroughProject(string fileName)
+        internal bool CanCreateFileCodeModelThroughProject(string filePath)
         {
-            return _projectRoot.CanCreateFileCodeModel(fileName);
+            return _projectRoot.CanCreateFileCodeModel(filePath);
         }
 
-        internal object CreateFileCodeModelThroughProject(string fileName)
+        internal object CreateFileCodeModelThroughProject(string filePath)
         {
             var iid = VSConstants.IID_IUnknown;
-            return _projectRoot.CreateFileCodeModel(fileName, ref iid);
+            return _projectRoot.CreateFileCodeModel(filePath, ref iid);
         }
     }
 }

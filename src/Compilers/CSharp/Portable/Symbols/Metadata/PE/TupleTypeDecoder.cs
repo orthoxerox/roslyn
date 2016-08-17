@@ -78,9 +78,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             EntityHandle targetSymbolToken,
             PEModuleSymbol containingModule)
         {
-            Debug.Assert((object)metadataType != null);
-            Debug.Assert((object)containingModule != null);
-
             ImmutableArray<string> elementNames;
             var hasTupleElementNamesAttribute = containingModule
                 .Module
@@ -93,8 +90,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
                 return new UnsupportedMetadataTypeSymbol();
             }
 
-            var decoder = new TupleTypeDecoder(elementNames,
-                                               containingModule.ContainingAssembly);
+            return DecodeTupleTypesInternal(metadataType, containingModule.ContainingAssembly, elementNames, hasTupleElementNamesAttribute);
+        }
+
+        public static TypeSymbol DecodeTupleTypesIfApplicable(
+            TypeSymbol metadataType,
+            AssemblySymbol containingAssembly,
+            ImmutableArray<string> elementNames)
+        {
+            return DecodeTupleTypesInternal(metadataType, containingAssembly, elementNames, hasTupleElementNamesAttribute: !elementNames.IsDefaultOrEmpty);
+        }
+
+        private static TypeSymbol DecodeTupleTypesInternal(TypeSymbol metadataType, AssemblySymbol containingAssembly, ImmutableArray<string> elementNames, bool hasTupleElementNamesAttribute)
+        {
+            Debug.Assert((object)metadataType != null);
+            Debug.Assert((object)containingAssembly != null);
+
+            var decoder = new TupleTypeDecoder(elementNames, containingAssembly);
             try
             {
                 var decoded = decoder.DecodeType(metadataType);
@@ -185,8 +197,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE
             if (typeArgsChanged || containerChanged)
             {
                 var newTypeArgs = type.HasTypeArgumentsCustomModifiers
-                    ? decodedArgs.Zip(type.TypeArgumentsCustomModifiers,
-                                      (t, m) => new TypeWithModifiers(t, m)).AsImmutable()
+                    ? decodedArgs.ZipAsArray(type.TypeArgumentsCustomModifiers, (t, m) => new TypeWithModifiers(t, m))
                     : decodedArgs.SelectAsArray(TypeMap.TypeSymbolAsTypeWithModifiers);
 
                 if (containerChanged)

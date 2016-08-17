@@ -44,6 +44,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         internal const int RestPosition = 8; // The Rest field is in 8th position
         internal const string TupleTypeName = "ValueTuple";
+        internal const string RestFieldName = "Rest";
 
         private TupleTypeSymbol(Location locationOpt, NamedTypeSymbol underlyingType, ImmutableArray<Location> elementLocations, ImmutableArray<string> elementNames, ImmutableArray<TypeSymbol> elementTypes)
             : this(locationOpt == null ? ImmutableArray<Location>.Empty : ImmutableArray.Create(locationOpt),
@@ -196,7 +197,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private static ImmutableArray<CustomModifier> GetModifiers(ImmutableArray<ImmutableArray<CustomModifier>> modifiers, int i)
         {
-            return modifiers.IsDefaultOrEmpty? ImmutableArray<CustomModifier>.Empty: modifiers[i];
+            return modifiers.IsDefaultOrEmpty ? ImmutableArray<CustomModifier>.Empty : modifiers[i];
         }
 
         /// <summary>
@@ -376,6 +377,28 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
+        internal static void ReportNamesMismatchesIfAny(ImmutableArray<string> destinationNames, BoundTupleLiteral literal, DiagnosticBag diagnostics)
+        {
+            var sourceNames = literal.ArgumentNamesOpt;
+            if (sourceNames.IsDefault)
+            {
+                return;
+            }
+
+            int sourceLength = sourceNames.Length;
+            bool allMissing = destinationNames.IsDefault;
+            Debug.Assert(allMissing || destinationNames.Length == sourceLength);
+
+            for (int i = 0; i < sourceLength; i++)
+            {
+                var sourceName = sourceNames[i];
+                if (sourceName != null && (allMissing || string.CompareOrdinal(destinationNames[i], sourceName) != 0))
+                {
+                    diagnostics.Add(ErrorCode.WRN_TupleLiteralNameMismatch, literal.Arguments[i].Syntax.Parent.Location, sourceName);
+                }
+            }
+        }
+
         /// <summary>
         /// Find the well-known ValueTuple type of a given arity.
         /// For example, for arity=2:
@@ -533,6 +556,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 return 0;
             }
 
+            return MatchesCanonicalElementName(name);
+        }
+
+        /// <summary>
+        /// Returns 3 for "Item3".
+        /// Returns -1 otherwise.
+        /// </summary>
+        private static int MatchesCanonicalElementName(string name)
+        {
             if (name.StartsWith("Item", StringComparison.Ordinal))
             {
                 string tail = name.Substring(4);
@@ -701,13 +733,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                     continue;
                 }
 
-                int index = (member as TupleFieldSymbol)?.TupleElementIndex ??
-                            ((TupleErrorFieldSymbol)member).TupleElementIndex;
+                var field = (FieldSymbol)member;
+                var index = field.TupleElementIndex;
 
-                if (index >= 0)
+                if (index >= 0 && index == MatchesCanonicalElementName(field.Name) - 1)
                 {
                     Debug.Assert((object)builder[index] == null);
-                    builder[index] = (FieldSymbol)member;
+                    builder[index] = field;
                 }
             }
 
@@ -791,21 +823,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                                     if (namesOfVirtualFields[tupleFieldIndex] != defaultName)
                                     {
                                         // The name given doesn't match default name Item8, etc.
-                                        members.Add(new TupleRenamedElementFieldSymbol(this, fieldSymbol, defaultName, -members.Count - 1, null));
+                                        // Add a field with default name and make it virtual since we are not at the top level
+                                        members.Add(new TupleVirtualElementFieldSymbol(this, fieldSymbol, defaultName, tupleFieldIndex, null));
                                     }
 
                                     // Add a field with the given name
                                     var location = _elementLocations.IsDefault ? null : _elementLocations[tupleFieldIndex];
+                                    members.Add(new TupleVirtualElementFieldSymbol(this, fieldSymbol, namesOfVirtualFields[tupleFieldIndex],
+                                                        tupleFieldIndex, location));
 
-                                    if (field.Name == namesOfVirtualFields[tupleFieldIndex])
-                                    {
-                                        members.Add(new TupleElementFieldSymbol(this, fieldSymbol, tupleFieldIndex, location));
-                                    }
-                                    else
-                                    {
-                                        members.Add(new TupleRenamedElementFieldSymbol(this, fieldSymbol, namesOfVirtualFields[tupleFieldIndex],
-                                                                                                tupleFieldIndex, location));
-                                    }
                                 }
                                 else if (field.Name == namesOfVirtualFields[tupleFieldIndex])
                                 {
@@ -815,12 +841,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                                 else
                                 {
                                     // Add a field with default name
-                                    members.Add(new TupleFieldSymbol(this, fieldSymbol, -members.Count - 1));
+                                    members.Add(new TupleFieldSymbol(this, fieldSymbol, tupleFieldIndex));
 
                                     // Add a field with the given name
                                     if (namesOfVirtualFields[tupleFieldIndex] != null)
                                     {
-                                        members.Add(new TupleRenamedElementFieldSymbol(this, fieldSymbol, namesOfVirtualFields[tupleFieldIndex], tupleFieldIndex,
+                                        members.Add(new TupleVirtualElementFieldSymbol(this, fieldSymbol, namesOfVirtualFields[tupleFieldIndex], tupleFieldIndex,
                                                                                                 _elementLocations.IsDefault ? null : _elementLocations[tupleFieldIndex]));
                                     }
                                 }
@@ -937,7 +963,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             get
             {
                 return _lazyUnderlyingDefinitionToMemberMap ??
-                    (_lazyUnderlyingDefinitionToMemberMap = ComputeDefinitionToMemberMap()); 
+                    (_lazyUnderlyingDefinitionToMemberMap = ComputeDefinitionToMemberMap());
             }
         }
 
@@ -1095,40 +1121,40 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
-        internal override bool Equals(TypeSymbol t2, bool ignoreCustomModifiers, bool ignoreDynamic)
+        internal override bool Equals(TypeSymbol t2, TypeCompareKind comparison)
         {
-            if (ignoreDynamic)
+            if ((comparison & TypeCompareKind.IgnoreTupleNames) != 0)
             {
                 if (t2?.IsTupleType == true)
                 {
                     t2 = t2.TupleUnderlyingType;
                 }
 
-                return _underlyingType.Equals(t2, ignoreCustomModifiers, ignoreDynamic);
+                return _underlyingType.Equals(t2, comparison);
             }
 
-            return this.Equals(t2 as TupleTypeSymbol, ignoreCustomModifiers, ignoreDynamic);
+            return this.Equals(t2 as TupleTypeSymbol, comparison);
         }
 
         internal bool Equals(TupleTypeSymbol other)
         {
-            return Equals(other, false, false);
+            return Equals(other, TypeCompareKind.ConsiderEverything);
         }
 
-        private bool Equals(TupleTypeSymbol other, bool ignoreCustomModifiers, bool ignoreDynamic)
+        private bool Equals(TupleTypeSymbol other, TypeCompareKind comparison)
         {
             if (ReferenceEquals(this, other))
             {
                 return true;
             }
 
-            if ((object)other == null || !other._underlyingType.Equals(_underlyingType, ignoreCustomModifiers, ignoreDynamic))
+            if ((object)other == null || !other._underlyingType.Equals(_underlyingType, comparison))
             {
                 return false;
             }
 
             // Make sure field names are the same.
-            if (!ignoreDynamic)
+            if ((comparison & TypeCompareKind.IgnoreTupleNames) == 0)
             {
                 if (this._elementNames.IsDefault)
                 {

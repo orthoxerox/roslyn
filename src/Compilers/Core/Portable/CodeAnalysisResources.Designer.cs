@@ -189,6 +189,15 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Analyzer attempted to register an &apos;async&apos; action, which is not supported..
+        /// </summary>
+        internal static string AsyncAnalyzerActionCannotBeRegistered {
+            get {
+                return ResourceManager.GetString("AsyncAnalyzerActionCannotBeRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Can&apos;t alias a module..
         /// </summary>
         internal static string CannotAliasModule {
@@ -384,6 +393,15 @@ namespace Microsoft.CodeAnalysis {
         internal static string DuplicateAnalyzerInstances {
             get {
                 return ResourceManager.GetString("DuplicateAnalyzerInstances", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Embedded texts are only supported when emitting Portable PDB..
+        /// </summary>
+        internal static string EmbeddedTextsRequirePortablePdb {
+            get {
+                return ResourceManager.GetString("EmbeddedTextsRequirePortablePdb", resourceCulture);
             }
         }
         
@@ -722,6 +740,15 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Feature &apos;IOperation&apos; is disabled..
+        /// </summary>
+        internal static string IOperationFeatureDisabled {
+            get {
+                return ResourceManager.GetString("IOperationFeatureDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Argument to &apos;/keepalive&apos; option is not a 32-bit integer..
         /// </summary>
         internal static string KeepAliveIsNotAnInteger {
@@ -938,6 +965,15 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to PDB stream should not be given when embedding PDB into the PE stream..
+        /// </summary>
+        internal static string PdbStreamUnexpectedWhenEmbedding {
+            get {
+                return ResourceManager.GetString("PdbStreamUnexpectedWhenEmbedding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to PE image doesn&apos;t contain managed metadata..
         /// </summary>
         internal static string PEImageDoesntContainManagedMetadata {
@@ -1082,6 +1118,24 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Source Link embedding is only supported when emitting Portable PDB..
+        /// </summary>
+        internal static string SourceLinkRequiresPortablePdb {
+            get {
+                return ResourceManager.GetString("SourceLinkRequiresPortablePdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceText cannot be embedded. Provide encoding or canBeEmbedded=true at construction..
+        /// </summary>
+        internal static string SourceTextCannotBeEmbedded {
+            get {
+                return ResourceManager.GetString("SourceTextCannotBeEmbedded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The span does not include the end of a line..
         /// </summary>
         internal static string SpanDoesNotIncludeEndOfLine {
@@ -1105,6 +1159,24 @@ namespace Microsoft.CodeAnalysis {
         internal static string StartMustNotBeNegative {
             get {
                 return ResourceManager.GetString("StartMustNotBeNegative", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stream is too long..
+        /// </summary>
+        internal static string StreamIsTooLong {
+            get {
+                return ResourceManager.GetString("StreamIsTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stream must be readable..
+        /// </summary>
+        internal static string StreamMustSupportRead {
+            get {
+                return ResourceManager.GetString("StreamMustSupportRead", resourceCulture);
             }
         }
         
@@ -1163,6 +1235,15 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to If names are used in a tuple type, then there must be the same number of names and elements..
+        /// </summary>
+        internal static string TupleNamesAllOrNone {
+            get {
+                return ResourceManager.GetString("TupleNamesAllOrNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tuples must have at least two elements..
         /// </summary>
         internal static string TuplesNeedAtLeastTwoElements {
@@ -1213,6 +1294,15 @@ namespace Microsoft.CodeAnalysis {
         internal static string UnexpectedTypeOfNodeInList {
             get {
                 return ResourceManager.GetString("UnexpectedTypeOfNodeInList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unrecognized resource file format..
+        /// </summary>
+        internal static string UnrecognizedResourceFileFormat {
+            get {
+                return ResourceManager.GetString("UnrecognizedResourceFileFormat", resourceCulture);
             }
         }
         
