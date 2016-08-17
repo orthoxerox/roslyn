@@ -1046,7 +1046,16 @@ namespace Microsoft.CodeAnalysis
             AttributeInfo info = FindLastTargetAttribute(token, AttributeDescription.DateTimeConstantAttribute);
             if (info.HasValue && TryExtractLongValueFromAttribute(info.Handle, out value))
             {
-                defaultValue = ConstantValue.Create(new DateTime(value));
+                // if value is outside this range, DateTime would throw when constructed
+                if (value < DateTime.MinValue.Ticks || value > DateTime.MaxValue.Ticks)
+                {
+                    defaultValue = ConstantValue.Bad;
+                }
+                else
+                {
+                    defaultValue = ConstantValue.Create(new DateTime(value));
+                }
+
                 return true;
             }
 
@@ -1192,8 +1201,8 @@ namespace Microsoft.CodeAnalysis
         {
             switch (comInterfaceType)
             {
-                case (int)ComInterfaceType.InterfaceIsDual:
-                case (int)ComInterfaceType.InterfaceIsIDispatch:
+                case (int)Cci.Constants.ComInterfaceType_InterfaceIsDual:
+                case (int)Cci.Constants.ComInterfaceType_InterfaceIsIDispatch:
                 case (int)ComInterfaceType.InterfaceIsIInspectable:
                 case (int)ComInterfaceType.InterfaceIsIUnknown:
                     return true;
@@ -1242,7 +1251,7 @@ namespace Microsoft.CodeAnalysis
             return TryExtractValueFromAttribute(handle, out value, s_attributeStringValueExtractor);
         }
 
-        private bool TryExtractLongValueFromAttribute(CustomAttributeHandle handle, out long value)
+        internal bool TryExtractLongValueFromAttribute(CustomAttributeHandle handle, out long value)
         {
             return TryExtractValueFromAttribute(handle, out value, s_attributeLongValueExtractor);
         }
@@ -2464,7 +2473,7 @@ namespace Microsoft.CodeAnalysis
 
                 string moduleName = GetModuleRefNameOrThrow(methodImport.Module);
                 string entryPointName = MetadataReader.GetString(methodImport.Name);
-                Cci.PInvokeAttributes flags = (Cci.PInvokeAttributes)methodImport.Attributes;
+                MethodImportAttributes flags = (MethodImportAttributes)methodImport.Attributes;
 
                 return new DllImportData(moduleName, entryPointName, flags);
             }

@@ -1,14 +1,104 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Generic;
+using Microsoft.CodeAnalysis.Test.Utilities;
 using System.Linq;
 using Xunit;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 {
+    [CompilerTrait(CompilerFeature.LocalFunctions)]
     public class LocalFunctionParsingTests : ParsingTests
     {
+        [Fact]
+        public void DiagnosticsWithoutExperimental()
+        {
+            // Experimental nodes should only appear when experimental are
+            // turned on in parse options
+            var file = ParseFile(@"
+class c
+{
+    void m()
+    {
+        int local() => 0;
+    }
+    void m2()
+    {
+        int local() { return 0; }
+    }
+}");
+            Assert.NotNull(file);
+            Assert.False(file.DescendantNodes().Any(n => n.Kind() == SyntaxKind.LocalFunctionStatement && !n.ContainsDiagnostics));
+            Assert.True(file.HasErrors);
+            file.SyntaxTree.GetDiagnostics().Verify(
+                // (6,9): error CS8058: Feature 'local functions' is experimental and unsupported; use '/features:localFunctions' to enable.
+                //         int local() => 0;
+                Diagnostic(ErrorCode.ERR_FeatureIsExperimental, "int local() => 0;").WithArguments("local functions", "localFunctions").WithLocation(6, 9),
+                // (10,9): error CS8058: Feature 'local functions' is experimental and unsupported; use '/features:localFunctions' to enable.
+                //         int local() { return 0; }
+                Diagnostic(ErrorCode.ERR_FeatureIsExperimental, "int local() { return 0; }").WithArguments("local functions", "localFunctions").WithLocation(10, 9)
+                );
+
+            Assert.Equal(0, file.SyntaxTree.Options.Features.Count);
+            var c = Assert.IsType<ClassDeclarationSyntax>(file.Members.Single());
+            Assert.Equal(2, c.Members.Count);
+            var m = Assert.IsType<MethodDeclarationSyntax>(c.Members[0]);
+            var s1 = Assert.IsType<LocalFunctionStatementSyntax>(m.Body.Statements[0]);
+            Assert.True(s1.ContainsDiagnostics);
+
+            var m2 = Assert.IsType<MethodDeclarationSyntax>(c.Members[1]);
+            s1 = Assert.IsType<LocalFunctionStatementSyntax>(m.Body.Statements[0]);
+            Assert.True(s1.ContainsDiagnostics);
+        }
+
+        [Fact]
+        public void NodesWithExperimental()
+        {
+            // Experimental nodes should only appear when experimental are
+            // turned on in parse options
+            var file = ParseFileExperimental(@"
+class c
+{
+    void m()
+    {
+        int local() => 0;
+    }
+    void m2()
+    {
+        int local()
+        {
+            return 0;
+        }
+    }
+}");
+            Assert.NotNull(file);
+            Assert.False(file.HasErrors);
+            Assert.Equal(0, file.SyntaxTree.Options.Features.Count);
+            var c = Assert.IsType<ClassDeclarationSyntax>(file.Members.Single());
+            Assert.Equal(2, c.Members.Count);
+            var m = Assert.IsType<MethodDeclarationSyntax>(c.Members[0]);
+            var s1 = Assert.IsType<LocalFunctionStatementSyntax>(m.Body.Statements[0]);
+            Assert.Equal(SyntaxKind.PredefinedType, s1.ReturnType.Kind());
+            Assert.Equal("int", s1.ReturnType.ToString());
+            Assert.Equal("local", s1.Identifier.ToString());
+            Assert.NotNull(s1.ParameterList);
+            Assert.Empty(s1.ParameterList.Parameters);
+            Assert.NotNull(s1.ExpressionBody);
+            Assert.Equal(SyntaxKind.NumericLiteralExpression, s1.ExpressionBody.Expression.Kind());
+
+            var m2 = Assert.IsType<MethodDeclarationSyntax>(c.Members[1]);
+            s1 = Assert.IsType<LocalFunctionStatementSyntax>(m2.Body.Statements[0]);
+            Assert.Equal(SyntaxKind.PredefinedType, s1.ReturnType.Kind());
+            Assert.Equal("int", s1.ReturnType.ToString());
+            Assert.Equal("local", s1.Identifier.ToString());
+            Assert.NotNull(s1.ParameterList);
+            Assert.Empty(s1.ParameterList.Parameters);
+            Assert.Null(s1.ExpressionBody);
+            Assert.NotNull(s1.Body);
+            var s2 = Assert.IsType<ReturnStatementSyntax>(s1.Body.Statements.Single());
+            Assert.Equal(SyntaxKind.NumericLiteralExpression, s2.Expression.Kind());
+        }
+
         [Fact(Skip = "https://github.com/dotnet/roslyn/issues/10388")]
         public void LocalFunctionsWithAwait()
         {

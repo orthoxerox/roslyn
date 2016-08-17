@@ -5,6 +5,7 @@ using System.Composition;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting.Rules;
 using Microsoft.CodeAnalysis.Options;
+using System.Linq;
 
 namespace Microsoft.CodeAnalysis.CSharp.Formatting
 {
@@ -158,22 +159,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
                 }
             }
 
-            var propertyPattern = node as PropertyPatternSyntax;
-            if (propertyPattern?.PatternList != null)
+            var interpolatedStringExpression = node as InterpolatedStringExpressionSyntax;
+            if (interpolatedStringExpression != null)
             {
-                AddSuppressWrappingIfOnSingleLineOperation(list, propertyPattern.Type.GetFirstToken(), propertyPattern.PatternList.CloseBraceToken);
-            }
-
-            var casePatternLabel = node as CasePatternSwitchLabelSyntax;
-            if (casePatternLabel != null)
-            {
-                // Need to suppress the addition of a newline between }: in the pattern property case.
-                // case Point { X is 42 }:
-                propertyPattern = casePatternLabel.Pattern as PropertyPatternSyntax;
-                if (propertyPattern != null)
-                {
-                    AddSuppressOperation(list, propertyPattern.PatternList.CloseBraceToken, casePatternLabel.ColonToken, SuppressOption.NoWrapping);
-                }
+                AddSuppressWrappingIfOnSingleLineOperation(list, interpolatedStringExpression.StringStartToken, interpolatedStringExpression.StringEndToken);
             }
         }
 

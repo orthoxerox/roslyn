@@ -2,7 +2,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders.XmlDocCommentCompletion;
+using Microsoft.CodeAnalysis.CSharp.Completion.Providers;
 using Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces;
 using Roslyn.Test.Utilities;
 using Xunit;
@@ -15,7 +15,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Completion.CompletionPr
         {
         }
 
-        internal override CompletionListProvider CreateCompletionProvider()
+        internal override CompletionProvider CreateCompletionProvider()
         {
             return new XmlDocCommentCompletionProvider();
         }
@@ -81,7 +81,7 @@ public class foo
 {
     /// <summary> $$ </summary>
     public void bar() { }
-}", "c", "code", "list", "para", "paramref", "typeparamref");
+}", "c", "code", "list", "para");
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
@@ -265,6 +265,33 @@ public class foo<T>
     /// $$
     public int this[T green] { get { } set { } }
 }", "param name=\"green\"");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task MethodParamRefName()
+        {
+            await VerifyItemsExistAsync(@"
+public class foo<T>
+{
+    
+    /// <summary>
+    /// $$
+    /// </summary>
+    public int bar<T>(T green) { }
+}", "typeparamref name=\"T\"", "paramref name=\"green\"");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task ClassTypeParamRefName()
+        {
+            await VerifyItemsExistAsync(@"
+/// <summary>
+/// $$
+/// </summary>
+public class foo<T>
+{
+    public int bar<T>(T green) { }
+}", "typeparamref name=\"T\"");
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
@@ -1009,7 +1036,7 @@ public class foo<T>
 /// </summary>
 ";
 
-            await VerifyItemsExistAsync(text, "!--", "![CDATA[", "c", "code", "list", "para", "paramref", "seealso", "see", "typeparamref");
+            await VerifyItemsExistAsync(text, "!--", "![CDATA[", "c", "code", "list", "para", "seealso", "see");
         }
 
         [WorkItem(734825, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/734825")]

@@ -1,72 +1,75 @@
 // Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+#r "./../Roslyn.Test.Performance.Utilities.dll"
 
+// RunFile()
+// GetAllCsxRecursive()
 #load "./util/runner_util.csx"
-#load "./util/test_util.csx"
-#load "./util/trace_manager_util.csx"
+// Log()
+// StdoutFrom()
+// IsVerbose()
+#load "./util/tools_util.csx"
 
 using System.Collections.Generic;
 using System.IO;
 using System;
+using Roslyn.Test.Performance.Utilities;
 
 var directoryInfo = new RelativeDirectory();
-var testDirectory = Path.Combine(directoryInfo.MyWorkingDirectory, "Tests");
+var testDirectory = Path.Combine(directoryInfo.MyWorkingDirectory, "tests");
 
 // Print message at startup
 Log("Starting Performance Test Run");
 Log("hash: " + StdoutFrom("git", "show --format=\"%h\" HEAD --").Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None)[0]);
 Log("time: " + DateTime.Now.ToString());
 
-var testInstances = new List<dynamic>();
+var testInstances = new List<PerfTest>();
 
 // Find all the tests from inside of the csx files.
 foreach (var script in GetAllCsxRecursive(testDirectory))
 {
     var scriptName = Path.GetFileNameWithoutExtension(script);
     Log($"Collecting tests from {scriptName}");
-    var tests = (object[]) (await RunFile(script)).ReturnValue;
+    var state = await RunFile(script);
+    var tests = (PerfTest[]) state.GetVariable("resultTests").Value;
     testInstances.AddRange(tests);
 }
 
-var traceManager = TraceManagerFactory.GetTraceManager();
-traceManager.Setup();
-for (int i = 0; i < traceManager.Iterations; i++)
-{
-    traceManager.Start();
-    foreach (dynamic test in testInstances)
-    {
-        test.Setup();
-        traceManager.StartScenario(test.Name, test.MeasuredProc);
-        traceManager.StartEvent();
-        test.Test();
-        traceManager.EndEvent();
-        traceManager.EndScenario();
-    }
-    traceManager.EndScenarios();
-    traceManager.WriteScenariosFileToDisk();
-    traceManager.Stop();
-    traceManager.ResetScenarioGenerator();
-}
-traceManager.Cleanup();
+var traceManager = TraceManagerFactory.GetTraceManager(IsVerbose());
 
-/*
-var traceManager = TraceManagerFactory.GetTraceManager();
-traceManager.Setup();
-// Run each of the tests
-foreach (dynamic test in testInstances) 
+traceManager.Initialize();
+foreach (var test in testInstances)
 {
     test.Setup();
-    traceManager.Start();
-    for (int i = 0; i < test.Iterations; i++) 
+    traceManager.Setup();
+    
+    var iterations = traceManager.HasWarmUpIteration ? 
+                     test.Iterations + 1 :
+                     test.Iterations;
+                     
+    for (int i = 0; i < iterations; i++)
     {
-        traceManager.StartScenario("temp" + i, "csc");
-        traceManager.StartEvent();
-        test.Test();
-        traceManager.EndEvent();
-        traceManager.EndScenario();
+        traceManager.Start();
+        traceManager.StartScenarios();
+        
+        if (test.ProvidesScenarios)
+        {
+            traceManager.WriteScenarios(test.GetScenarios());
+            test.Test();
+        }
+        else
+        {
+            traceManager.StartScenario(test.Name, test.MeasuredProc);
+            traceManager.StartEvent();
+            test.Test();
+            traceManager.EndEvent();
+            traceManager.EndScenario();
+        }
+        
+        traceManager.EndScenarios();
+        traceManager.WriteScenariosFileToDisk();
+        traceManager.Stop();
+        traceManager.ResetScenarioGenerator();
     }
-    traceManager.EndScenarios();
-    traceManager.WriteScenariosFileToDisk();
-    traceManager.Stop();
+
     traceManager.Cleanup();
 }
-*/

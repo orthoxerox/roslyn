@@ -372,7 +372,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             return node.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia);
         }
 
-        public static TNode ConvertToSingleLine<TNode>(this TNode node)
+        public static TNode ConvertToSingleLine<TNode>(this TNode node, bool useElasticTrivia = false)
             where TNode : SyntaxNode
         {
             if (node == null)
@@ -380,7 +380,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 return node;
             }
 
-            var rewriter = new SingleLineRewriter();
+            var rewriter = new SingleLineRewriter(useElasticTrivia);
             return (TNode)rewriter.Visit(node);
         }
 
@@ -740,7 +740,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
         public static bool IsLeftSideOfAnyAssignExpression(this SyntaxNode node)
         {
-            return node.Parent.IsAnyAssignExpression() &&
+            return node != null &&
+                node.Parent.IsAnyAssignExpression() &&
                 ((AssignmentExpressionSyntax)node.Parent).Left == node;
         }
 
@@ -864,12 +865,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
             if (initializeExpressionNode != null)
             {
                 return ValueTuple.Create(initializeExpressionNode.OpenBraceToken, initializeExpressionNode.CloseBraceToken);
-            }
-
-            var propertyList = node as SubPropertyPatternListSyntax;
-            if (propertyList != null)
-            {
-                return ValueTuple.Create(propertyList.OpenBraceToken, propertyList.CloseBraceToken);
             }
 
             return new ValueTuple<SyntaxToken, SyntaxToken>();
