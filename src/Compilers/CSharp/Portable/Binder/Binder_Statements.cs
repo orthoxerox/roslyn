@@ -3116,6 +3116,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         private BoundReturnStatement BindReturnParts(ReturnStatementSyntax syntax, DiagnosticBag diagnostics)
         {
             var refKind = syntax.RefKeyword.Kind().GetRefKind();
+            var isTail = syntax.FromKeyword.Kind() == SyntaxKind.FromKeyword;
 
             var expressionSyntax = syntax.Expression;
             BoundExpression arg = null;
@@ -3156,6 +3157,21 @@ namespace Microsoft.CodeAnalysis.CSharp
                 diagnostics.Add(errorCode, syntax.ReturnKeyword.GetLocation());
                 hasErrors = true;
             }
+            else if (isTail && arg == null)
+            {
+                diagnostics.Add(ErrorCode.ERR_InvalidTailCallTarget, syntax.ReturnKeyword.GetLocation());
+                hasErrors = true;
+            }
+            else if (isTail && !(arg is BoundCall))
+            {
+                diagnostics.Add(ErrorCode.ERR_InvalidTailCallTarget, syntax.ReturnKeyword.GetLocation());
+                hasErrors = true;
+            } 
+            else if (isTail && IsInAsyncMethod())
+            {
+                diagnostics.Add(ErrorCode.ERR_InvalidTailCallTarget, syntax.ReturnKeyword.GetLocation());
+                hasErrors = true;
+            } 
             else if (arg != null)
             {
                 hasErrors = arg.HasErrors || ((object)arg.Type != null && arg.Type.IsErrorType());
@@ -3232,6 +3248,14 @@ namespace Microsoft.CodeAnalysis.CSharp
                 {
                     Error(diagnostics, ErrorCode.ERR_CantReturnVoid, expressionSyntax);
                 }
+            }
+
+            if (isTail && arg is BoundCall)
+            {
+                var bc = (BoundCall)arg;
+                arg = (bc).Update(bc.ReceiverOpt, bc.Method, bc.Arguments, bc.ArgumentNamesOpt, 
+                    bc.ArgumentRefKindsOpt, bc.IsDelegateCall, bc.Expanded, bc.InvokedAsExtensionMethod, 
+                    true, bc.ArgsToParamsOpt, bc.ResultKind, bc.Type);
             }
 
             return new BoundReturnStatement(syntax, refKind, arg);

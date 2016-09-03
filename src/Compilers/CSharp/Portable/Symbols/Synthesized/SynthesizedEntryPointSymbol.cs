@@ -318,6 +318,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 isDelegateCall: false,
                 expanded: false,
                 invokedAsExtensionMethod: false,
+                isTailCall: false,
                 argsToParamsOpt: default(ImmutableArray<int>),
                 resultKind: LookupResultKind.Viable,
                 type: method.ReturnType)

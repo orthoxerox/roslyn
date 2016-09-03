@@ -115,6 +115,7 @@
     <Compile Include="CodeGen\CodeGenShortCircuitOperatorTests.cs" />
     <Compile Include="CodeGen\CodeGenStringConcat.cs" />
     <Compile Include="CodeGen\CodeGenStructsAndEnum.cs" />
+    <Compile Include="CodeGen\CodeGenTailCallTests.cs" />
     <Compile Include="CodeGen\CodeGenTests.cs" />
     <Compile Include="CodeGen\CodeGenThrowTests.cs" />
     <Compile Include="CodeGen\CodeGenTryFinally.cs" />

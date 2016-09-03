@@ -220,6 +220,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     isDelegateCall: false,
                     expanded: false,
                     invokedAsExtensionMethod: invokedAsExtensionMethod,
+                    isTailCall: false,
                     argsToParamsOpt: default(ImmutableArray<int>),
                     resultKind: resultKind,
                     type: type);
@@ -235,6 +236,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     node.IsDelegateCall,
                     false,
                     node.InvokedAsExtensionMethod,
+                    node.IsTailCall,
                     default(ImmutableArray<int>),
                     node.ResultKind,
                     node.Type);
@@ -641,6 +643,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             isDelegateCall: false,
                             expanded: false,
                             invokedAsExtensionMethod: false,
+                            isTailCall: false,
                             argsToParamsOpt: default(ImmutableArray<int>),
                             resultKind: LookupResultKind.Viable,
                             type: arrayEmpty.ReturnType);

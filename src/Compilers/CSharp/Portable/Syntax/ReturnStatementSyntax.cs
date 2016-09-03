@@ -10,7 +10,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     {
         public ReturnStatementSyntax Update(SyntaxToken returnKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
-            return Update(returnKeyword, this.RefKeyword, expression, semicolonToken);
+            return Update(returnKeyword, this.FromKeyword, this.RefKeyword, expression, semicolonToken);
         }
     }
 }
@@ -22,7 +22,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <summary>Creates a new ReturnStatementSyntax instance.</summary>
         public static ReturnStatementSyntax ReturnStatement(SyntaxToken returnKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
-            return ReturnStatement(returnKeyword, default(SyntaxToken), expression, semicolonToken);
+            return ReturnStatement(returnKeyword, default(SyntaxToken), default(SyntaxToken), expression, semicolonToken);
         }
     }
 }

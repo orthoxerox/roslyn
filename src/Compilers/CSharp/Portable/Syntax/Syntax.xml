@@ -1940,6 +1940,9 @@
     <Field Name="ReturnKeyword" Type="SyntaxToken">
       <Kind Name="ReturnKeyword"/>
     </Field>
+    <Field Name="FromKeyword" Type="SyntaxToken" Optional="true">
+      <Kind Name="FromKeyword"/>
+    </Field>
     <Field Name="RefKeyword" Type="SyntaxToken" Optional="true">
       <Kind Name="RefKeyword"/>
     </Field>

@@ -1109,6 +1109,75 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
 
         [Fact]
+        public void TestReturnFromExpression()
+        {
+            var text = "return from a();";
+            var statement = this.ParseStatement(text);
+
+            Assert.NotNull(statement);
+            Assert.Equal(SyntaxKind.ReturnStatement, statement.Kind());
+            Assert.Equal(text, statement.ToString());
+            Assert.Equal(0, statement.Errors().Length);
+
+            var rs = (ReturnStatementSyntax)statement;
+            Assert.NotNull(rs.ReturnKeyword);
+            Assert.False(rs.ReturnKeyword.IsMissing);
+            Assert.Equal(SyntaxKind.ReturnKeyword, rs.ReturnKeyword.Kind());
+            Assert.NotNull(rs.FromKeyword);
+            Assert.False(rs.FromKeyword.IsMissing);
+            Assert.Equal(SyntaxKind.FromKeyword, rs.FromKeyword.Kind());
+            Assert.NotNull(rs.Expression);
+            Assert.Equal("a()", rs.Expression.ToString());
+            Assert.NotNull(rs.SemicolonToken);
+            Assert.False(rs.SemicolonToken.IsMissing);
+        }
+
+        [Fact]
+        public void TestReturnQueryExpression()
+        {
+            var text = "return from x in xs select x;";
+            var statement = this.ParseStatement(text);
+
+            Assert.NotNull(statement);
+            Assert.Equal(SyntaxKind.ReturnStatement, statement.Kind());
+            Assert.Equal(text, statement.ToString());
+            Assert.Equal(0, statement.Errors().Length);
+
+            var rs = (ReturnStatementSyntax)statement;
+            Assert.NotNull(rs.ReturnKeyword);
+            Assert.False(rs.ReturnKeyword.IsMissing);
+            Assert.Equal(SyntaxKind.ReturnKeyword, rs.ReturnKeyword.Kind());
+            Assert.NotNull(rs.FromKeyword);
+            Assert.False(rs.FromKeyword.IsMissing);
+            Assert.Equal(SyntaxKind.None, rs.FromKeyword.Kind());
+            Assert.NotNull(rs.Expression);
+            Assert.Equal("from x in xs select x", rs.Expression.ToString());
+            Assert.NotNull(rs.SemicolonToken);
+            Assert.False(rs.SemicolonToken.IsMissing);
+        }
+
+        [Fact]
+        public void TestReturnFromIdentifier()
+        {
+            var text = "return from;";
+            var statement = this.ParseStatement(text);
+
+            Assert.NotNull(statement);
+            Assert.Equal(SyntaxKind.ReturnStatement, statement.Kind());
+            Assert.Equal(text, statement.ToString());
+            Assert.Equal(0, statement.Errors().Length);
+
+            var rs = (ReturnStatementSyntax)statement;
+            Assert.NotNull(rs.ReturnKeyword);
+            Assert.False(rs.ReturnKeyword.IsMissing);
+            Assert.Equal(SyntaxKind.ReturnKeyword, rs.ReturnKeyword.Kind());
+            Assert.NotNull(rs.Expression);
+            Assert.Equal("from", rs.Expression.ToString());
+            Assert.NotNull(rs.SemicolonToken);
+            Assert.False(rs.SemicolonToken.IsMissing);
+        }
+
+        [Fact]
         public void TestYieldReturnExpression()
         {
             var text = "yield return a;";

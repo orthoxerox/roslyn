@@ -1819,6 +1819,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 isDelegateCall: false,
                 expanded: false,
                 invokedAsExtensionMethod: false,
+                isTailCall: false,
                 argsToParamsOpt: ImmutableArray<int>.Empty,
                 resultKind: resultKind,
                 type: objectType,

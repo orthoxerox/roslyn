@@ -3035,6 +3035,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         isDelegateCall: false,
                         expanded: memberResolutionResult.Result.Kind == MemberResolutionKind.ApplicableInExpandedForm,
                         invokedAsExtensionMethod: false,
+                        isTailCall: false,
                         argsToParamsOpt: memberResolutionResult.Result.ArgsToParamsOpt,
                         resultKind: LookupResultKind.Viable,
                         type: constructorReturnType,

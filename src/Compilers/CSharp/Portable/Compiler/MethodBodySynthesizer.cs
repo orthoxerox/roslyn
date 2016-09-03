@@ -45,6 +45,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         isDelegateCall: false,
                         expanded: false,
                         invokedAsExtensionMethod: false,
+                        isTailCall: false,
                         argsToParamsOpt: ImmutableArray<int>.Empty,
                         resultKind: LookupResultKind.Viable,
                         type: objectType)

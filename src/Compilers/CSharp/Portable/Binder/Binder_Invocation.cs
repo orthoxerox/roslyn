@@ -939,7 +939,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             if ((object)delegateTypeOpt != null)
             {
                 return new BoundCall(node, receiver, method, args, argNames, argRefKinds, isDelegateCall: true,
-                            expanded: expanded, invokedAsExtensionMethod: invokedAsExtensionMethod,
+                            expanded: expanded, invokedAsExtensionMethod: invokedAsExtensionMethod, isTailCall: false,
                             argsToParamsOpt: argsToParams, resultKind: LookupResultKind.Viable, type: returnType, hasErrors: gotError);
             }
             else
@@ -960,7 +960,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 }
 
                 return new BoundCall(node, receiver, method, args, argNames, argRefKinds, isDelegateCall: false,
-                            expanded: expanded, invokedAsExtensionMethod: invokedAsExtensionMethod,
+                            expanded: expanded, invokedAsExtensionMethod: invokedAsExtensionMethod, isTailCall: false,
                             argsToParamsOpt: argsToParams, resultKind: LookupResultKind.Viable, type: returnType, hasErrors: gotError);
             }
         }

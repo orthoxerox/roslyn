@@ -7936,10 +7936,31 @@ tryAgain:
         {
             Debug.Assert(this.CurrentToken.Kind == SyntaxKind.ReturnKeyword);
             var @return = this.EatToken(SyntaxKind.ReturnKeyword);
+            SyntaxToken fromKeyword = null;
             SyntaxToken refKeyword = null;
             ExpressionSyntax arg = null;
             if (this.CurrentToken.Kind != SyntaxKind.SemicolonToken)
             {
+                if (this.CurrentToken.ContextualKind == SyntaxKind.FromKeyword) {
+                    //here we test if we can eat it as a function call;
+                    var reset = this.GetResetPoint();
+                    fromKeyword = this.EatContextualToken(SyntaxKind.FromKeyword);
+                    if (this.CurrentToken.Kind == SyntaxKind.RefKeyword) {
+                        refKeyword = this.EatToken();
+                        refKeyword = CheckFeatureAvailability(refKeyword, MessageID.IDS_FeatureRefLocalsReturns);
+                    }
+                    arg = this.ParseExpressionCore();
+                    if (arg.Kind == SyntaxKind.InvocationExpression) {
+                        this.Release(ref reset);
+                        goto done;
+                    }
+                    fromKeyword = null;
+                    refKeyword = null;
+                    arg = null;
+                    this.Reset(ref reset);
+                    this.Release(ref reset);
+                }
+
                 if (this.CurrentToken.Kind == SyntaxKind.RefKeyword)
                 {
                     refKeyword = this.EatToken();
@@ -7948,8 +7969,9 @@ tryAgain:
                 arg = this.ParseExpressionCore();
             }
 
+            done:
             var semicolon = this.EatToken(SyntaxKind.SemicolonToken);
-            return _syntaxFactory.ReturnStatement(@return, refKeyword, arg, semicolon);
+            return _syntaxFactory.ReturnStatement(@return, fromKeyword, refKeyword, arg, semicolon);
         }
 
         private YieldStatementSyntax ParseYieldStatement()

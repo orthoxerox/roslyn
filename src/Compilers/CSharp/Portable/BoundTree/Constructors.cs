@@ -86,14 +86,14 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             var call = new BoundCall(node, receiverOpt, method, arguments, namedArguments,
                 refKinds, isDelegateCall: isDelegateCall, expanded: false, invokedAsExtensionMethod: invokedAsExtensionMethod, argsToParamsOpt: default(ImmutableArray<int>),
-                resultKind: resultKind, type: method.ReturnType, hasErrors: true);
+                isTailCall: false, resultKind: resultKind, type: method.ReturnType, hasErrors: true);
             call.OriginalMethodsOpt = originalMethods;
             return call;
         }
 
         public BoundCall Update(BoundExpression receiverOpt, MethodSymbol method, ImmutableArray<BoundExpression> arguments)
         {
-            return this.Update(receiverOpt, method, arguments, ArgumentNamesOpt, ArgumentRefKindsOpt, IsDelegateCall, Expanded, InvokedAsExtensionMethod, ArgsToParamsOpt, ResultKind, Type);
+            return this.Update(receiverOpt, method, arguments, ArgumentNamesOpt, ArgumentRefKindsOpt, IsDelegateCall, Expanded, InvokedAsExtensionMethod, IsTailCall, ArgsToParamsOpt, ResultKind, Type);
         }
 
         public static BoundCall Synthesized(CSharpSyntaxNode syntax, BoundExpression receiverOpt, MethodSymbol method)
@@ -122,6 +122,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     isDelegateCall: false,
                     expanded: false,
                     invokedAsExtensionMethod: false,
+                    isTailCall: false,
                     argsToParamsOpt: default(ImmutableArray<int>),
                     resultKind: LookupResultKind.Viable,
                     type: method.ReturnType,

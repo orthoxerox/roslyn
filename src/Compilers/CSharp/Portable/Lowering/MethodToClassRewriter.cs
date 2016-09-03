@@ -230,6 +230,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 node.IsDelegateCall,
                 node.Expanded,
                 node.InvokedAsExtensionMethod,
+                node.IsTailCall,
                 node.ArgsToParamsOpt,
                 node.ResultKind,
                 rewrittenType);

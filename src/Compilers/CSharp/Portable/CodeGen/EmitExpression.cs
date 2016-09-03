@@ -1440,6 +1440,12 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
 
             EmitArguments(arguments, method.Parameters);
             int stackBehavior = GetCallStackBehavior(call);
+
+            if (call.IsTailCall)
+            {
+                _builder.EmitOpCode(ILOpCode.Tail);
+            }
+
             switch (callKind)
             {
                 case CallKind.Call:

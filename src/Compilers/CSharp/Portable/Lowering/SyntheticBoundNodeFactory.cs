@@ -607,7 +607,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             Debug.Assert(method.ParameterCount == args.Length);
             return new BoundCall(
                 Syntax, receiver, method, args,
-                ImmutableArray<String>.Empty, ImmutableArray<RefKind>.Empty, false, false, false,
+                ImmutableArray<String>.Empty, ImmutableArray<RefKind>.Empty, false, false, false, false,
                 ImmutableArray<int>.Empty, LookupResultKind.Viable, method.ReturnType)
             { WasCompilerGenerated = true };
         }
@@ -617,7 +617,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             Debug.Assert(method.ParameterCount == args.Length);
             return new BoundCall(
                 Syntax, receiver, method, args,
-                ImmutableArray<String>.Empty, refKinds, false, false, false,
+                ImmutableArray<String>.Empty, refKinds, false, false, false, false,
                 ImmutableArray<int>.Empty, LookupResultKind.Viable, method.ReturnType)
             { WasCompilerGenerated = true };
         }
