@@ -660,6 +660,12 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                    _builder.InExceptionHandler;
         }
 
+        bool TailCall(BoundReturnStatement boundReturnStatement)
+        {
+            var call = boundReturnStatement.ExpressionOpt as BoundCall;
+            return (call != null && call.IsTailCall);
+        }
+
         // Compiler generated return mapped to a block is very likely the synthetic return
         // that was added at the end of the last block of a void method by analysis.
         // This is likely to be the last return in the method, so if we have not yet
@@ -668,7 +674,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
         {
             return boundReturnStatement.WasCompilerGenerated &&
                     (boundReturnStatement.Syntax.IsKind(SyntaxKind.Block) || _method?.IsImplicitConstructor == true) &&
-                    !_builder.InExceptionHandler;
+                    !_builder.InExceptionHandler && !TailCall(boundReturnStatement);
         }
 
         private void EmitReturnStatement(BoundReturnStatement boundReturnStatement)
@@ -683,7 +689,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                 this.EmitAddress(expressionOpt, AddressKind.Writeable);
             }
 
-            if (ShouldUseIndirectReturn())
+            if (ShouldUseIndirectReturn() && !TailCall(boundReturnStatement))
             {
                 if (expressionOpt != null)
                 {
