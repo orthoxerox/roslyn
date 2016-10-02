@@ -161,15 +161,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to PDB embedded texts are not supported in VB..
-        '''</summary>
-        Friend ReadOnly Property EmbeddedTextsNotSupported() As String
-            Get
-                Return ResourceManager.GetString("EmbeddedTextsNotSupported", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
         '''  Looks up a localized string similar to Cannot find the interop type that matches the embedded type &apos;{0}&apos;. Are you missing an assembly reference?.
         '''</summary>
         Friend ReadOnly Property ERR_AbsentReferenceToPIA1() As String
@@ -1757,6 +1748,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to /embed switch is only supported when emitting Portable PDB (/debug:portable or /debug:embedded)..
+        '''</summary>
+        Friend ReadOnly Property ERR_CannotEmbedWithoutPdb() As String
+            Get
+                Return ResourceManager.GetString("ERR_CannotEmbedWithoutPdb", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to &apos;{0}{1}&apos; is not valid because &apos;{2}&apos; is inside a scope that defines a variable that is used in a lambda or query expression..
         '''</summary>
         Friend ReadOnly Property ERR_CannotGotoNonScopeBlocksWithClosure() As String
@@ -2942,6 +2942,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_DllImportOnResumableMethod() As String
             Get
                 Return ResourceManager.GetString("ERR_DllImportOnResumableMethod", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Error writing to XML documentation file: {0}.
+        '''</summary>
+        Friend ReadOnly Property ERR_DocFileGen() As String
+            Get
+                Return ResourceManager.GetString("ERR_DocFileGen", resourceCulture)
             End Get
         End Property
         
@@ -4445,6 +4454,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_ExpectedXmlWhiteSpace() As String
             Get
                 Return ResourceManager.GetString("ERR_ExpectedXmlWhiteSpace", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Cannot reference &apos;System.Runtime.CompilerServices.TupleElementNamesAttribute&apos; explicitly. Use the tuple syntax to define tuple names..
+        '''</summary>
+        Friend ReadOnly Property ERR_ExplicitTupleElementNamesAttribute() As String
+            Get
+                Return ResourceManager.GetString("ERR_ExplicitTupleElementNamesAttribute", resourceCulture)
             End Get
         End Property
         
@@ -5960,6 +5978,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_InvalidInNamespace() As String
             Get
                 Return ResourceManager.GetString("ERR_InvalidInNamespace", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Invalid instrumentation kind: {0}.
+        '''</summary>
+        Friend ReadOnly Property ERR_InvalidInstrumentationKind() As String
+            Get
+                Return ResourceManager.GetString("ERR_InvalidInstrumentationKind", resourceCulture)
             End Get
         End Property
         
@@ -10371,11 +10398,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to Tuple member names must all be provided, if any one is provided..
+        '''  Looks up a localized string similar to Cannot define a class or member that utilizes tuples because the compiler required type &apos;{0}&apos; cannot be found. Are you missing a reference?.
         '''</summary>
-        Friend ReadOnly Property ERR_TupleExplicitNamesOnAllMembersOrNone() As String
+        Friend ReadOnly Property ERR_TupleElementNamesAttributeMissing() As String
             Get
-                Return ResourceManager.GetString("ERR_TupleExplicitNamesOnAllMembersOrNone", resourceCulture)
+                Return ResourceManager.GetString("ERR_TupleElementNamesAttributeMissing", resourceCulture)
             End Get
         End Property
         
@@ -10389,7 +10416,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to Tuple membername &apos;{0}&apos; is disallowed at any position..
+        '''  Looks up a localized string similar to Tuple member name &apos;{0}&apos; is disallowed at any position..
         '''</summary>
         Friend ReadOnly Property ERR_TupleReservedMemberNameAnyPosition() As String
             Get
@@ -11286,6 +11313,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_ValueAndClassTypeConstrCombined() As String
             Get
                 Return ResourceManager.GetString("ERR_ValueAndClassTypeConstrCombined", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Predefined type &apos;{0}&apos; is not defined or imported..
+        '''</summary>
+        Friend ReadOnly Property ERR_ValueTupleTypeRefResolutionError() As String
+            Get
+                Return ResourceManager.GetString("ERR_ValueTupleTypeRefResolutionError", resourceCulture)
             End Get
         End Property
         
@@ -14553,6 +14589,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property WRN_SynthMemberShadowsSynthMember7_Title() As String
             Get
                 Return ResourceManager.GetString("WRN_SynthMemberShadowsSynthMember7_Title", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to The tuple element name &apos;{0}&apos; is ignored because a different name is specified by the target type &apos;{1}&apos;..
+        '''</summary>
+        Friend ReadOnly Property WRN_TupleLiteralNameMismatch() As String
+            Get
+                Return ResourceManager.GetString("WRN_TupleLiteralNameMismatch", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to The tuple element name is ignored because a different name is specified by the assignment target..
+        '''</summary>
+        Friend ReadOnly Property WRN_TupleLiteralNameMismatch_Title() As String
+            Get
+                Return ResourceManager.GetString("WRN_TupleLiteralNameMismatch_Title", resourceCulture)
             End Get
         End Property
         

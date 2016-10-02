@@ -20,17 +20,19 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend Class VisualBasicSyntaxFactsServiceFactory
         Implements ILanguageServiceFactory
 
-        Public Shared ReadOnly Property Instance As New VisualBasicSyntaxFactsService
-
         Public Function CreateLanguageService(languageServices As HostLanguageServices) As ILanguageService Implements ILanguageServiceFactory.CreateLanguageService
-            Return Instance
+            Return VisualBasicSyntaxFactsService.Instance
         End Function
-
     End Class
 
     Friend Class VisualBasicSyntaxFactsService
         Inherits AbstractSyntaxFactsService
         Implements ISyntaxFactsService
+
+        Public Shared ReadOnly Property Instance As New VisualBasicSyntaxFactsService
+
+        Private Sub New()
+        End Sub
 
         Public Function IsAwaitKeyword(token As SyntaxToken) As Boolean Implements ISyntaxFactsService.IsAwaitKeyword
             Return token.Kind = SyntaxKind.AwaitKeyword
@@ -436,7 +438,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Me.IsOperator(token)
         End Function
 
-        Public Function IsMemberAccessExpression(node As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsMemberAccessExpression
+        Public Function IsSimpleMemberAccessExpression(node As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsSimpleMemberAccessExpression
             Return TypeOf node Is MemberAccessExpressionSyntax AndAlso
                 DirectCast(node, MemberAccessExpressionSyntax).Kind = SyntaxKind.SimpleMemberAccessExpression
         End Function
@@ -564,8 +566,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Public Function IsObjectInitializerNamedAssignmentIdentifier(node As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsObjectInitializerNamedAssignmentIdentifier
+            Dim unused As SyntaxNode = Nothing
+            Return IsObjectInitializerNamedAssignmentIdentifier(node, unused)
+        End Function
+
+        Public Function IsObjectInitializerNamedAssignmentIdentifier(
+                node As SyntaxNode,
+                ByRef initializedInstance As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsObjectInitializerNamedAssignmentIdentifier
+
             Dim identifier = TryCast(node, IdentifierNameSyntax)
-            Return If(identifier?.IsChildNode(Of NamedFieldInitializerSyntax)(Function(n) n.Name), False)
+            If identifier?.IsChildNode(Of NamedFieldInitializerSyntax)(Function(n) n.Name) Then
+                ' .parent is the NamedField.
+                ' .parent.parent is the ObjectInitializer.
+                ' .parent.parent.parent will be the ObjectCreationExpression.
+                initializedInstance = identifier.Parent.Parent.Parent
+                Return True
+            End If
+
+            Return False
         End Function
 
         Public Function IsElementAccessExpression(node As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsElementAccessExpression
@@ -907,7 +925,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Function GetInheritanceNames(typeBlock As TypeBlockSyntax) As ImmutableArray(Of String)
-            Dim builder = ImmutableArray.CreateBuilder(Of String)
+            Dim builder = ArrayBuilder(Of String).GetInstance()
 
             Dim aliasMap = GetAliasMap(typeBlock)
             Try
@@ -919,7 +937,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     AddInheritanceNames(builder, implementsStatement.Types, aliasMap)
                 Next
 
-                Return builder.ToImmutable()
+                Return builder.ToImmutableAndFree()
             Finally
                 FreeAliasMap(aliasMap)
             End Try
@@ -948,7 +966,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Sub AddInheritanceNames(
-                builder As ImmutableArray(Of String).Builder,
+                builder As ArrayBuilder(Of String),
                 types As SeparatedSyntaxList(Of TypeSyntax),
                 aliasMap As Dictionary(Of String, String))
 
@@ -958,7 +976,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Sub
 
         Private Sub AddInheritanceName(
-                builder As ImmutableArray(Of String).Builder,
+                builder As ArrayBuilder(Of String),
                 typeSyntax As TypeSyntax,
                 aliasMap As Dictionary(Of String, String))
             Dim name = GetTypeName(typeSyntax)
@@ -1346,7 +1364,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Public Function GetArgumentsForInvocationExpression(invocationExpression As SyntaxNode) As SeparatedSyntaxList(Of SyntaxNode) Implements ISyntaxFactsService.GetArgumentsForInvocationExpression
-            Return (TryCast(invocationExpression, InvocationExpressionSyntax)?.ArgumentList.Arguments).Value
+            Dim arguments = TryCast(invocationExpression, InvocationExpressionSyntax)?.ArgumentList?.Arguments
+            Return If(arguments.HasValue, arguments.Value, Nothing)
         End Function
 
         Public Function ConvertToSingleLine(node As SyntaxNode, Optional useElasticTrivia As Boolean = False) As SyntaxNode Implements ISyntaxFactsService.ConvertToSingleLine
@@ -1404,41 +1423,98 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     End If
                     Return False
 
-                Case SyntaxKind.NamespaceStatement
-                Case SyntaxKind.NamespaceBlock
-                Case SyntaxKind.ModuleStatement
-                Case SyntaxKind.ModuleBlock
-                Case SyntaxKind.EnumStatement
-                Case SyntaxKind.EnumBlock
-                Case SyntaxKind.StructureStatement
-                Case SyntaxKind.StructureBlock
-                Case SyntaxKind.InterfaceStatement
-                Case SyntaxKind.InterfaceBlock
-                Case SyntaxKind.ClassStatement
-                Case SyntaxKind.ClassBlock
-                Case SyntaxKind.DelegateFunctionStatement
-                Case SyntaxKind.DelegateSubStatement
-                Case SyntaxKind.EventStatement
-                Case SyntaxKind.EventBlock
-                Case SyntaxKind.AddHandlerAccessorBlock
-                Case SyntaxKind.RemoveHandlerAccessorBlock
-                Case SyntaxKind.FieldDeclaration
-                Case SyntaxKind.SubStatement
-                Case SyntaxKind.SubBlock
-                Case SyntaxKind.FunctionStatement
-                Case SyntaxKind.FunctionBlock
-                Case SyntaxKind.PropertyStatement
-                Case SyntaxKind.PropertyBlock
-                Case SyntaxKind.GetAccessorBlock
-                Case SyntaxKind.SetAccessorBlock
-                Case SyntaxKind.SubNewStatement
-                Case SyntaxKind.ConstructorBlock
-                Case SyntaxKind.OperatorStatement
-                Case SyntaxKind.OperatorBlock
+                Case SyntaxKind.NamespaceStatement,
+                     SyntaxKind.NamespaceBlock,
+                     SyntaxKind.ModuleStatement,
+                     SyntaxKind.ModuleBlock,
+                     SyntaxKind.EnumStatement,
+                     SyntaxKind.EnumBlock,
+                     SyntaxKind.StructureStatement,
+                     SyntaxKind.StructureBlock,
+                     SyntaxKind.InterfaceStatement,
+                     SyntaxKind.InterfaceBlock,
+                     SyntaxKind.ClassStatement,
+                     SyntaxKind.ClassBlock,
+                     SyntaxKind.DelegateFunctionStatement,
+                     SyntaxKind.DelegateSubStatement,
+                     SyntaxKind.EventStatement,
+                     SyntaxKind.EventBlock,
+                     SyntaxKind.AddHandlerAccessorBlock,
+                     SyntaxKind.RemoveHandlerAccessorBlock,
+                     SyntaxKind.FieldDeclaration,
+                     SyntaxKind.SubStatement,
+                     SyntaxKind.SubBlock,
+                     SyntaxKind.FunctionStatement,
+                     SyntaxKind.FunctionBlock,
+                     SyntaxKind.PropertyStatement,
+                     SyntaxKind.PropertyBlock,
+                     SyntaxKind.GetAccessorBlock,
+                     SyntaxKind.SetAccessorBlock,
+                     SyntaxKind.SubNewStatement,
+                     SyntaxKind.ConstructorBlock,
+                     SyntaxKind.OperatorStatement,
+                     SyntaxKind.OperatorBlock
                     Return True
             End Select
 
             Return False
+        End Function
+
+        Public Sub AddFirstMissingCloseBrace(root As SyntaxNode, contextNode As SyntaxNode, ByRef newRoot As SyntaxNode, ByRef newContextNode As SyntaxNode) Implements ISyntaxFactsService.AddFirstMissingCloseBrace
+            ' Nothing to be done.  VB doesn't have close braces
+            newRoot = root
+            newContextNode = contextNode
+        End Sub
+
+        Public Function GetObjectCreationInitializer(objectCreationExpression As SyntaxNode) As SyntaxNode Implements ISyntaxFactsService.GetObjectCreationInitializer
+            Return DirectCast(objectCreationExpression, ObjectCreationExpressionSyntax).Initializer
+        End Function
+
+        Public Function IsSimpleAssignmentStatement(statement As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsSimpleAssignmentStatement
+            Return statement.IsKind(SyntaxKind.SimpleAssignmentStatement)
+        End Function
+
+        Public Sub GetPartsOfAssignmentStatement(statement As SyntaxNode, ByRef left As SyntaxNode, ByRef right As SyntaxNode) Implements ISyntaxFactsService.GetPartsOfAssignmentStatement
+            Dim assignment = DirectCast(statement, AssignmentStatementSyntax)
+            left = assignment.Left
+            right = assignment.Right
+        End Sub
+
+        Public Function GetNameOfMemberAccessExpression(memberAccessExpression As SyntaxNode) As SyntaxNode Implements ISyntaxFactsService.GetNameOfMemberAccessExpression
+            Return DirectCast(memberAccessExpression, MemberAccessExpressionSyntax).Name
+        End Function
+
+        Public Function GetOperatorTokenOfMemberAccessExpression(memberAccessExpression As SyntaxNode) As SyntaxToken Implements ISyntaxFactsService.GetOperatorTokenOfMemberAccessExpression
+            Return DirectCast(memberAccessExpression, MemberAccessExpressionSyntax).OperatorToken
+        End Function
+
+        Public Function GetIdentifierOfSimpleName(node As SyntaxNode) As SyntaxToken Implements ISyntaxFactsService.GetIdentifierOfSimpleName
+            Return DirectCast(node, SimpleNameSyntax).Identifier
+        End Function
+
+        Public Function GetIdentifierOfVariableDeclarator(node As SyntaxNode) As SyntaxToken Implements ISyntaxFactsService.GetIdentifierOfVariableDeclarator
+            Return DirectCast(node, VariableDeclaratorSyntax).Names.Last().Identifier
+        End Function
+
+        Public Function IsIdentifierName(node As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsIdentifierName
+            Return node.IsKind(SyntaxKind.IdentifierName)
+        End Function
+
+        Public Function IsLocalDeclarationStatement(node As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsLocalDeclarationStatement
+            Return node.IsKind(SyntaxKind.LocalDeclarationStatement)
+        End Function
+
+        Public Function IsDeclaratorOfLocalDeclarationStatement(declarator As SyntaxNode, localDeclarationStatement As SyntaxNode) As Boolean Implements ISyntaxFactsService.IsDeclaratorOfLocalDeclarationStatement
+            Return DirectCast(localDeclarationStatement, LocalDeclarationStatementSyntax).Declarators.
+                Contains(DirectCast(declarator, VariableDeclaratorSyntax))
+        End Function
+
+        Public Function AreEquivalent(token1 As SyntaxToken, token2 As SyntaxToken) As Boolean Implements ISyntaxFactsService.AreEquivalent
+            Return SyntaxFactory.AreEquivalent(token1, token2)
+        End Function
+
+        Public Function AreEquivalent(node1 As SyntaxNode, node2 As SyntaxNode) As Boolean Implements ISyntaxFactsService.AreEquivalent
+            Return SyntaxFactory.AreEquivalent(node1, node2)
         End Function
     End Class
 End Namespace

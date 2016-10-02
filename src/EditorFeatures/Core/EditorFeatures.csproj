@@ -43,7 +43,6 @@
     <ProjectReference Include="..\..\InteractiveWindow\Editor\InteractiveWindow.csproj">
       <Project>{01E9BD68-0339-4A13-B42F-A3CA84D164F3}</Project>
       <Name>InteractiveWindow</Name>
-      <Aliases>InteractiveWindow</Aliases>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -226,9 +225,6 @@
     <Compile Include="Extensibility\NavigationBar\NavigationBarActionlessItem.cs" />
     <Compile Include="Extensibility\NavigationBar\NavigationBarPresentedItem.cs" />
     <Compile Include="Extensibility\NavigationBar\NavigationBarSymbolItem.cs" />
-    <Compile Include="Extensibility\Navigation\INavigableItem.cs" />
-    <Compile Include="Extensibility\Navigation\NavigableItemFactory.cs" />
-    <Compile Include="Extensibility\Navigation\NavigableItemFactory.DeclaredSymbolNavigableItem.cs" />
     <Compile Include="Extensibility\NavigationBar\INavigationBarController.cs" />
     <Compile Include="Extensibility\NavigationBar\INavigationBarControllerFactoryService.cs" />
     <Compile Include="Extensibility\NavigationBar\INavigationBarItemService.cs" />
@@ -238,7 +234,6 @@
     <Compile Include="Extensibility\NavigationBar\NavigationBarItemSelectedEventArgs.cs" />
     <Compile Include="Extensibility\NavigationBar\NavigationBarProjectItem.cs" />
     <Compile Include="Extensibility\NavigationBar\NavigationBarSelectedItems.cs" />
-    <Compile Include="Extensibility\Navigation\NavigableItemFactory.SymbolLocationNavigableItem.cs" />
     <Compile Include="Extensibility\Peek\IPeekableItemFactory.cs" />
     <Compile Include="Extensibility\QuickInfo\ExportQuickInfoProviderAttribute.cs" />
     <Compile Include="Extensibility\QuickInfo\IDeferredQuickInfoContent.cs" />
@@ -282,10 +277,9 @@
     <Compile Include="Implementation\Intellisense\Completion\Presentation\VisualStudio14CompletionSetFactory.cs" />
     <Compile Include="Implementation\Interactive\IAbstractResetInteractiveCommand.cs" />
     <Compile Include="Implementation\LineSeparators\LineSeparatorAdornmentManagerProvider.cs" />
-    <Compile Include="Implementation\NavigateTo\NavigateToSearchResultProvider.cs" />
-    <Compile Include="Implementation\NavigateTo\INavigateToSearchResultProvider.cs" />
-    <Compile Include="Implementation\Outlining\AbstractSyntaxOutliner.cs" />
-    <Compile Include="Implementation\Outlining\InvalidOutliningRegionException.cs" />
+    <Compile Include="Implementation\NavigateTo\INavigateToOptionsService.cs" />
+    <Compile Include="Implementation\Structure\InvalidOutliningRegionException.cs" />
+    <Compile Include="Implementation\Structure\AbstractStructureTaggerProvider.cs" />
     <Compile Include="Implementation\Preview\DifferenceViewerPreview.cs" />
     <Compile Include="Implementation\Preview\PreviewReferenceHighlightingTaggerProvider.cs" />
     <Compile Include="Implementation\Suggestions\FixMultipleOccurrencesService.cs" />
@@ -546,13 +540,9 @@
     <Compile Include="Implementation\MetadataAsSource\MetadataAsSourceGeneratedFileInfo.cs" />
     <Compile Include="Implementation\MetadataAsSource\MetadataAsSourceWorkspace.cs" />
     <Compile Include="Implementation\MetadataAsSource\SymbolMappingServiceFactory.cs" />
-    <Compile Include="Implementation\NavigateTo\AbstractNavigateToSearchService.cs" />
-    <Compile Include="Implementation\NavigateTo\AbstractNavigateToSearchService.SearchResult.cs" />
     <Compile Include="Implementation\NavigateTo\DefaultNavigateToPreviewService.cs" />
     <Compile Include="Implementation\NavigateTo\DefaultNavigateToPreviewServiceFactory.cs" />
     <Compile Include="Implementation\NavigateTo\INavigateToPreviewService.cs" />
-    <Compile Include="Implementation\NavigateTo\INavigateToSearchResult.cs" />
-    <Compile Include="Implementation\NavigateTo\INavigateToSearchService.cs" />
     <Compile Include="Implementation\NavigateTo\NavigateToIconFactory.cs" />
     <Compile Include="Implementation\NavigateTo\NavigateToItemProvider.cs" />
     <Compile Include="Implementation\NavigateTo\NavigateToItemProvider.ItemDisplayFactory.cs" />
@@ -566,16 +556,9 @@
     <Compile Include="Implementation\NavigationBar\NavigationBarSymbolIdIndexProvider.cs" />
     <Compile Include="Implementation\Notification\EditorNotificationServiceFactory.cs" />
     <Compile Include="Implementation\Organizing\OrganizeDocumentCommandHandler.cs" />
-    <Compile Include="Implementation\Outlining\AbstractOutliningService.cs" />
-    <Compile Include="Implementation\Outlining\AbstractSyntaxNodeOutliner.cs" />
-    <Compile Include="Implementation\Outlining\AbstractSyntaxTriviaOutliner.cs" />
-    <Compile Include="Implementation\Outlining\IOutliningService.cs" />
-    <Compile Include="Implementation\Outlining\OutliningCommandHandler.cs" />
-    <Compile Include="Implementation\Outlining\OutliningExtensions.cs" />
-    <Compile Include="Implementation\Outlining\OutliningSpan.cs" />
-    <Compile Include="Implementation\Outlining\OutliningTaggerProvider.cs" />
-    <Compile Include="Implementation\Outlining\OutliningTaggerProvider.Tag.cs" />
-    <Compile Include="Implementation\Outlining\RegionCollector.cs" />
+    <Compile Include="Implementation\Structure\OutliningCommandHandler.cs" />
+    <Compile Include="Implementation\Structure\VisualStudio14StructureTaggerProvider.cs" />
+    <Compile Include="Implementation\Structure\RoslynOutliningRegionTag.cs" />
     <Compile Include="Implementation\Peek\DefinitionPeekableItem.cs" />
     <Compile Include="Implementation\Peek\ExternalFilePeekableItem.cs" />
     <Compile Include="Implementation\Peek\PeekableItem.cs" />
@@ -653,6 +636,7 @@
     <Compile Include="IRefactorNotifyService.cs" />
     <Compile Include="Shared\IImageMonikerService.cs" />
     <Compile Include="Shared\DefaultImageMonikerService.cs" />
+    <Compile Include="Shared\Tagging\EventSources\TaggerEventSources.EditorFormatMapChangedEventSource.cs" />
     <Compile Include="Shared\Tagging\EventSources\TaggerEventSources.ViewSpanChangedEventSource.cs" />
     <Compile Include="Shared\Utilities\SynchronizationContextTaskScheduler.cs" />
     <Compile Include="Tagging\AbstractAsynchronousTaggerProvider.Tagger.cs" />
@@ -704,7 +688,7 @@
     <Compile Include="Shared\Extensions\SnapshotPointExtensions.cs" />
     <Compile Include="Shared\Extensions\SnapshotSpanExtensions.cs" />
     <Compile Include="Shared\Extensions\SpanExtensions.cs" />
-    <Compile Include="Shared\Extensions\TaggedTextExtensions.cs" />
+    <Compile Include="Shared\Extensions\ClassificationExtensions.cs" />
     <Compile Include="Shared\Extensions\TextChangeExtensions.cs" />
     <Compile Include="Shared\Extensions\WorkspaceExtensions.cs" />
     <Compile Include="Shared\Options\ComponentOnOffOptions.cs" />
@@ -801,6 +785,8 @@
     <PublicAPI Include="PublicAPI.Shipped.txt" />
     <PublicAPI Include="PublicAPI.Unshipped.txt" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Extensibility\Navigation\" />
+  </ItemGroup>
   <Import Project="..\..\..\build\Targets\VSL.Imports.targets" />
 </Project>

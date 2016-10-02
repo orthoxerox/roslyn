@@ -69,7 +69,7 @@ static void addRoslynJob(def myJob, String jobName, String branchName, Boolean i
     if (triggerPhraseExtra) {
       triggerCore = "${triggerCore}|${triggerPhraseExtra}"
     }
-    def triggerPhrase = "(?i).*test\\W+(${triggerCore})\\W+please.*";
+    def triggerPhrase = "(?i)^\\s*(@?dotnet-bot\\s+)?test\\s+(${triggerCore})(\\s+please)?\\s*$";
     def contextName = jobName
     Utilities.addGithubPRTriggerForBranch(myJob, branchName, contextName, triggerPhrase, triggerPhraseOnly)
   } else {
@@ -101,9 +101,9 @@ set TMP=%TEMP%
                   }
                 }
 
-      def triggerPhraseOnly = configuration == 'release'   
+      def triggerPhraseOnly = false
       def triggerPhraseExtra = ""
-                Utilities.setMachineAffinity(myJob, 'Windows_NT', 'latest-or-auto-dev15')
+      Utilities.setMachineAffinity(myJob, 'Windows_NT', 'latest-or-auto-dev15')
       Utilities.addXUnitDotNETResults(myJob, '**/xUnitResults/*.xml')
       addRoslynJob(myJob, jobName, branchName, isPr, triggerPhraseExtra, triggerPhraseOnly)
     }
@@ -197,3 +197,10 @@ commitPullList.each { isPr ->
   Utilities.setMachineAffinity(myJob, 'Windows_NT', 'latest-or-auto-dev15')
   addRoslynJob(myJob, jobName, branchName, isPr, triggerPhraseExtra, triggerPhraseOnly)
 }
+
+JobReport.Report.generateJobReport(out)
+
+// Make the call to generate the help job
+Utilities.createHelperJob(this, projectName, branchName,
+    "Welcome to the ${projectName} Repository",  // This is prepended to the help message
+    "Have a nice day!")  // This is appended to the help message.  You might put known issues here.

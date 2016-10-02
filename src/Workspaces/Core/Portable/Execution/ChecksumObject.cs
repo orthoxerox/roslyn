@@ -32,11 +32,11 @@ namespace Microsoft.CodeAnalysis.Execution
         }
 
         /// <summary>
-        /// This will write out this object's data to bits
+        /// This will write out this object's data (the data the checksum is associated with) to bits
         /// 
         /// this hide how each data is serialized to bits
         /// </summary>
-        public abstract Task WriteToAsync(ObjectWriter writer, CancellationToken cancellationToken);
+        public abstract Task WriteObjectToAsync(ObjectWriter writer, CancellationToken cancellationToken);
     }
 
     /// <summary>
@@ -58,9 +58,10 @@ namespace Microsoft.CodeAnalysis.Execution
 
         public object[] Children { get; }
 
-        public override Task WriteToAsync(ObjectWriter writer, CancellationToken cancellationToken)
+        public override Task WriteObjectToAsync(ObjectWriter writer, CancellationToken cancellationToken)
         {
-            return _serializer.SerializeChecksumObjectWithChildrenAsync(this, writer, cancellationToken);
+            _serializer.SerializeChecksumObjectWithChildren(this, writer, cancellationToken);
+            return SpecializedTasks.EmptyTask;
         }
 
         private static Checksum CreateChecksum(string kind, object[] children)
@@ -72,6 +73,8 @@ namespace Microsoft.CodeAnalysis.Execution
     // TODO: Kind might not actually needed. see whether we can get rid of this
     internal static class WellKnownChecksumObjects
     {
+        public const string Null = nameof(Null);
+
         public const string Projects = nameof(Projects);
         public const string Documents = nameof(Documents);
         public const string TextDocuments = nameof(TextDocuments);
@@ -88,5 +91,6 @@ namespace Microsoft.CodeAnalysis.Execution
         public const string MetadataReference = nameof(MetadataReference);
         public const string AnalyzerReference = nameof(AnalyzerReference);
         public const string SourceText = nameof(SourceText);
+        public const string OptionSet = nameof(OptionSet);
     }
 }

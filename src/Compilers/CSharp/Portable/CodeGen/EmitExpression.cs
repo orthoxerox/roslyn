@@ -302,6 +302,10 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                     EmitPseudoVariableValue((BoundPseudoVariable)expression, used);
                     break;
 
+                case BoundKind.ThrowExpression:
+                    EmitThrowExpression((BoundThrowExpression)expression, used);
+                    break;
+
                 case BoundKind.Void:
                     Debug.Assert(!used);
                     break;
@@ -313,6 +317,14 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                     // node should have been lowered:
                     throw ExceptionUtilities.UnexpectedValue(expression.Kind);
             }
+        }
+
+        private void EmitThrowExpression(BoundThrowExpression node, bool used)
+        {
+            this.EmitThrow(node.Expression);
+
+            // to satisfy invariants, we push a default value to pretend to adjust the stack height
+            EmitDefaultValue(node.Type, used, node.Syntax);
         }
 
         private void EmitComplexConditionalReceiver(BoundComplexConditionalReceiver expression, bool used)
@@ -1742,11 +1754,13 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
             }
             else
             {
-                if (!used &&
-                    expression.Constructor.OriginalDefinition == _module.Compilation.GetSpecialTypeMember(SpecialMember.System_Nullable_T__ctor))
+                if (!used && ConstructorNotSideEffecting(constructor))
                 {
-                    // creating nullable has no side-effects, so we will just evaluate the arg
-                    EmitExpression(expression.Arguments[0], used: false);
+                    // creating nullable has no side-effects, so we will just evaluate the arguments
+                    foreach (var arg in expression.Arguments)
+                    {
+                        EmitExpression(arg, used: false);
+                    }
                 }
                 else
                 {
@@ -1762,6 +1776,35 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                     EmitPopIfUnused(used);
                 }
             }
+        }
+
+        /// <summary>
+        /// Recognizes constructors known to not have side-effects (which means they can be skipped unless the constructed object is used)
+        /// </summary>
+        private bool ConstructorNotSideEffecting(MethodSymbol constructor)
+        {
+            var originalDef = constructor.OriginalDefinition;
+            var compilation = _module.Compilation;
+
+            if (originalDef == compilation.GetSpecialTypeMember(SpecialMember.System_Nullable_T__ctor))
+            {
+                return true;
+            }
+
+            if (originalDef.ContainingType.Name == TupleTypeSymbol.TupleTypeName &&
+                    (originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T2__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T3__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T4__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T5__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T6__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T7__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_TRest__ctor) ||
+                    originalDef == compilation.GetWellKnownTypeMember(WellKnownMember.System_ValueTuple_T1__ctor)))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void EmitAssignmentExpression(BoundAssignmentOperator assignmentOperator, UseKind useKind)
@@ -2710,7 +2753,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
         private void EmitInstrumentationPayloadRootStore(BoundInstrumentationPayloadRoot node)
         {
             _builder.EmitOpCode(ILOpCode.Stsfld);
-            EmitInstrumentationPayloadRootToken(node);  
+            EmitInstrumentationPayloadRootToken(node);
         }
 
         private void EmitInstrumentationPayloadRootToken(BoundInstrumentationPayloadRoot node)

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Microsoft.CodeAnalysis.Syntax.InternalSyntax;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
@@ -3149,7 +3150,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
             if (error != null)
             {
-                this.AddError(error.Value, errorArgs ?? SpecializedCollections.EmptyArray<object>());
+                this.AddError(error.Value, errorArgs ?? Array.Empty<object>());
             }
         }
 

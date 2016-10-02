@@ -1686,16 +1686,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_PeWritingFailure = 37256
 
         ERR_OptionMustBeAbsolutePath = 37257
+        ERR_DocFileGen = 37258
 
-        ERR_TupleExplicitNamesOnAllMembersOrNone = 37258
         ERR_TupleTooFewElements = 37259
-        ERR_TupleReservedMemberNameAnyPosition = 37260
-        ERR_TupleReservedMemberName = 37261
-        ERR_TupleDuplicateMemberName = 37262
+        ERR_TupleReservedElementNameAnyPosition = 37260
+        ERR_TupleReservedElementName = 37261
+        ERR_TupleDuplicateElementName = 37262
 
         ERR_RefReturningCallInExpressionTree = 37263
 
         ERR_SourceLinkRequiresPortablePdb = 37264
+        ERR_CannotEmbedWithoutPdb = 37265
+
+        ERR_InvalidInstrumentationKind = 37266
+
+        ERR_ValueTupleTypeRefResolutionError = 37267
+
+        ERR_TupleElementNamesAttributeMissing = 37268
+        ERR_ExplicitTupleElementNamesAttribute = 37269
 
         '// WARNINGS BEGIN HERE
         WRN_UseOfObsoleteSymbol2 = 40000
@@ -1761,8 +1769,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         WRN_ConstraintsFailedForInferredArgs2 = 41006
         WRN_ConditionalNotValidOnFunction = 41007
         WRN_UseSwitchInsteadOfAttribute = 41008
+        WRN_TupleLiteralNameMismatch = 41009
 
-        '// AVAILABLE                             41009 - 41199
+        '// AVAILABLE                             41010 - 41199
         WRN_ReferencedAssemblyDoesNotHaveStrongName = 41997
         WRN_RecursiveAddHandlerCall = 41998
         WRN_ImplicitConversionCopyBack = 41999

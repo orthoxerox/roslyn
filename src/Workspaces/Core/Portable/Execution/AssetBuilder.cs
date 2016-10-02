@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 
@@ -24,134 +25,154 @@ namespace Microsoft.CodeAnalysis.Execution
             _serializer = checksumTree.Serializer;
         }
 
-        public Task<Asset> BuildAsync(Solution solution, CancellationToken cancellationToken)
+        public Asset Build(SolutionState solutionState, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(solution, GetInfo(solution), WellKnownChecksumObjects.SolutionChecksumObjectInfo, CreateSolutionChecksumObjectInfoAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(solutionState, GetInfo(solutionState), WellKnownChecksumObjects.SolutionChecksumObjectInfo, CreateSolutionChecksumObjectInfo, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(Project project, CancellationToken cancellationToken)
+        public Asset Build(ProjectState projectState, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(project.Solution.GetProjectState(project.Id), GetInfo(project), WellKnownChecksumObjects.ProjectChecksumObjectInfo, CreateProjectChecksumObjectInfoAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(projectState, GetInfo(projectState), WellKnownChecksumObjects.ProjectChecksumObjectInfo, CreateProjectChecksumObjectInfo, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(TextDocument document, CancellationToken cancellationToken)
+        public Asset Build(TextDocumentState document, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(document.State, GetInfo(document), WellKnownChecksumObjects.DocumentChecksumObjectInfo, CreateDocumentChecksumObjectInfoAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(document, GetInfo(document), WellKnownChecksumObjects.DocumentChecksumObjectInfo, CreateDocumentChecksumObjectInfo, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(Project project, CompilationOptions compilationOptions, CancellationToken cancellationToken)
+        public Asset Build(ProjectState projectState, CompilationOptions compilationOptions, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(compilationOptions, project, WellKnownChecksumObjects.CompilationOptions, CreateCompilationOptionsAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(compilationOptions, projectState, WellKnownChecksumObjects.CompilationOptions, CreateCompilationOptions, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(Project project, ParseOptions parseOptions, CancellationToken cancellationToken)
+        public Asset Build(ProjectState projectState, ParseOptions parseOptions, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(parseOptions, project, WellKnownChecksumObjects.ParseOptions, CreateParseOptionsAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(parseOptions, projectState, WellKnownChecksumObjects.ParseOptions, CreateParseOptions, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(ProjectReference reference, CancellationToken cancellationToken)
+        public Asset Build(ProjectReference reference, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(reference, reference, WellKnownChecksumObjects.ProjectReference, CreateProjectReferenceAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(reference, reference, WellKnownChecksumObjects.ProjectReference, CreateProjectReference, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(MetadataReference reference, CancellationToken cancellationToken)
+        public Asset Build(MetadataReference reference, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(reference, reference, WellKnownChecksumObjects.MetadataReference, CreateMetadataReferenceAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(reference, reference, WellKnownChecksumObjects.MetadataReference, CreateMetadataReference, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(AnalyzerReference reference, CancellationToken cancellationToken)
+        public Asset Build(AnalyzerReference reference, CancellationToken cancellationToken)
         {
-            return _checksumTree.GetOrCreateAssetAsync(reference, reference, WellKnownChecksumObjects.AnalyzerReference, CreateAnalyzerReferenceAsync, cancellationToken);
+            return _checksumTree.GetOrCreateAsset(reference, reference, WellKnownChecksumObjects.AnalyzerReference, CreateAnalyzerReference, cancellationToken);
         }
 
-        public Task<Asset> BuildAsync(TextDocumentState state, SourceText unused, CancellationToken cancellationToken)
+        public Asset Build(TextDocumentState state, SourceText text, CancellationToken cancellationToken)
         {
             // TODO: currently this is a bit wierd not to hold onto source text.
             //       it would be nice if SourceText is changed like how recoverable syntax tree work.
-            return _checksumTree.GetOrCreateAssetAsync(state, state, WellKnownChecksumObjects.SourceText, CreateSourceTextAsync, cancellationToken);
+            var asset = _checksumTree.GetOrCreateAsset(state, state, WellKnownChecksumObjects.SourceText, CreateSourceText, cancellationToken);
+
+            // make sure we keep text alive. this is to make sure we don't do any async call in asset builder
+            GC.KeepAlive(text);
+            return asset;
         }
 
-        private Task<Asset> CreateSolutionChecksumObjectInfoAsync(SolutionChecksumObjectInfo info, string kind, CancellationToken cancellationToken)
+        public Asset Build(OptionSet options, string language, CancellationToken cancellationToken)
+        {
+            // get around issue where this can't be captured in struct
+            var local = this;
+            return _checksumTree.GetOrCreateAsset(options, options, WellKnownChecksumObjects.OptionSet, (v, k, c) => local.CreateOptionSet(v, language, k, c), cancellationToken);
+        }
+
+        private Asset CreateSolutionChecksumObjectInfo(SolutionChecksumObjectInfo info, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<Asset>(new Asset<SolutionChecksumObjectInfo>(info, kind, _serializer.SerializeSolutionChecksumObjectInfo));
+            return new Asset<SolutionChecksumObjectInfo>(info, kind, _serializer.SerializeSolutionChecksumObjectInfo);
         }
 
-        private Task<Asset> CreateProjectChecksumObjectInfoAsync(ProjectChecksumObjectInfo info, string kind, CancellationToken cancellationToken)
+        private Asset CreateProjectChecksumObjectInfo(ProjectChecksumObjectInfo info, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<Asset>(new Asset<ProjectChecksumObjectInfo>(info, kind, _serializer.SerializeProjectChecksumObjectInfo));
+            return new Asset<ProjectChecksumObjectInfo>(info, kind, _serializer.SerializeProjectChecksumObjectInfo);
         }
 
-        private Task<Asset> CreateDocumentChecksumObjectInfoAsync(DocumentChecksumObjectInfo info, string kind, CancellationToken cancellationToken)
+        private Asset CreateDocumentChecksumObjectInfo(DocumentChecksumObjectInfo info, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<Asset>(new Asset<DocumentChecksumObjectInfo>(info, kind, _serializer.SerializeDocumentChecksumObjectInfo));
+            return new Asset<DocumentChecksumObjectInfo>(info, kind, _serializer.SerializeDocumentChecksumObjectInfo);
         }
 
-        private Task<Asset> CreateCompilationOptionsAsync(Project project, string kind, CancellationToken cancellationToken)
+        private Asset CreateCompilationOptions(ProjectState projectState, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<Asset>(new LanguageSpecificAsset<CompilationOptions>(project.Language, project.CompilationOptions, kind, _serializer.SerializeCompilationOptions));
+            return new LanguageSpecificAsset<CompilationOptions>(projectState.Language, projectState.CompilationOptions, kind, _serializer.SerializeCompilationOptions);
         }
 
-        private Task<Asset> CreateParseOptionsAsync(Project project, string kind, CancellationToken cancellationToken)
+        private Asset CreateParseOptions(ProjectState projectState, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<Asset>(new LanguageSpecificAsset<ParseOptions>(project.Language, project.ParseOptions, kind, _serializer.SerializeParseOptions));
+            return new LanguageSpecificAsset<ParseOptions>(projectState.Language, projectState.ParseOptions, kind, _serializer.SerializeParseOptions);
         }
 
-        private Task<Asset> CreateProjectReferenceAsync(ProjectReference reference, string kind, CancellationToken cancellationToken)
+        private Asset CreateProjectReference(ProjectReference reference, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<Asset>(new Asset<ProjectReference>(reference, kind, _serializer.SerializeProjectReference));
+            return new Asset<ProjectReference>(reference, kind, _serializer.SerializeProjectReference);
         }
 
-        private Task<Asset> CreateMetadataReferenceAsync(MetadataReference reference, string kind, CancellationToken cancellationToken)
+        private Asset CreateMetadataReference(MetadataReference reference, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var checksum = _serializer.HostSerializationService.CreateChecksum(reference, cancellationToken);
-            return Task.FromResult<Asset>(new MetadataReferenceAsset(_serializer, reference, checksum, kind));
+            return new MetadataReferenceAsset(_serializer, reference, checksum, kind);
         }
 
-        private Task<Asset> CreateAnalyzerReferenceAsync(AnalyzerReference reference, string kind, CancellationToken cancellationToken)
+        private Asset CreateAnalyzerReference(AnalyzerReference reference, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var checksum = _serializer.HostSerializationService.CreateChecksum(reference, cancellationToken);
-            return Task.FromResult<Asset>(new AnalyzerReferenceAsset(_serializer, reference, checksum, kind));
+            return new AnalyzerReferenceAsset(_serializer, reference, checksum, kind);
         }
 
-        private async Task<Asset> CreateSourceTextAsync(TextDocumentState state, string kind, CancellationToken cancellationToken)
+        private Asset CreateSourceText(TextDocumentState state, string kind, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var text = await state.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            SourceText text;
+            Contract.ThrowIfFalse(state.TryGetText(out text));
+
             var checksum = new Checksum(text.GetChecksum());
-
             return new SourceTextAsset(_serializer, state, checksum, kind);
         }
 
-        private SolutionChecksumObjectInfo GetInfo(Solution solution)
+        private Asset CreateOptionSet(OptionSet options, string language, string kind, CancellationToken cancellationToken)
         {
-            return new SolutionChecksumObjectInfo(solution.Id, solution.Version, solution.FilePath);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var serializer = _serializer;
+            return new Asset<OptionSet>(options, kind, (o, w, c) => serializer.SerializeOptionSet(o, language, w, c));
         }
 
-        private ProjectChecksumObjectInfo GetInfo(Project project)
+        private SolutionChecksumObjectInfo GetInfo(SolutionState solutionState)
         {
-            return new ProjectChecksumObjectInfo(project.Id, project.Version, project.Name, project.AssemblyName, project.Language, project.FilePath, project.OutputFilePath);
+            return new SolutionChecksumObjectInfo(solutionState.Id, solutionState.Version, solutionState.FilePath);
         }
 
-        private DocumentChecksumObjectInfo GetInfo(TextDocument document)
+        private ProjectChecksumObjectInfo GetInfo(ProjectState projectState)
+        {
+            return new ProjectChecksumObjectInfo(projectState.Id, projectState.Version, projectState.Name, projectState.AssemblyName, projectState.Language, projectState.FilePath, projectState.OutputFilePath);
+        }
+
+        private DocumentChecksumObjectInfo GetInfo(TextDocumentState documentState)
         {
             // we might just split it to TextDocument and Document.
-            return new DocumentChecksumObjectInfo(document.Id, document.Name, document.Folders, GetSourceCodeKind(document), document.FilePath, IsGenerated(document));
+            return new DocumentChecksumObjectInfo(documentState.Id, documentState.Name, documentState.Folders, GetSourceCodeKind(documentState), documentState.FilePath, IsGenerated(documentState));
         }
 
-        private bool IsGenerated(TextDocument document)
+        private bool IsGenerated(TextDocumentState documentState)
         {
-            var source = document.State as DocumentState;
+            var source = documentState as DocumentState;
             if (source != null)
             {
                 return source.IsGenerated;
@@ -161,9 +182,9 @@ namespace Microsoft.CodeAnalysis.Execution
             return false;
         }
 
-        private SourceCodeKind GetSourceCodeKind(TextDocument document)
+        private SourceCodeKind GetSourceCodeKind(TextDocumentState documentState)
         {
-            var source = document as Document;
+            var source = documentState as DocumentState;
             if (source != null)
             {
                 return source.SourceCodeKind;
@@ -177,20 +198,25 @@ namespace Microsoft.CodeAnalysis.Execution
         {
             public AssetOnlyTreeNode(Solution solution)
             {
-                Solution = solution;
-                Serializer = new Serializer(solution.Workspace.Services);
+                Serializer = ChecksumTreeCollection.GetOrCreateSerializer(solution.Workspace.Services);
             }
 
-            public Solution Solution { get; }
             public Serializer Serializer { get; }
 
-            public Task<TResult> GetOrCreateAssetAsync<TKey, TValue, TResult>(
-                TKey key, TValue value, string kind, Func<TValue, string, CancellationToken, Task<TResult>> valueGetterAsync, CancellationToken cancellationToken)
+            public Asset GetOrCreateAsset<TKey, TValue>(
+                TKey key, TValue value, string kind, Func<TValue, string, CancellationToken, Asset> valueGetter, CancellationToken cancellationToken)
                 where TKey : class
-                where TResult : Asset
             {
                 Contract.ThrowIfNull(key);
-                return valueGetterAsync(value, kind, cancellationToken);
+                return valueGetter(value, kind, cancellationToken);
+            }
+
+            public TResult GetOrCreateChecksumObjectWithChildren<TKey, TValue, TResult>(
+                TKey key, TValue value, string kind, Func<TKey, TValue, string, CancellationToken, TResult> valueGetter, CancellationToken cancellationToken)
+                where TKey : class
+                where TResult : ChecksumObjectWithChildren
+            {
+                return Contract.FailWithReturn<TResult>("shouldn't be called");
             }
 
             public Task<TResult> GetOrCreateChecksumObjectWithChildrenAsync<TKey, TValue, TResult>(

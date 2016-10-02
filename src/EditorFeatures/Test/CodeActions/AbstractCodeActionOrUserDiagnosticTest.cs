@@ -143,10 +143,17 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.CodeActions
         protected async Task TestActionCountAsync(
             string initialMarkup,
             int count,
-            ParseOptions parseOptions = null, CompilationOptions compilationOptions = null)
+            ParseOptions parseOptions = null,
+            CompilationOptions compilationOptions = null,
+            IDictionary<OptionKey, object> featureOptions = null)
         {
             using (var workspace = await CreateWorkspaceFromFileAsync(initialMarkup, parseOptions, compilationOptions))
             {
+                if (featureOptions != null)
+                {
+                    workspace.ApplyOptions(featureOptions);
+                }
+
                 var actions = await GetCodeActionsAsync(workspace, fixAllActionEquivalenceKey: null);
 
                 Assert.Equal(count, actions.Count());
@@ -372,7 +379,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.CodeActions
 
         private static bool IsWorkspaceElement(string text)
         {
-            return text.TrimStart('\r', '\n', ' ').StartsWith("<Workspace>", StringComparison.Ordinal);
+            return TestWorkspace.IsWorkspaceElement(text);
         }
 
         protected async Task<Tuple<Solution, Solution>> TestOperationsAsync(

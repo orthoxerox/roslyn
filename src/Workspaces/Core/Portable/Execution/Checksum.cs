@@ -14,6 +14,8 @@ namespace Microsoft.CodeAnalysis.Execution
     /// </summary>
     internal sealed partial class Checksum : IObjectWritable, IEquatable<Checksum>
     {
+        public static readonly Checksum Null = new Checksum(ImmutableArray<byte>.Empty);
+
         private readonly ImmutableArray<byte> _checkSum;
         private int _lazyHash;
 
@@ -124,6 +126,16 @@ namespace Microsoft.CodeAnalysis.Execution
             }
 
             return new Checksum(builder.MoveToImmutable());
+        }
+
+        public static string GetChecksumLogInfo(Checksum checksum)
+        {
+            return checksum.ToString();
+        }
+
+        public static string GetChecksumsLogInfo(IEnumerable<Checksum> checksums)
+        {
+            return string.Join("|", checksums.Select(c => c.ToString()));
         }
     }
 }

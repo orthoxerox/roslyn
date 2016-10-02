@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.CodeAnalysis.Collections;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
@@ -51,6 +52,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             string appConfigPath = null;
             bool displayLogo = true;
             bool displayHelp = false;
+            bool displayVersion = false;
             bool optimize = false;
             bool checkOverflow = false;
             bool allowUnsafe = false;
@@ -111,7 +113,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             string runtimeMetadataVersion = null;
             bool errorEndLocation = false;
             bool reportAnalyzer = false;
-            string instrument = "";
+            ArrayBuilder<InstrumentationKind> instrumentationKinds = ArrayBuilder<InstrumentationKind>.GetInstance();
             CultureInfo preferredUILang = null;
             string touchedFilesPath = null;
             bool optionsEnded = false;
@@ -163,6 +165,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                     case "?":
                     case "help":
                         displayHelp = true;
+                        continue;
+
+                    case "version":
+                        displayVersion = true;
                         continue;
 
                     case "r":
@@ -312,7 +318,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                             }
                             else
                             {
-                                instrument = value;
+                                foreach (InstrumentationKind instrumentationKind in ParseInstrumentationKinds(value, diagnostics))
+                                {
+                                    if (!instrumentationKinds.Contains(instrumentationKind))
+                                    {
+                                        instrumentationKinds.Add(instrumentationKind);
+                                    }
+                                }
                             }
 
                             continue;
@@ -1253,7 +1265,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 fileAlignment: fileAlignment,
                 subsystemVersion: subsystemVersion,
                 runtimeMetadataVersion: runtimeMetadataVersion,
-                instrument: instrument
+                instrumentationKinds: instrumentationKinds.ToImmutableAndFree()
             );
 
             // add option incompatibility errors if any
@@ -1291,6 +1303,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 NoWin32Manifest = noWin32Manifest,
                 DisplayLogo = displayLogo,
                 DisplayHelp = displayHelp,
+                DisplayVersion = displayVersion,
                 ManifestResources = managedResources.AsImmutable(),
                 CompilationOptions = options,
                 ParseOptions = IsScriptRunner ? scriptParseOptions : parseOptions,
@@ -1321,7 +1334,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 {
                     AddDiagnostic(diagnostics, ErrorCode.WRN_InvalidSearchPathDir, path, origin.Localize(), MessageID.IDS_DirectoryHasInvalidPath.Localize());
                 }
-                else if (!PortableShim.Directory.Exists(resolvedPath))
+                else if (!Directory.Exists(resolvedPath))
                 {
                     AddDiagnostic(diagnostics, ErrorCode.WRN_InvalidSearchPathDir, path, origin.Localize(), MessageID.IDS_DirectoryDoesNotExist.Localize());
                 }
@@ -1544,7 +1557,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        private IEnumerable<CommandLineAnalyzerReference> ParseAnalyzers(string arg, string value, List<Diagnostic> diagnostics)
+        private static IEnumerable<CommandLineAnalyzerReference> ParseAnalyzers(string arg, string value, List<Diagnostic> diagnostics)
         {
             if (value == null)
             {
@@ -1565,7 +1578,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        private IEnumerable<CommandLineReference> ParseAssemblyReferences(string arg, string value, IList<Diagnostic> diagnostics, bool embedInteropTypes)
+        private static IEnumerable<CommandLineReference> ParseAssemblyReferences(string arg, string value, IList<Diagnostic> diagnostics, bool embedInteropTypes)
         {
             if (value == null)
             {
@@ -1656,6 +1669,24 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
+        private static IEnumerable<InstrumentationKind> ParseInstrumentationKinds(string value, IList<Diagnostic> diagnostics)
+        {
+            string[] kinds = value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var kind in kinds)
+            {
+                switch (kind.ToLower())
+                {
+                    case "testcoverage":
+                        yield return InstrumentationKind.TestCoverage;
+                        break;
+
+                    default:
+                        AddDiagnostic(diagnostics, ErrorCode.ERR_InvalidInstrumentationKind, kind);
+                        break;
+                }
+            }
+        }
+
         internal static ResourceDescription ParseResourceDescription(
             string arg,
             string resourceDescriptor,
@@ -1716,7 +1747,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                             {
                                                 // Use FileShare.ReadWrite because the file could be opened by the current process.
                                                 // For example, it is an XML doc file produced by the build.
-                                                return PortableShim.FileStream.Create(fullPath, PortableShim.FileMode.Open, PortableShim.FileAccess.Read, PortableShim.FileShare.ReadWrite);
+                                                return new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                                             };
             return new ResourceDescription(resourceName, fileName, dataProvider, isPublic, embedded, checkArgs: false);
         }

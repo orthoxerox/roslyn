@@ -360,10 +360,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 foreach (VariableDeclaratorSyntax declarator in declarationSyntax.Variables)
                 {
-                    if (declarator.Initializer != null)
-                    {
-                        Visit(declarator.Initializer.Value, usingBinder);
-                    }
+                    Visit(declarator, usingBinder);
                 }
             }
 
@@ -401,10 +398,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 foreach (var variable in declaration.Variables)
                 {
-                    if (variable.Initializer != null)
-                    {
-                        Visit(variable.Initializer.Value, binder);
-                    }
+                    Visit(variable, binder);
                 }
             }
             else
@@ -478,10 +472,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 foreach (VariableDeclaratorSyntax declarator in node.Declaration.Variables)
                 {
-                    if (declarator.Initializer != null)
-                    {
-                        Visit(declarator.Initializer.Value, binder);
-                    }
+                    Visit(declarator, binder);
                 }
             }
 
@@ -636,9 +627,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             if (node.Expression != null)
             {
-                var patternBinder = new ExpressionVariableBinder(node, _enclosing);
-                AddToMap(node, patternBinder);
-                Visit(node.Expression, patternBinder);
+                Visit(node.Expression, _enclosing);
             }
 
             _sawYield = true;
@@ -646,37 +635,33 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public override void VisitExpressionStatement(ExpressionStatementSyntax node)
         {
+            Visit(node.Expression, _enclosing);
         }
 
         public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
-            var patternBinder = new ExpressionVariableBinder(node, _enclosing);
-            AddToMap(node, patternBinder);
-
             foreach (var decl in node.Declaration.Variables)
             {
-                var value = decl.Initializer?.Value;
-                if (value != null)
-                {
-                    Visit(value, patternBinder);
-                }
+                Visit(decl);
             }
+        }
+
+        public override void VisitVariableDeclarator(VariableDeclaratorSyntax node)
+        {
+            Visit(node.ArgumentList);
+            Visit(node.Initializer?.Value);
         }
 
         public override void VisitDeconstructionDeclarationStatement(DeconstructionDeclarationStatementSyntax node)
         {
-            var patternBinder = new ExpressionVariableBinder(node, _enclosing);
-            AddToMap(node, patternBinder);
-            Visit(node.Assignment.Value, patternBinder);
+            Visit(node.Assignment.Value, _enclosing);
         }
 
         public override void VisitReturnStatement(ReturnStatementSyntax node)
         {
             if (node.Expression != null)
             {
-                var patternBinder = new ExpressionVariableBinder(node, _enclosing);
-                AddToMap(node, patternBinder);
-                Visit(node.Expression, patternBinder);
+                Visit(node.Expression, _enclosing);
             }
         }
 
@@ -684,9 +669,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             if (node.Expression != null)
             {
-                var patternBinder = new ExpressionVariableBinder(node, _enclosing);
-                AddToMap(node, patternBinder);
-                Visit(node.Expression, patternBinder);
+                Visit(node.Expression, _enclosing);
             }
         }
 
@@ -741,11 +724,19 @@ namespace Microsoft.CodeAnalysis.CSharp
             _map[node] = binder;
         }
 
+        /// <summary>
+        /// Some statements by default do not introduce its own scope for locals. 
+        /// For example: Expression Statement, Return Statement, etc. However, 
+        /// when a statement like that is an embedded statement (like IfStatementSyntax.Statement), 
+        /// then it should introduce a scope for locals declared within it. 
+        /// Here we are detecting such statements and creating a binder that should own the scope.
+        /// </summary>
         private Binder GetBinderForPossibleEmbeddedStatement(StatementSyntax statement, Binder enclosing, out CSharpSyntaxNode embeddedScopeDesignator)
         {
             switch (statement.Kind())
             {
                 case SyntaxKind.LocalDeclarationStatement:
+                case SyntaxKind.DeconstructionDeclarationStatement:
                 case SyntaxKind.LabeledStatement:
                 case SyntaxKind.LocalFunctionStatement:
                 // It is an error to have a declaration or a label in an embedded statement,
@@ -756,6 +747,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.DoStatement:
                 case SyntaxKind.LockStatement:
                 case SyntaxKind.IfStatement:
+                case SyntaxKind.YieldReturnStatement:
+                case SyntaxKind.ReturnStatement:
+                case SyntaxKind.ThrowStatement:
                     Debug.Assert((object)_containingMemberOrLambda == enclosing.ContainingMemberOrLambda);
                     embeddedScopeDesignator = statement;
                     return new EmbeddedStatementBinder(enclosing, statement);
@@ -777,6 +771,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             if (statement != null)
             {
                 CSharpSyntaxNode embeddedScopeDesignator;
+                // Some statements by default do not introduce its own scope for locals. 
+                // For example: Expression Statement, Return Statement, etc. However, 
+                // when a statement like that is an embedded statement (like IfStatementSyntax.Statement), 
+                // then it should introduce a scope for locals declared within it. Here we are detecting 
+                // such statements and creating a binder that should own the scope.
                 enclosing = GetBinderForPossibleEmbeddedStatement(statement, enclosing, out embeddedScopeDesignator);
 
                 if (embeddedScopeDesignator != null)
