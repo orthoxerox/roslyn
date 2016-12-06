@@ -2024,11 +2024,26 @@ End Module
             await VerifyAsync(code, expected);
         }
 
+        [Fact]
+        [WorkItem(14034, "https://github.com/dotnet/roslyn/issues/14034")]
+        [Trait(Traits.Feature, Traits.Features.ReduceTokens)]
+        public async Task ReduceIntegersWithDigitSeparators()
+        {
+            var source = @"
+Module Module1
+    Sub Main()
+        Dim x = 100_000
+    End Sub
+End Module
+";
+            var expected = source;
+            await VerifyAsync($"[|{source}|]", expected);
+        }
+
         private static async Task VerifyAsync(string codeWithMarker, string expectedResult)
         {
-            var codeWithoutMarker = default(string);
             var textSpans = (IList<TextSpan>)new List<TextSpan>();
-            MarkupTestFile.GetSpans(codeWithMarker, out codeWithoutMarker, out textSpans);
+            MarkupTestFile.GetSpans(codeWithMarker, out var codeWithoutMarker, out textSpans);
 
             var document = CreateDocument(codeWithoutMarker, LanguageNames.VisualBasic);
             var codeCleanups = CodeCleaner.GetDefaultProviders(document).Where(p => p.Name == PredefinedCodeCleanupProviderNames.ReduceTokens || p.Name == PredefinedCodeCleanupProviderNames.CaseCorrection || p.Name == PredefinedCodeCleanupProviderNames.Format);

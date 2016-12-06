@@ -273,16 +273,13 @@ public class Cls
         return null;
     }
 }";
-            var compilation = CreateCompilationWithMscorlib(text, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+            var compilation = CreateCompilationWithMscorlib(text, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                             options: TestOptions.ReleaseExe, parseOptions: TestOptions.Regular);
 
             compilation.VerifyDiagnostics(
                 // (11,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var (x1, (x2, x3)));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, (x2, x3))").WithLocation(11, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, (x2, x3))").WithLocation(11, 19)
                 );
 
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
@@ -320,10 +317,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (8,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var (x1));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1)").WithLocation(8, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1)").WithLocation(8, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -361,10 +355,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (9,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var (x1, x2: x2));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, x2: x2)").WithLocation(9, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, x2: x2)").WithLocation(9, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -402,10 +393,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (9,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var (ref x1, x2));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (ref x1, x2)").WithLocation(9, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (ref x1, x2)").WithLocation(9, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -443,10 +431,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (9,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var (x1, (x2)));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, (x2))").WithLocation(9, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, (x2))").WithLocation(9, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -484,10 +469,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (9,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var ((x1), x2));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var ((x1), x2)").WithLocation(9, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var ((x1), x2)").WithLocation(9, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -570,9 +552,6 @@ public class Cls
             var compilation = CreateCompilationWithMscorlib(text, options: TestOptions.ReleaseExe, parseOptions: TestOptions.Regular);
 
             compilation.VerifyDiagnostics(
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
                 );
 
             CompileAndVerify(compilation, expectedOutput: "123");
@@ -612,10 +591,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (9,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(ref var (x1, x2));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, x2)").WithLocation(9, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, x2)").WithLocation(9, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -653,7 +629,7 @@ public class Cls
 
             compilation.VerifyDiagnostics();
 
-            CompileAndVerify(compilation, expectedOutput: 
+            CompileAndVerify(compilation, expectedOutput:
 @"124
 123");
 
@@ -694,9 +670,6 @@ public class Cls
                                                             options: TestOptions.ReleaseExe, parseOptions: TestOptions.Regular);
 
             compilation.VerifyDiagnostics(
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
                 );
 
             CompileAndVerify(compilation, expectedOutput: "123");
@@ -739,10 +712,7 @@ public class Cls
             compilation.VerifyDiagnostics(
                 // (11,19): error CS8199: The syntax 'var (...)' as an lvalue is reserved.
                 //         Test1(out var (x1, (a: x2, b: x3)));
-                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, (a: x2, b: x3))").WithLocation(11, 19),
-                // (4,24): warning CS0649: Field 'Cls.F1' is never assigned to, and will always have its default value 0
-                //     private static int F1;
-                Diagnostic(ErrorCode.WRN_UnassignedInternalField, "F1").WithArguments("Cls.F1", "0").WithLocation(4, 24)
+                Diagnostic(ErrorCode.ERR_VarInvocationLvalueReserved, "var (x1, (a: x2, b: x3))").WithLocation(11, 19)
                 );
             Assert.False(compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Any());
         }
@@ -751,7 +721,7 @@ public class Cls
         {
             return GetReferences(tree, name).Single();
         }
-        
+
         private static IdentifierNameSyntax[] GetReferences(SyntaxTree tree, string name, int count)
         {
             var nameRef = GetReferences(tree, name).ToArray();
@@ -771,12 +741,31 @@ public class Cls
 
         private static IEnumerable<DeclarationExpressionSyntax> GetOutVarDeclarations(SyntaxTree tree, string name)
         {
-            return tree.GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>().Where(p => p.Identifier().ValueText == name);
+            return tree.GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>()
+                    .Where(p => IsOutVarDeclaration(p) && p.Identifier().ValueText == name);
+        }
+
+        private static IEnumerable<DiscardedDesignationSyntax> GetDiscardDesignations(SyntaxTree tree)
+        {
+            return tree.GetRoot().DescendantNodes().OfType<DiscardedDesignationSyntax>();
+        }
+
+        private static IEnumerable<IdentifierNameSyntax> GetDiscardIdentifiers(SyntaxTree tree)
+        {
+            return tree.GetRoot().DescendantNodes().OfType<IdentifierNameSyntax>().Where(i => i.Identifier.ContextualKind() == SyntaxKind.UnderscoreToken);
+        }
+
+        private static bool IsOutVarDeclaration(DeclarationExpressionSyntax p)
+        {
+            return p.Designation.Kind() == SyntaxKind.SingleVariableDesignation
+                && p.Parent.Kind() == SyntaxKind.Argument
+                && ((ArgumentSyntax)p.Parent).RefOrOutKeyword.Kind() == SyntaxKind.OutKeyword;
         }
 
         private static IEnumerable<DeclarationExpressionSyntax> GetOutVarDeclarations(SyntaxTree tree)
         {
-            return tree.GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>();
+            return tree.GetRoot().DescendantNodes().OfType<DeclarationExpressionSyntax>()
+                    .Where(p => IsOutVarDeclaration(p));
         }
 
         [Fact]
@@ -868,12 +857,12 @@ public class Cls
             Assert.True(model.LookupNames(decl.SpanStart).Contains(decl.Identifier().ValueText));
 
             var local = (SourceLocalSymbol)symbol;
-            var typeSyntax = decl.Type();
+            var typeSyntax = decl.Type;
 
             Assert.True(SyntaxFacts.IsInNamespaceOrTypeContext(typeSyntax));
             Assert.True(SyntaxFacts.IsInTypeOnlyContext(typeSyntax));
 
-            if (typeSyntax.IsVar && local.IsVar && local.Type.IsErrorType())
+            if (local.Type.IsErrorType())
             {
                 Assert.Null(model.GetSymbolInfo(typeSyntax).Symbol);
             }
@@ -882,9 +871,7 @@ public class Cls
                 Assert.Equal(local.Type, model.GetSymbolInfo(typeSyntax).Symbol);
             }
 
-            Assert.Same(symbol, model.GetSymbolInfo(decl).Symbol);
-            Assert.Equal(local.Type, model.GetTypeInfo(decl).Type);
-            Assert.Null(model.GetDeclaredSymbol(decl));
+            AssertInfoForDeclarationExpressionSyntax(model, decl);
 
             foreach (var reference in references)
             {
@@ -898,6 +885,32 @@ public class Cls
             {
                 VerifyDataFlow(model, decl, isDelegateCreation, isExecutableCode, references, symbol);
             }
+        }
+
+        private static void AssertInfoForDeclarationExpressionSyntax(SemanticModel model, DeclarationExpressionSyntax decl)
+        {
+            var symbolInfo = model.GetSymbolInfo(decl);
+            Assert.Null(symbolInfo.Symbol);
+            Assert.Empty(symbolInfo.CandidateSymbols);
+            Assert.Equal(CandidateReason.None, symbolInfo.CandidateReason);
+            Assert.Equal(symbolInfo, ((CSharpSemanticModel)model).GetSymbolInfo(decl));
+
+            var typeInfo = model.GetTypeInfo(decl);
+            Assert.Null(typeInfo.Type);
+            Assert.Null(typeInfo.ConvertedType);
+            Assert.Equal(typeInfo, ((CSharpSemanticModel)model).GetTypeInfo(decl));
+
+            var conversion = model.ClassifyConversion(decl, model.Compilation.ObjectType, false);
+            Assert.False(conversion.Exists);
+            Assert.Equal(conversion, model.ClassifyConversion(decl, model.Compilation.ObjectType, true));
+            Assert.Equal(conversion, ((CSharpSemanticModel)model).ClassifyConversion(decl, model.Compilation.ObjectType, false));
+            Assert.Equal(conversion, ((CSharpSemanticModel)model).ClassifyConversion(decl, model.Compilation.ObjectType, true));
+            Assert.Equal(conversion, model.ClassifyConversion(decl.Position, decl, model.Compilation.ObjectType, false));
+            Assert.Equal(conversion, model.ClassifyConversion(decl.Position, decl, model.Compilation.ObjectType, true));
+            Assert.Equal(conversion, ((CSharpSemanticModel)model).ClassifyConversion(decl.Position, decl, model.Compilation.ObjectType, false));
+            Assert.Equal(conversion, ((CSharpSemanticModel)model).ClassifyConversion(decl.Position, decl, model.Compilation.ObjectType, true));
+
+            Assert.Null(model.GetDeclaredSymbol(decl));
         }
 
         private static void VerifyDataFlow(SemanticModel model, DeclarationExpressionSyntax decl, bool isDelegateCreation, bool isExecutableCode, IdentifierNameSyntax[] references, ISymbol symbol)
@@ -918,10 +931,9 @@ public class Cls
 
             var dataFlow = model.AnalyzeDataFlow(dataFlowParent);
 
-            Assert.Equal(isExecutableCode, dataFlow.Succeeded);
-
             if (isExecutableCode)
             {
+                Assert.True(dataFlow.Succeeded);
                 Assert.True(dataFlow.VariablesDeclared.Contains(symbol, ReferenceEqualityComparer.Instance));
 
                 if (!isDelegateCreation)
@@ -959,13 +971,13 @@ public class Cls
 
             var local = (SourceLocalSymbol)symbol;
 
-            if (decl.Type().IsVar && local.IsVar && local.Type.IsErrorType())
+            if (decl.Type.IsVar && local.IsVar && local.Type.IsErrorType())
             {
-                Assert.Null(model.GetSymbolInfo(decl.Type()).Symbol);
+                Assert.Null(model.GetSymbolInfo(decl.Type).Symbol);
             }
             else
             {
-                Assert.Equal(local.Type, model.GetSymbolInfo(decl.Type()).Symbol);
+                Assert.Equal(local.Type, model.GetSymbolInfo(decl.Type).Symbol);
             }
         }
 
@@ -985,7 +997,7 @@ public class Cls
                 var local = (SourceLocalSymbol)symbol;
                 var parent = local.IdentifierToken.Parent;
 
-                Assert.Empty(parent.Ancestors().OfType<DeclarationExpressionSyntax>());
+                Assert.Empty(parent.Ancestors().OfType<DeclarationExpressionSyntax>().Where(e => IsOutVarDeclaration(e)));
 
                 if (parent.Kind() == SyntaxKind.VariableDeclarator)
                 {
@@ -1009,8 +1021,7 @@ public class Cls
 
         private static SingleVariableDesignationSyntax GetVariableDesignation(DeclarationExpressionSyntax decl)
         {
-            var component = (TypedVariableComponentSyntax)decl.VariableComponent;
-            return (SingleVariableDesignationSyntax)component.Designation;
+            return (SingleVariableDesignationSyntax)decl.Designation;
         }
 
         private static bool FlowsIn(ExpressionSyntax dataFlowParent, DeclarationExpressionSyntax decl, IdentifierNameSyntax[] references)
@@ -1096,7 +1107,7 @@ public class Cls
 
             MethodDeclarationSyntax methodDeclParent;
 
-            if (containingReturnOrThrow != null && decl.Identifier().ValueText == "x1" && 
+            if (containingReturnOrThrow != null && decl.Identifier().ValueText == "x1" &&
                 ((methodDeclParent = containingReturnOrThrow.Parent.Parent as MethodDeclarationSyntax) == null ||
                   methodDeclParent.Body.Statements.First() != containingReturnOrThrow))
             {
@@ -1105,9 +1116,9 @@ public class Cls
 
             foreach (var reference in references)
             {
-                if (!dataFlowParent.Span.Contains(reference.Span) && 
+                if (!dataFlowParent.Span.Contains(reference.Span) &&
                     (containingReturnOrThrow == null || containingReturnOrThrow.Span.Contains(reference.SpanStart)) &&
-                    (reference.SpanStart > decl.SpanStart || 
+                    (reference.SpanStart > decl.SpanStart ||
                      (containingReturnOrThrow == null &&
                      reference.Ancestors().OfType<DoStatementSyntax>().Join(
                          decl.Ancestors().OfType<DoStatementSyntax>(), d => d, d => d, (d1, d2) => true).Any())))
@@ -1509,8 +1520,8 @@ public class Cls
     }
 }";
             var compilation = CreateCompilationWithMscorlib(text,
-                                                            references: new MetadataReference[] { CSharpRef, SystemCoreRef }, 
-                                                            options: TestOptions.ReleaseExe, 
+                                                            references: new MetadataReference[] { CSharpRef, SystemCoreRef },
+                                                            options: TestOptions.ReleaseExe,
                                                             parseOptions: TestOptions.Regular);
 
             CompileAndVerify(compilation, expectedOutput: @"123").VerifyDiagnostics();
@@ -4590,7 +4601,7 @@ Dummy(TakeOutParam(true, out var x1), x1);
             Assert.True(success);
             Assert.NotNull(model);
             tree = statement.SyntaxTree;
-            
+
             var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
             var x1Ref = GetReferences(tree, "x1").ToArray();
             Assert.Equal(1, x1Ref.Length);
@@ -8598,7 +8609,7 @@ public class X
     }
 }
 ";
-            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                               options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
             compilation.VerifyDiagnostics(
                 // (19,51): error CS0128: A local variable named 'x4' is already defined in this scope
@@ -8926,13 +8937,13 @@ public class X
     }
 }
 ";
-            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                               options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
 
             var tree = compilation.SyntaxTrees.Single();
             var model = compilation.GetSemanticModel(tree);
 
-            var statement = (DeconstructionDeclarationStatementSyntax)SyntaxFactory.ParseStatement(@"
+            var statement = (ExpressionStatementSyntax)SyntaxFactory.ParseStatement(@"
 var (y1, dd) = (TakeOutParam(true, out var x1), x1);
 ");
 
@@ -8949,7 +8960,7 @@ var (y1, dd) = (TakeOutParam(true, out var x1), x1);
 
             Assert.Equal("System.Boolean y1", model.LookupSymbols(x1Ref[0].SpanStart, name: "y1").Single().ToTestDisplayString());
         }
-        
+
         [Fact]
         [CompilerTrait(CompilerFeature.Tuples)]
         public void Scope_DeconstructionDeclarationStmt_06()
@@ -8977,7 +8988,7 @@ public class X
     }
 }
 ";
-            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                               options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
             compilation.VerifyDiagnostics(
                 // (11,13): error CS1023: Embedded statement cannot be a declaration or labeled statement
@@ -12503,7 +12514,7 @@ public class X
             }
             VerifyModelForOutVarDuplicateInSameScope(model, x15Decl[1]);
         }
-        
+
         [Fact]
         public void Scope_SwitchLabelGuard_02()
         {
@@ -12836,7 +12847,7 @@ public class X
 ";
             var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
 
-            CompileAndVerify(compilation, expectedOutput: 
+            CompileAndVerify(compilation, expectedOutput:
 @"123
 1").VerifyDiagnostics();
 
@@ -13042,7 +13053,7 @@ public class X
     }
 }
 ";
-            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                               options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
 
             CompileAndVerify(compilation, expectedOutput:
@@ -14866,7 +14877,7 @@ public class X
 1
 2
 2");
-            
+
             var tree = compilation.SyntaxTrees.Single();
             var model = compilation.GetSemanticModel(tree);
 
@@ -15815,7 +15826,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
         }
-        
+
         [Fact]
         public void DataFlow_03()
         {
@@ -16023,7 +16034,7 @@ public class Cls
             var x1Decl = GetOutVarDeclaration(tree, "x1");
             VerifyModelForOutVar(model, x1Decl);
 
-            Assert.Equal("a=System.Int32", model.GetAliasInfo(x1Decl.Type()).ToTestDisplayString());
+            Assert.Equal("a=System.Int32", model.GetAliasInfo(x1Decl.Type).ToTestDisplayString());
         }
 
 
@@ -16056,7 +16067,7 @@ public class Cls
             var x1Decl = GetOutVarDeclaration(tree, "x1");
             VerifyModelForOutVar(model, x1Decl);
 
-            Assert.Equal("var=System.Int32", model.GetAliasInfo(x1Decl.Type()).ToTestDisplayString());
+            Assert.Equal("var=System.Int32", model.GetAliasInfo(x1Decl.Type).ToTestDisplayString());
         }
 
         [Fact]
@@ -16173,7 +16184,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
         }
 
         [Fact]
@@ -16208,7 +16219,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
         }
 
         [Fact]
@@ -16247,7 +16258,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("System.Int32 x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
 
@@ -16288,7 +16299,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("System.Int32 x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
 
@@ -16331,7 +16342,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("System.Int32 x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
 
@@ -16374,10 +16385,10 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("System.Int32 x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
-        
+
         [Fact]
         public void SimpleVar_07()
         {
@@ -16413,7 +16424,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("var x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
 
@@ -16489,7 +16500,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, true, true, false, true, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("var x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
 
@@ -16721,7 +16732,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
             Assert.Equal("dynamic x1", model.GetDeclaredSymbol(GetVariableDesignation(x1Decl)).ToTestDisplayString());
         }
 
@@ -16762,7 +16773,7 @@ public class Cls
             var varRef = GetReferences(tree, "var").Skip(1).Single();
             VerifyModelForOutVar(model, varDecl, varRef);
         }
-        
+
         [Fact]
         public void SimpleVar_16()
         {
@@ -16799,7 +16810,7 @@ public class Cls
 
             VerifyModelForOutVar(model, x1Decl, x1Ref);
 
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
         }
 
         [Fact]
@@ -17026,7 +17037,7 @@ public class Cls
             var x1Ref = GetReference(tree, "x1");
             VerifyModelForOutVar(model, x1Decl, x1Ref);
         }
-        
+
         [Fact]
         public void RestrictedTypes_04()
         {
@@ -17092,6 +17103,7 @@ public class Cls
         var x = new [] {1};
         Test2(x[out var x1]);
         Test2(x1);
+        Test2(x[out var _]);
     }
 
     static void Test2(object x) { }
@@ -17114,7 +17126,13 @@ public class Cls
                 Diagnostic(ErrorCode.ERR_BadArgExtraRef, "var x1").WithArguments("1", "out").WithLocation(7, 21),
                 // (7,25): error CS8197: Cannot infer the type of implicitly-typed out variable 'x1'.
                 //         Test2(x[out var x1]);
-                Diagnostic(ErrorCode.ERR_TypeInferenceFailedForImplicitlyTypedOutVariable, "x1").WithArguments("x1").WithLocation(7, 25)
+                Diagnostic(ErrorCode.ERR_TypeInferenceFailedForImplicitlyTypedOutVariable, "x1").WithArguments("x1").WithLocation(7, 25),
+                // (9,25): error CS1615: Argument 1 may not be passed with the 'out' keyword
+                //         Test2(x[out var _]);
+                Diagnostic(ErrorCode.ERR_BadArgExtraRef, "_").WithArguments("1", "out").WithLocation(9, 25),
+                // (9,25): error CS8183: Cannot infer the type of implicitly-typed discard.
+                //         Test2(x[out var _]);
+                Diagnostic(ErrorCode.ERR_DiscardTypeInferenceFailed, "_").WithLocation(9, 25)
                 );
         }
 
@@ -17446,6 +17464,103 @@ public class Cls
 }");
         }
 
+        [Fact]
+        public void IndexingDynamicWithDiscard()
+        {
+            var text = @"
+public class Cls
+{
+    public static void Main()
+    {
+        dynamic d = null;
+        var x = d[out int _];
+    }
+}";
+            // the C# dynamic binder does not support ref or out indexers, so we don't run this
+            CompileAndVerify(text, additionalRefs: new[] { SystemCoreRef, CSharpRef }).VerifyIL("Cls.Main()",
+@"
+{
+  // Code size       87 (0x57)
+  .maxstack  7
+  .locals init (object V_0, //d
+                int V_1)
+  IL_0000:  ldnull
+  IL_0001:  stloc.0
+  IL_0002:  ldsfld     ""System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>> Cls.<>o__0.<>p__0""
+  IL_0007:  brtrue.s   IL_003e
+  IL_0009:  ldc.i4.0
+  IL_000a:  ldtoken    ""Cls""
+  IL_000f:  call       ""System.Type System.Type.GetTypeFromHandle(System.RuntimeTypeHandle)""
+  IL_0014:  ldc.i4.2
+  IL_0015:  newarr     ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo""
+  IL_001a:  dup
+  IL_001b:  ldc.i4.0
+  IL_001c:  ldc.i4.0
+  IL_001d:  ldnull
+  IL_001e:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
+  IL_0023:  stelem.ref
+  IL_0024:  dup
+  IL_0025:  ldc.i4.1
+  IL_0026:  ldc.i4.s   17
+  IL_0028:  ldnull
+  IL_0029:  call       ""Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags, string)""
+  IL_002e:  stelem.ref
+  IL_002f:  call       ""System.Runtime.CompilerServices.CallSiteBinder Microsoft.CSharp.RuntimeBinder.Binder.GetIndex(Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags, System.Type, System.Collections.Generic.IEnumerable<Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)""
+  IL_0034:  call       ""System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>> System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>>.Create(System.Runtime.CompilerServices.CallSiteBinder)""
+  IL_0039:  stsfld     ""System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>> Cls.<>o__0.<>p__0""
+  IL_003e:  ldsfld     ""System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>> Cls.<>o__0.<>p__0""
+  IL_0043:  ldfld      ""<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic> System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>>.Target""
+  IL_0048:  ldsfld     ""System.Runtime.CompilerServices.CallSite<<>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>> Cls.<>o__0.<>p__0""
+  IL_004d:  ldloc.0
+  IL_004e:  ldloca.s   V_1
+  IL_0050:  callvirt   ""dynamic <>F{00000004}<System.Runtime.CompilerServices.CallSite, dynamic, int, dynamic>.Invoke(System.Runtime.CompilerServices.CallSite, dynamic, ref int)""
+  IL_0055:  pop
+  IL_0056:  ret
+}
+");
+        }
+
+        [Fact]
+        public void IndexingDynamicWithVarDiscard()
+        {
+            var text = @"
+public class Cls
+{
+    public static void Main()
+    {
+        dynamic d = null;
+        var x = d[out var _];
+    }
+}";
+            // the C# dynamic binder does not support ref or out indexers, so we don't run this
+            var comp = CreateCompilationWithMscorlib(text, options: TestOptions.DebugDll, references: new[] { SystemCoreRef, CSharpRef });
+            comp.VerifyDiagnostics(
+                // (7,27): error CS8183: Cannot infer the type of implicitly-typed discard.
+                //         var x = d[out var _];
+                Diagnostic(ErrorCode.ERR_DiscardTypeInferenceFailed, "_").WithLocation(7, 27)
+                );
+        }
+
+        [Fact]
+        public void IndexingDynamicWithShortDiscard()
+        {
+            var text = @"
+public class Cls
+{
+    public static void Main()
+    {
+        dynamic d = null;
+        var x = d[out _];
+    }
+}";
+            var compilation = CreateCompilationWithMscorlib(text, options: TestOptions.ReleaseExe);
+            compilation.VerifyDiagnostics(
+                // (7,23): error CS8183: Cannot infer the type of implicitly-typed discard.
+                //         var x = d[out _];
+                Diagnostic(ErrorCode.ERR_DiscardTypeInferenceFailed, "_").WithLocation(7, 23)
+                );
+        }
+
         [Fact, WorkItem(13219, "https://github.com/dotnet/roslyn/issues/13219")]
         public void IndexingDynamicWithOutVar()
         {
@@ -17670,6 +17785,156 @@ class B
             }
         }
 
+        [ClrOnlyFact]
+        public void OutVariableDiscardInIndex()
+        {
+            var source1 =
+@".class interface public abstract import IA
+{
+  .custom instance void [mscorlib]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 04 49 74 65 6D 00 00 ) // ...Item..
+  .custom instance void [mscorlib]System.Runtime.InteropServices.CoClassAttribute::.ctor(class [mscorlib]System.Type) = ( 01 00 01 41 00 00 )
+  .custom instance void [mscorlib]System.Runtime.InteropServices.GuidAttribute::.ctor(string) = ( 01 00 24 31 36 35 46 37 35 32 44 2D 45 39 43 34 2D 34 46 37 45 2D 42 30 44 30 2D 43 44 46 44 37 41 33 36 45 32 31 31 00 00 )
+  .method public abstract virtual instance int32 get_Item([out] int32& i) { }
+  .method public abstract virtual instance void set_Item([out] int32& i, int32 v) { }
+  .property instance int32 Item([out] int32&)
+  {
+    .get instance int32 IA::get_Item([out] int32&)
+    .set instance void IA::set_Item([out] int32&, int32)
+  }
+  .method public abstract virtual instance int32 get_P([out] int32& i) { }
+  .method public abstract virtual instance void set_P([out] int32& i, int32 v) { }
+  .property instance int32 P([out] int32&)
+  {
+    .get instance int32 IA::get_P([out] int32&)
+    .set instance void IA::set_P([out] int32&, int32)
+  }
+}
+.class public A implements IA
+{
+  .custom instance void [mscorlib]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 04 49 74 65 6D 00 00 ) // ...Item..
+  .method public hidebysig specialname rtspecialname instance void .ctor()
+  {
+    ret
+  }
+  // i = 1; System.Console.WriteLine(11); return 111;
+  .method public virtual instance int32 get_P([out] int32& i)
+  {
+    ldarg.1
+    ldc.i4.1
+    stind.i4
+    ldc.i4.s   11
+    call       void [mscorlib]System.Console::WriteLine(int32)
+    ldc.i4     0x06F
+    ret
+  }
+  // i = 2; System.Console.Write(22); return;
+  .method public virtual instance void set_P([out] int32& i, int32 v)
+  {
+    ldarg.1
+    ldc.i4.2
+    stind.i4
+    ldc.i4.s   22
+    call       void [mscorlib]System.Console::WriteLine(int32)
+    ret
+  }
+  .property instance int32 P([out] int32&)
+  {
+    .get instance int32 A::get_P([out] int32&)
+    .set instance void A::set_P([out] int32&, int32)
+  }
+  // i = 3; System.Console.WriteLine(33) return 333;
+  .method public virtual instance int32 get_Item([out] int32& i)
+  {
+    ldarg.1
+    ldc.i4.3
+    stind.i4
+    ldc.i4.s   33
+    call       void [mscorlib]System.Console::WriteLine(int32)
+    ldc.i4     0x14D
+    ret
+  }
+  // i = 4; System.Console.WriteLine(44); return;
+  .method public virtual instance void set_Item([out] int32& i, int32 v)
+  {
+    ldarg.1
+    ldc.i4.4
+    stind.i4
+    ldc.i4.s   44
+    call       void [mscorlib]System.Console::WriteLine(int32)
+    ret
+  }
+  .property instance int32 Item([out] int32&)
+  {
+    .get instance int32 A::get_Item([out] int32&)
+    .set instance void A::set_Item([out] int32&, int32)
+  }
+}";
+            var reference1 = CompileIL(source1);
+            var source2Template =
+@"using System;
+class B
+{{
+    public static void Main()
+    {{
+        A a = new A();
+        IA ia = a;
+        Console.WriteLine(ia.P[out {0} _]);
+        ia.P[out {0} _] = 4;
+        Console.WriteLine(ia[out {0} _]);
+        ia[out {0} _] = 4;
+    }}
+}}";
+            string[] fillIns = new[] { "int", "var", "" };
+            foreach (var fillIn in fillIns)
+            {
+                var source2 = string.Format(source2Template, fillIn);
+                var compilation = CreateCompilationWithMscorlib(source2, references: new[] { reference1 }, options: TestOptions.DebugExe);
+
+                CompileAndVerify(compilation, expectedOutput:
+@"11
+111
+22
+33
+333
+44")
+                .VerifyIL("B.Main()",
+@"
+{
+  // Code size       58 (0x3a)
+  .maxstack  3
+  .locals init (A V_0, //a
+                IA V_1, //ia
+                int V_2)
+  IL_0000:  nop
+  IL_0001:  newobj     ""A..ctor()""
+  IL_0006:  stloc.0
+  IL_0007:  ldloc.0
+  IL_0008:  stloc.1
+  IL_0009:  ldloc.1
+  IL_000a:  ldloca.s   V_2
+  IL_000c:  callvirt   ""int IA.P[out int].get""
+  IL_0011:  call       ""void System.Console.WriteLine(int)""
+  IL_0016:  nop
+  IL_0017:  ldloc.1
+  IL_0018:  ldloca.s   V_2
+  IL_001a:  ldc.i4.4
+  IL_001b:  callvirt   ""void IA.P[out int].set""
+  IL_0020:  nop
+  IL_0021:  ldloc.1
+  IL_0022:  ldloca.s   V_2
+  IL_0024:  callvirt   ""int IA.this[out int].get""
+  IL_0029:  call       ""void System.Console.WriteLine(int)""
+  IL_002e:  nop
+  IL_002f:  ldloc.1
+  IL_0030:  ldloca.s   V_2
+  IL_0032:  ldc.i4.4
+  IL_0033:  callvirt   ""void IA.this[out int].set""
+  IL_0038:  nop
+  IL_0039:  ret
+}");
+            }
+        }
+
         [Fact]
         public void ElementAccess_04()
         {
@@ -17679,8 +17944,19 @@ public class Cls
 {
     public static void Main()
     {
-        var list = new Dictionary<int, long> { [out var x1] = 3 };
-        System.Console.WriteLine(x1);
+        var list = new Dictionary<int, long>
+        {
+            [out var x1] = 3,
+            [out var _] = 4,
+            [out _] = 5
+        };
+        System.Console.Write(x1);
+        System.Console.Write(_);
+
+        {
+            int _ = 1;
+            var list2 = new Dictionary<int, long> { [out _] = 6 };
+        }
     }
 }";
             var compilation = CreateCompilationWithMscorlib(text,
@@ -17694,12 +17970,24 @@ public class Cls
             VerifyModelForOutVarWithoutDataFlow(model, x1Decl, x1Ref);
 
             compilation.VerifyDiagnostics(
-                // (7,53): error CS1615: Argument 1 may not be passed with the 'out' keyword
-                //         var list = new Dictionary<int, long> { [out var x1] = 3 };
-                Diagnostic(ErrorCode.ERR_BadArgExtraRef, "var x1").WithArguments("1", "out").WithLocation(7, 53),
-                // (7,53): error CS0165: Use of unassigned local variable 'x1'
-                //         var list = new Dictionary<int, long> { [out var x1] = 3 };
-                Diagnostic(ErrorCode.ERR_UseDefViolation, "var x1").WithArguments("x1").WithLocation(7, 53)
+                // (9,18): error CS1615: Argument 1 may not be passed with the 'out' keyword
+                //             [out var x1] = 3,
+                Diagnostic(ErrorCode.ERR_BadArgExtraRef, "var x1").WithArguments("1", "out").WithLocation(9, 18),
+                // (10,22): error CS1615: Argument 1 may not be passed with the 'out' keyword
+                //             [out var _] = 4,
+                Diagnostic(ErrorCode.ERR_BadArgExtraRef, "_").WithArguments("1", "out").WithLocation(10, 22),
+                // (11,18): error CS1615: Argument 1 may not be passed with the 'out' keyword
+                //             [out _] = 5
+                Diagnostic(ErrorCode.ERR_BadArgExtraRef, "_").WithArguments("1", "out").WithLocation(11, 18),
+                // (14,30): error CS0103: The name '_' does not exist in the current context
+                //         System.Console.Write(_);
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "_").WithArguments("_").WithLocation(14, 30),
+                // (18,58): error CS1615: Argument 1 may not be passed with the 'out' keyword
+                //             var list2 = new Dictionary<int, long> { [out _] = 6 };
+                Diagnostic(ErrorCode.ERR_BadArgExtraRef, "_").WithArguments("1", "out").WithLocation(18, 58),
+                // (9,18): error CS0165: Use of unassigned local variable 'x1'
+                //             [out var x1] = 3,
+                Diagnostic(ErrorCode.ERR_UseDefViolation, "var x1").WithArguments("x1").WithLocation(9, 18)
                 );
         }
 
@@ -18033,7 +18321,7 @@ public class X
             Assert.True(decl.Ancestors().OfType<VariableDeclaratorSyntax>().First().ArgumentList.Contains(decl));
         }
 
-        private static void AssertContainedInDeclaratorArguments(params DeclarationExpressionSyntax [] decls)
+        private static void AssertContainedInDeclaratorArguments(params DeclarationExpressionSyntax[] decls)
         {
             foreach (var decl in decls)
             {
@@ -18998,7 +19286,7 @@ public class X
             var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
             int[] exclude = new int[] { (int)ErrorCode.ERR_BadVarDecl,
                                         (int)ErrorCode.ERR_SyntaxError,
-                                        (int)ErrorCode.WRN_UnreferencedVar, 
+                                        (int)ErrorCode.WRN_UnreferencedVar,
                                         (int)ErrorCode.ERR_ImplicitlyTypedVariableMultipleDeclarator,
                                         (int)ErrorCode.ERR_FixedMustInit,
                                         (int)ErrorCode.ERR_ImplicitlyTypedVariableWithNoInitializer,
@@ -19731,11 +20019,10 @@ public class X
             Assert.False(model.LookupSymbols(decl.SpanStart, name: identifierText).Any());
 
             Assert.False(model.LookupNames(decl.SpanStart).Contains(identifierText));
-            Assert.Null(model.GetSymbolInfo(decl.Type()).Symbol);
+            Assert.Null(model.GetSymbolInfo(decl.Type).Symbol);
 
-            Assert.Null(model.GetSymbolInfo(decl).Symbol);
-            Assert.Null(model.GetTypeInfo(decl).Type);
-            Assert.Null(model.GetDeclaredSymbol(decl));
+            AssertInfoForDeclarationExpressionSyntax(model, decl);
+
             VerifyModelNotSupported(model, references);
         }
 
@@ -23105,7 +23392,7 @@ class H
 }
 ";
             {
-                var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+                var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                                   options: TestOptions.ReleaseExe.WithScriptClassName("Script"), parseOptions: TestOptions.Script);
 
                 compilation.VerifyDiagnostics(
@@ -23991,7 +24278,7 @@ class H
 }
 ";
             {
-                var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+                var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                                   options: TestOptions.ReleaseExe.WithScriptClassName("Script"), parseOptions: TestOptions.Script);
 
                 compilation.VerifyDiagnostics(
@@ -24158,7 +24445,7 @@ class H
 }
 ";
             {
-                var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+                var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                                   options: TestOptions.ReleaseExe.WithScriptClassName("Script"), parseOptions: TestOptions.Script);
 
                 compilation.VerifyDiagnostics(
@@ -24315,7 +24602,7 @@ class H
 }
 ";
 
-            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef }, 
+            var compilation = CreateCompilationWithMscorlib45(source, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef },
                                                               options: TestOptions.DebugExe.WithScriptClassName("Script"), parseOptions: TestOptions.Script);
 
             CompileAndVerify(compilation, expectedOutput:
@@ -26425,7 +26712,7 @@ class H
 }
 ";
             {
-                var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.ReleaseExe.WithScriptClassName("Script"), 
+                var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.ReleaseExe.WithScriptClassName("Script"),
                                                                   parseOptions: TestOptions.Script);
 
                 compilation.VerifyDiagnostics(
@@ -26866,7 +27153,7 @@ class H
             var model = compilation.GetSemanticModel(tree);
 
             var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
         }
 
         [Fact]
@@ -26895,7 +27182,7 @@ class H
             var model = compilation.GetSemanticModel(tree);
 
             var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
-            Assert.Equal("var=System.Int32", model.GetAliasInfo(x1Decl.Type()).ToTestDisplayString());
+            Assert.Equal("var=System.Int32", model.GetAliasInfo(x1Decl.Type).ToTestDisplayString());
         }
 
         [Fact]
@@ -26924,7 +27211,7 @@ class H
             var model = compilation.GetSemanticModel(tree);
 
             var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
-            Assert.Equal("a=System.Int32", model.GetAliasInfo(x1Decl.Type()).ToTestDisplayString());
+            Assert.Equal("a=System.Int32", model.GetAliasInfo(x1Decl.Type).ToTestDisplayString());
         }
 
         [Fact]
@@ -26951,7 +27238,87 @@ class H
             var model = compilation.GetSemanticModel(tree);
 
             var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
-            Assert.Null(model.GetAliasInfo(x1Decl.Type()));
+            Assert.Null(model.GetAliasInfo(x1Decl.Type));
+        }
+
+        [Fact, WorkItem(14717, "https://github.com/dotnet/roslyn/issues/14717")]
+        public void ExpressionVariableInCase_1()
+        {
+            string source =
+@"
+class Program
+{
+    static void Main(string[] args)
+    {
+        switch (true)
+        {
+            case TakeOutParam(3, out var x1):
+                System.Console.WriteLine(x1);
+                break;
+        }
+    }
+    static bool TakeOutParam(int y, out int x) 
+    {
+        x = y;
+        return true;
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
+            // The point of this test is that it should not crash.
+            compilation.VerifyDiagnostics(
+                // (8,18): error CS0150: A constant value is expected
+                //             case TakeOutParam(3, out var x1):
+                Diagnostic(ErrorCode.ERR_ConstantExpected, "TakeOutParam(3, out var x1)").WithLocation(8, 18),
+                // (9,17): warning CS0162: Unreachable code detected
+                //                 System.Console.WriteLine(x1);
+                Diagnostic(ErrorCode.WRN_UnreachableCode, "System").WithLocation(9, 17)
+                );
+
+            var tree = compilation.SyntaxTrees.Single();
+            var model = compilation.GetSemanticModel(tree);
+            var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
+            var x1Ref = GetReference(tree, "x1");
+            VerifyModelForOutVarInNotExecutableCode(model, x1Decl, x1Ref);
+        }
+
+        [Fact, WorkItem(14717, "https://github.com/dotnet/roslyn/issues/14717")]
+        public void ExpressionVariableInCase_2()
+        {
+            string source =
+@"
+class Program
+{
+    static void Main(string[] args)
+    {
+        switch (true)
+        {
+            case TakeOutParam(3, out UndelcaredType x1):
+                System.Console.WriteLine(x1);
+                break;
+        }
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
+            // The point of this test is that it should not crash.
+            compilation.VerifyDiagnostics(
+                // (8,38): error CS0246: The type or namespace name 'UndelcaredType' could not be found (are you missing a using directive or an assembly reference?)
+                //             case TakeOutParam(3, out UndelcaredType x1):
+                Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "UndelcaredType").WithArguments("UndelcaredType").WithLocation(8, 38),
+                // (8,18): error CS0103: The name 'TakeOutParam' does not exist in the current context
+                //             case TakeOutParam(3, out UndelcaredType x1):
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "TakeOutParam").WithArguments("TakeOutParam").WithLocation(8, 18),
+                // (9,17): warning CS0162: Unreachable code detected
+                //                 System.Console.WriteLine(x1);
+                Diagnostic(ErrorCode.WRN_UnreachableCode, "System").WithLocation(9, 17)
+                );
+
+            var tree = compilation.SyntaxTrees.Single();
+            var model = compilation.GetSemanticModel(tree);
+            var x1Decl = GetOutVarDeclarations(tree, "x1").Single();
+            var x1Ref = GetReference(tree, "x1");
+            VerifyModelForOutVarInNotExecutableCode(model, x1Decl, x1Ref);
         }
 
         private static void VerifyModelForOutField(
@@ -26999,7 +27366,7 @@ class H
             Assert.Contains(decl.Identifier().ValueText, names);
 
             var local = (FieldSymbol)symbol;
-            var typeSyntax = decl.Type();
+            var typeSyntax = decl.Type;
 
             Assert.True(SyntaxFacts.IsInNamespaceOrTypeContext(typeSyntax));
             Assert.True(SyntaxFacts.IsInTypeOnlyContext(typeSyntax));
@@ -27016,18 +27383,8 @@ class H
             var declarator = decl.Ancestors().OfType<VariableDeclaratorSyntax>().FirstOrDefault();
             var inFieldDeclaratorArgumentlist = declarator != null && declarator.Parent.Parent.Kind() != SyntaxKind.LocalDeclarationStatement &&
                                            (declarator.ArgumentList?.Contains(decl)).GetValueOrDefault();
-            if (inFieldDeclaratorArgumentlist)
-            {
-                Assert.Null(model.GetSymbolInfo(decl).Symbol);
-                Assert.Null(model.GetSymbolInfo(decl).Symbol);
-            }
-            else
-            {
-                Assert.Same(symbol, model.GetSymbolInfo(decl).Symbol);
-                Assert.Same(symbol, model.GetSymbolInfo(decl).Symbol);
-            }
 
-            Assert.Null(model.GetDeclaredSymbol(decl));
+            AssertInfoForDeclarationExpressionSyntax(model, decl);
 
             foreach (var reference in references)
             {
@@ -27076,6 +27433,485 @@ class H
                     }
                 }
             }
+        }
+
+        [Fact]
+        public void MethodTypeArgumentInference_01()
+        {
+            var source =
+@"
+public class X
+{
+    public static void Main()
+    {
+        TakeOutParam(out int a);
+        TakeOutParam(out long b);
+    }
+
+    static void TakeOutParam<T>(out T x) 
+    {
+        x = default(T);
+        System.Console.WriteLine(typeof(T));
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
+            CompileAndVerify(compilation, expectedOutput:
+@"System.Int32
+System.Int64");
+        }
+
+        [Fact]
+        public void MethodTypeArgumentInference_02()
+        {
+            var source =
+@"
+public class X
+{
+    public static void Main()
+    {
+        TakeOutParam(out var a);
+    }
+
+    static void TakeOutParam<T>(out T x) 
+    {
+        x = default(T);
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
+            compilation.VerifyDiagnostics(
+                // (6,9): error CS0411: The type arguments for method 'X.TakeOutParam<T>(out T)' cannot be inferred from the usage. Try specifying the type arguments explicitly.
+                //         TakeOutParam(out var a);
+                Diagnostic(ErrorCode.ERR_CantInferMethTypeArgs, "TakeOutParam").WithArguments("X.TakeOutParam<T>(out T)").WithLocation(6, 9)
+                );
+        }
+
+        [Fact]
+        public void MethodTypeArgumentInference_03()
+        {
+            var source =
+@"
+public class X
+{
+    public static void Main()
+    {
+        long a = 0;
+        TakeOutParam(out int b, a);
+        int c;
+        TakeOutParam(out c, a);
+    }
+
+    static void TakeOutParam<T>(out T x, T y) 
+    {
+        x = default(T);
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
+            compilation.VerifyDiagnostics(
+                // (7,9): error CS0411: The type arguments for method 'X.TakeOutParam<T>(out T, T)' cannot be inferred from the usage. Try specifying the type arguments explicitly.
+                //         TakeOutParam(out int b, a);
+                Diagnostic(ErrorCode.ERR_CantInferMethTypeArgs, "TakeOutParam").WithArguments("X.TakeOutParam<T>(out T, T)").WithLocation(7, 9),
+                // (9,9): error CS0411: The type arguments for method 'X.TakeOutParam<T>(out T, T)' cannot be inferred from the usage. Try specifying the type arguments explicitly.
+                //         TakeOutParam(out c, a);
+                Diagnostic(ErrorCode.ERR_CantInferMethTypeArgs, "TakeOutParam").WithArguments("X.TakeOutParam<T>(out T, T)").WithLocation(9, 9)
+                );
+        }
+
+        [Fact]
+        public void MethodTypeArgumentInference_04()
+        {
+            var source =
+@"
+public class X
+{
+    public static void Main()
+    {
+        byte a = 0;
+        int b = 0;
+        TakeOutParam(out int c, a);
+        TakeOutParam(out b, a);
+    }
+
+    static void TakeOutParam<T>(out T x, T y) 
+    {
+        x = default(T);
+        System.Console.WriteLine(typeof(T));
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe, parseOptions: TestOptions.Regular);
+            CompileAndVerify(compilation, expectedOutput:
+@"System.Int32
+System.Int32");
+        }
+
+        [Fact, WorkItem(14825, "https://github.com/dotnet/roslyn/issues/14825")]
+        public void OutVarDeclaredInReceiverUsedInArgument()
+        {
+            var source =
+@"using System.Linq;
+
+public class C
+{
+    public string[] Foo2(out string x) { x = """"; return null; }
+    public string[] Foo3(bool b) { return null; }
+
+    public string[] Foo5(string u) { return null; }
+    
+    public void Test()
+    {
+        var t1 = Foo2(out var x1).Concat(Foo5(x1));
+        var t2 = Foo3(t1 is var x2).Concat(Foo5(x2.First()));
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlibAndSystemCore(source, options: TestOptions.DebugDll, parseOptions: TestOptions.Regular);
+            compilation.VerifyDiagnostics();
+            var tree = compilation.SyntaxTrees.Single();
+            var model = compilation.GetSemanticModel(tree);
+
+            var x1Decl = GetOutVarDeclaration(tree, "x1");
+            var x1Ref = GetReference(tree, "x1");
+            VerifyModelForOutVar(model, x1Decl, x1Ref);
+            Assert.Equal("System.String", model.GetTypeInfo(x1Ref).Type.ToTestDisplayString());
+        }
+
+        [Fact]
+        public void OutVarDiscard()
+        {
+            var source =
+@"
+public class C
+{
+    static void Main()
+    {
+        M(out int _);
+        M(out var _);
+        M(out _);
+    }
+
+    static void M(out int x) { x = 1; System.Console.Write(""M""); }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: "MMM");
+            comp.VerifyDiagnostics();
+
+            var tree = comp.Compilation.SyntaxTrees.Single();
+            var model = comp.Compilation.GetSemanticModel(tree);
+
+            var discard1 = GetDiscardDesignations(tree).ElementAt(0);
+            Assert.Null(model.GetDeclaredSymbol(discard1));
+            var declaration1 = (DeclarationExpressionSyntax)discard1.Parent;
+            Assert.Equal("int _", declaration1.ToString());
+            //Assert.Equal("", model.GetTypeInfo(declaration1).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+
+            var discard2 = GetDiscardDesignations(tree).ElementAt(1);
+            Assert.Null(model.GetDeclaredSymbol(discard2));
+            var declaration2 = (DeclarationExpressionSyntax)discard2.Parent;
+            Assert.Equal("var _", declaration2.ToString());
+            //Assert.Equal("", model.GetTypeInfo(declaration2).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+
+            var discard3 = GetDiscardIdentifiers(tree).First();
+            var symbol = (IDiscardedSymbol)model.GetSymbolInfo(discard3).Symbol; // returns null  https://github.com/dotnet/roslyn/issues/15450
+            //Assert.Equal("System.Int32", symbol.Type.ToTestDisplayString());
+
+            comp.VerifyIL("C.Main()", @"
+{
+  // Code size       22 (0x16)
+  .maxstack  1
+  .locals init (int V_0)
+  IL_0000:  ldloca.s   V_0
+  IL_0002:  call       ""void C.M(out int)""
+  IL_0007:  ldloca.s   V_0
+  IL_0009:  call       ""void C.M(out int)""
+  IL_000e:  ldloca.s   V_0
+  IL_0010:  call       ""void C.M(out int)""
+  IL_0015:  ret
+}
+");
+        }
+
+        [Fact]
+        public void NamedOutVarDiscard()
+        {
+            var source =
+@"
+public class C
+{
+    static void Main()
+    {
+        M(y: out string _, x: out int _);
+        M(y: out var _, x: out var _);
+        M(y: out _, x: out _);
+    }
+
+    static void M(out int x, out string y) { x = 1; y = ""hello""; System.Console.Write(""M""); }
+}
+";
+            var comp = CompileAndVerify(source, expectedOutput: "MMM");
+            comp.VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void OutVarDiscardInCtor()
+        {
+            var source =
+    @"
+public class C
+{
+    public C(out int i) { i = 1; System.Console.Write(""C""); }
+    static void Main()
+    {
+        new C(out int i1);
+        new C(out int _);
+        new C(out var _);
+        new C(out _);
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugExe);
+            comp.VerifyDiagnostics();
+            CompileAndVerify(comp, expectedOutput: "CCCC");
+
+            var tree = comp.SyntaxTrees.Single();
+            var model = comp.GetSemanticModel(tree);
+
+            var discard1 = GetDiscardDesignations(tree).ElementAt(0);
+            Assert.Null(model.GetDeclaredSymbol(discard1));
+            var declaration1 = (DeclarationExpressionSyntax)discard1.Parent;
+            Assert.Equal("int _", declaration1.ToString());
+            //Assert.Equal("System.Int32", model.GetTypeInfo(declaration1).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+
+            var discard2 = GetDiscardDesignations(tree).ElementAt(1);
+            Assert.Null(model.GetDeclaredSymbol(discard2));
+            var declaration2 = (DeclarationExpressionSyntax)discard2.Parent;
+            Assert.Equal("var _", declaration2.ToString());
+            //Assert.Equal("System.Int32", model.GetTypeInfo(declaration2).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+
+            var discard3 = GetDiscardIdentifiers(tree).First();
+            var symbol = (IDiscardedSymbol)model.GetSymbolInfo(discard3).Symbol; // returns null  https://github.com/dotnet/roslyn/issues/15450
+            //Assert.Equal("System.Int32", symbol.Type.ToTestDisplayString());
+        }
+
+        [Fact]
+        public void OutVarDiscardInCtorInitializer()
+        {
+            var source =
+    @"
+public class C
+{
+    public C(out int i) { i = 1; System.Console.Write(""C ""); }
+    static void Main()
+    {
+        new Derived2(out int i2);
+        new Derived3(out int i3);
+        new Derived4();
+    }
+}
+public class Derived2 : C
+{
+    public Derived2(out int i) : base(out int _) { i = 2; System.Console.Write(""Derived2 ""); }
+}
+public class Derived3 : C
+{
+    public Derived3(out int i) : base(out var _) { i = 3; System.Console.Write(""Derived3 ""); }
+}
+public class Derived4 : C
+{
+    public Derived4(out int i) : base(out _) { i = 4; }
+    public Derived4() : this(out _) { System.Console.Write(""Derived4""); }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugExe);
+            comp.VerifyDiagnostics();
+            CompileAndVerify(comp, expectedOutput: "C Derived2 C Derived3 C Derived4");
+        }
+
+        [Fact]
+        public void DiscardNotRecognizedInOtherScenarios()
+        {
+            var source =
+    @"
+public class C
+{
+    void M<T>()
+    {
+        _.ToString();
+        M(_);
+        _<T>.ToString();
+        (_<T>, _<T>) = (1, 2);
+        M<_>();
+        new C() { _ = 1 };
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll, references: new[] { ValueTupleRef, SystemRuntimeFacadeRef });
+            comp.VerifyDiagnostics(
+                // (6,9): error CS0103: The name '_' does not exist in the current context
+                //         _.ToString();
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "_").WithArguments("_").WithLocation(6, 9),
+                // (7,11): error CS0103: The name '_' does not exist in the current context
+                //         M(_);
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "_").WithArguments("_").WithLocation(7, 11),
+                // (8,9): error CS0103: The name '_' does not exist in the current context
+                //         _<T>.ToString();
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "_<T>").WithArguments("_").WithLocation(8, 9),
+                // (9,10): error CS0103: The name '_' does not exist in the current context
+                //         (_<T>, _<T>) = (1, 2);
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "_<T>").WithArguments("_").WithLocation(9, 10),
+                // (9,16): error CS0103: The name '_' does not exist in the current context
+                //         (_<T>, _<T>) = (1, 2);
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "_<T>").WithArguments("_").WithLocation(9, 16),
+                // (10,11): error CS0246: The type or namespace name '_' could not be found (are you missing a using directive or an assembly reference?)
+                //         M<_>();
+                Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "_").WithArguments("_").WithLocation(10, 11),
+                // (11,19): error CS0117: 'C' does not contain a definition for '_'
+                //         new C() { _ = 1 };
+                Diagnostic(ErrorCode.ERR_NoSuchMember, "_").WithArguments("C", "_").WithLocation(11, 19)
+                );
+        }
+
+        [Fact]
+        public void TypedDiscardInMethodTypeInference()
+        {
+            var source =
+    @"
+public class C
+{
+    static void M<T>(out T t)
+    {
+        t = default(T);
+        System.Console.Write(t.GetType().ToString());
+    }
+    static void Main()
+    {
+        M(out int _);
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugExe);
+            comp.VerifyDiagnostics();
+            CompileAndVerify(comp, expectedOutput: "System.Int32");
+        }
+
+        [Fact]
+        public void UntypedDiscardInMethodTypeInference()
+        {
+            var source =
+    @"
+public class C
+{
+    static void M<T>(out T t)
+    {
+        t = default(T);
+    }
+    static void Main()
+    {
+        M(out var _);
+        M(out _);
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugExe);
+            comp.VerifyDiagnostics(
+                // (10,9): error CS0411: The type arguments for method 'C.M<T>(out T)' cannot be inferred from the usage. Try specifying the type arguments explicitly.
+                //         M(out var _);
+                Diagnostic(ErrorCode.ERR_CantInferMethTypeArgs, "M").WithArguments("C.M<T>(out T)").WithLocation(10, 9),
+                // (11,9): error CS0411: The type arguments for method 'C.M<T>(out T)' cannot be inferred from the usage. Try specifying the type arguments explicitly.
+                //         M(out _);
+                Diagnostic(ErrorCode.ERR_CantInferMethTypeArgs, "M").WithArguments("C.M<T>(out T)").WithLocation(11, 9)
+                );
+        }
+
+        [Fact]
+        public void PickOverloadWithTypedDiscard()
+        {
+            var source =
+    @"
+public class C
+{
+    static void M(out object x) { x = 1; System.Console.Write(""object returing M. ""); }
+    static void M(out int x) { x = 2; System.Console.Write(""int returning M.""); }
+    static void Main()
+    {
+        M(out object _);
+        M(out int _);
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugExe);
+            comp.VerifyDiagnostics();
+            CompileAndVerify(comp, expectedOutput: "object returing M. int returning M.");
+        }
+
+        [Fact]
+        public void CannotPickOverloadWithUntypedDiscard()
+        {
+            var source =
+    @"
+public class C
+{
+    static void M(out object x) { x = 1; }
+    static void M(out int x) { x = 2; }
+    static void Main()
+    {
+        M(out var _);
+        M(out _);
+        M(out byte _);
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            comp.VerifyDiagnostics(
+                // (8,9): error CS0121: The call is ambiguous between the following methods or properties: 'C.M(out object)' and 'C.M(out int)'
+                //         M(out var _);
+                Diagnostic(ErrorCode.ERR_AmbigCall, "M").WithArguments("C.M(out object)", "C.M(out int)").WithLocation(8, 9),
+                // (9,9): error CS0121: The call is ambiguous between the following methods or properties: 'C.M(out object)' and 'C.M(out int)'
+                //         M(out _);
+                Diagnostic(ErrorCode.ERR_AmbigCall, "M").WithArguments("C.M(out object)", "C.M(out int)").WithLocation(9, 9),
+                // (10,20): error CS1503: Argument 1: cannot convert from 'out byte' to 'out object'
+                //         M(out byte _);
+                Diagnostic(ErrorCode.ERR_BadArgType, "_").WithArguments("1", "out byte", "out object").WithLocation(10, 20)
+                );
+        }
+
+        [Fact]
+        public void NoOverloadWithDiscard()
+        {
+            var source =
+    @"
+public class A { }
+public class B : A
+{
+    static void M(A a)
+    {
+        a.M2(out A x);
+        a.M2(out A _);
+    }
+}
+public static class S
+{
+    public static void M2(this A self, out B x) { x = null; }
+}";
+            var comp = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll, references: new[] { SystemCoreRef });
+            comp.VerifyDiagnostics(
+                // (7,18): error CS1503: Argument 2: cannot convert from 'out A' to 'out B'
+                //         a.M2(out A x);
+                Diagnostic(ErrorCode.ERR_BadArgType, "A x").WithArguments("2", "out A", "out B").WithLocation(7, 18),
+                // (8,20): error CS1503: Argument 2: cannot convert from 'out A' to 'out B'
+                //         a.M2(out A _);
+                Diagnostic(ErrorCode.ERR_BadArgType, "_").WithArguments("2", "out A", "out B").WithLocation(8, 20)
+                );
+        }
+    }
+
+    internal static class OutVarTestsExtensions
+    {
+        internal static SingleVariableDesignationSyntax VariableDesignation(this DeclarationExpressionSyntax self)
+        {
+            return (SingleVariableDesignationSyntax)self.Designation;
         }
     }
 }

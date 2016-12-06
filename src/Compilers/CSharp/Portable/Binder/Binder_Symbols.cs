@@ -1,15 +1,15 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using Microsoft.CodeAnalysis.Collections;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.RuntimeMembers;
-using Roslyn.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.CodeAnalysis.Collections;
+using Microsoft.CodeAnalysis.CSharp.Symbols;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.RuntimeMembers;
+using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.CSharp
 {
@@ -432,16 +432,16 @@ namespace Microsoft.CodeAnalysis.CSharp
                 }
 
                 string name =  null;
-                IdentifierNameSyntax nameSyntax = argumentSyntax.Name;
+                SyntaxToken nameToken = argumentSyntax.Identifier;
 
-                if (nameSyntax != null)
+                if (nameToken.Kind() == SyntaxKind.IdentifierToken)
                 {
-                    name = nameSyntax.Identifier.ValueText;
+                    name = nameToken.ValueText;
 
                     // validate name if we have one
                     hasExplicitNames = true;
-                    CheckTupleMemberName(name, i, nameSyntax, diagnostics, uniqueFieldNames);
-                    locations.Add(nameSyntax.Location);
+                    CheckTupleMemberName(name, i, nameToken, diagnostics, uniqueFieldNames);
+                    locations.Add(nameToken.GetLocation());
                 }
                 else
                 {
@@ -513,7 +513,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        private static bool CheckTupleMemberName(string name, int index, CSharpSyntaxNode syntax, DiagnosticBag diagnostics, PooledHashSet<string> uniqueFieldNames)
+        private static bool CheckTupleMemberName(string name, int index, SyntaxNodeOrToken syntax, DiagnosticBag diagnostics, PooledHashSet<string> uniqueFieldNames)
         {
             int reserved = TupleTypeSymbol.IsElementNameReserved(name);
             if (reserved == 0)
@@ -755,13 +755,14 @@ namespace Microsoft.CodeAnalysis.CSharp
                 if ((object)type != null)
                 {
                     // pass args in a value tuple to avoid allocating a closure
-                    var args = ValueTuple.Create(this, diagnostics, syntax);
+                    var args = (this, diagnostics, syntax);
                     type.VisitType((typePart, argTuple, isNested) =>
                     {
                         argTuple.Item1.ReportDiagnosticsIfObsolete(argTuple.Item2, typePart, argTuple.Item3, hasBaseReceiver: false);
                         return false;
                     }, args);
                 }
+
                 return result;
             }
 

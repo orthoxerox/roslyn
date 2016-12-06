@@ -312,10 +312,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
                 rules: GetRules(insertionText));
         }
 
-        public override Task<CompletionDescription> GetDescriptionAsync(Document document, CompletionItem item, CancellationToken cancellationToken)
-        {
-            return SymbolCompletionItem.GetDescriptionAsync(item, document, cancellationToken);
-        }
+        protected override Task<CompletionDescription> GetDescriptionWorkerAsync(Document document, CompletionItem item, CancellationToken cancellationToken)
+            => SymbolCompletionItem.GetDescriptionAsync(item, document, cancellationToken);
 
         private static readonly CharacterSetModificationRule s_WithoutOpenBrace = CharacterSetModificationRule.Create(CharacterSetModificationKind.Remove, '{');
         private static readonly CharacterSetModificationRule s_WithoutOpenParen = CharacterSetModificationRule.Create(CharacterSetModificationKind.Remove, '(');
@@ -349,8 +347,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
 
         protected override Task<TextChange?> GetTextChangeAsync(CompletionItem selectedItem, char? ch, CancellationToken cancellationToken)
         {
-            string insertionText;
-            if (!selectedItem.Properties.TryGetValue(InsertionTextProperty, out insertionText))
+            if (!selectedItem.Properties.TryGetValue(InsertionTextProperty, out var insertionText))
             {
                 insertionText = selectedItem.DisplayText;
             }

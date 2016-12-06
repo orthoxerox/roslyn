@@ -54,12 +54,7 @@ namespace Microsoft.CodeAnalysis.FindSymbols
 
         private SearchQuery(string name, SearchKind kind)
         {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            Name = name;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
             Kind = kind;
 
             switch (kind)
@@ -83,13 +78,8 @@ namespace Microsoft.CodeAnalysis.FindSymbols
 
         private SearchQuery(Func<string, bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
-
             Kind = SearchKind.Custom;
-            _predicate = predicate;
+            _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         }
 
         public static SearchQuery Create(string name, bool ignoreCase)
@@ -314,7 +304,7 @@ namespace Microsoft.CodeAnalysis.FindSymbols
             {
                 if (referenceOpt != null)
                 {
-                    var info = await SymbolTreeInfo.GetInfoForMetadataReferenceAsync(
+                    var info = await SymbolTreeInfo.TryGetInfoForMetadataReferenceAsync(
                         solution, referenceOpt, loadOnly: false, cancellationToken: cancellationToken).ConfigureAwait(false);
                     if (info != null)
                     {

@@ -70,35 +70,60 @@ namespace Microsoft.CodeAnalysis.CodeFixes.FullyQualify
                                             .Take(MaxResults);
 
                 var displayService = project.LanguageServices.GetService<ISymbolDisplayService>();
+                var codeActions = CreateActions(context, document, diagnostic, node, semanticModel, proposedContainers, displayService).ToImmutableArray();
 
-                foreach (var container in proposedContainers)
+                if (codeActions.Length > 1)
                 {
-                    var containerName = displayService.ToMinimalDisplayString(semanticModel, node.SpanStart, container);
-
-                    var syntaxFacts = document.Project.LanguageServices.GetService<ISyntaxFactsService>();
-                    string name;
-                    int arity;
-                    syntaxFacts.GetNameAndArityOfSimpleName(node, out name, out arity);
-
-                    // Actual member name might differ by case.
-                    string memberName;
-                    if (this.IgnoreCase)
-                    {
-                        var member = container.GetMembers(name).FirstOrDefault();
-                        memberName = member != null ? member.Name : name;
-                    }
-                    else
-                    {
-                        memberName = name;
-                    }
-
-                    var codeAction = new MyCodeAction(
-                        $"{containerName}.{memberName}",
-                        c => ProcessNode(document, node, containerName, c));
-
-                    context.RegisterCodeFix(codeAction, diagnostic);
+                    // Wrap the spell checking actions into a single top level suggestion
+                    // so as to not clutter the list.
+                    context.RegisterCodeFix(new GroupingCodeAction(
+                        string.Format(FeaturesResources.Fully_qualify_0, GetNodeName(document, node)),
+                        codeActions), context.Diagnostics);
+                }
+                else
+                {
+                    context.RegisterFixes(codeActions, context.Diagnostics);
                 }
             }
+        }
+
+        private IEnumerable<CodeAction> CreateActions(
+            CodeFixContext context, Document document, Diagnostic diagnostic,
+            SyntaxNode node, SemanticModel semanticModel,
+            IEnumerable<INamespaceOrTypeSymbol> proposedContainers,
+            ISymbolDisplayService displayService)
+        {
+            foreach (var container in proposedContainers)
+            {
+                var containerName = displayService.ToMinimalDisplayString(semanticModel, node.SpanStart, container);
+
+                var name = GetNodeName(document, node);
+
+                // Actual member name might differ by case.
+                string memberName;
+                if (this.IgnoreCase)
+                {
+                    var member = container.GetMembers(name).FirstOrDefault();
+                    memberName = member != null ? member.Name : name;
+                }
+                else
+                {
+                    memberName = name;
+                }
+
+                var codeAction = new MyCodeAction(
+                    $"{containerName}.{memberName}",
+                    c => ProcessNode(document, node, containerName, c));
+
+                yield return codeAction;
+            }
+        }
+
+        private static string GetNodeName(Document document, SyntaxNode node)
+        {
+            var syntaxFacts = document.Project.LanguageServices.GetService<ISyntaxFactsService>();
+            syntaxFacts.GetNameAndArityOfSimpleName(node, out var name, out var arity);
+            return name;
         }
 
         private async Task<Document> ProcessNode(Document document, SyntaxNode node, string containerName, CancellationToken cancellationToken)
@@ -112,10 +137,8 @@ namespace Microsoft.CodeAnalysis.CodeFixes.FullyQualify
         {
             // Can't be on the right hand side of binary expression (like 'dot').
             cancellationToken.ThrowIfCancellationRequested();
-            string name;
-            int arity;
             var syntaxFacts = project.LanguageServices.GetService<ISyntaxFactsService>();
-            syntaxFacts.GetNameAndArityOfSimpleName(node, out name, out arity);
+            syntaxFacts.GetNameAndArityOfSimpleName(node, out var name, out var arity);
 
             var symbols = await SymbolFinder.FindDeclarationsAsync(project, name, this.IgnoreCase, SymbolFilter.Type, cancellationToken).ConfigureAwait(false);
 
@@ -157,9 +180,7 @@ namespace Microsoft.CodeAnalysis.CodeFixes.FullyQualify
                 return ImmutableArray<SymbolResult>.Empty;
             }
 
-            string name;
-            int arityUnused;
-            syntaxFacts.GetNameAndArityOfSimpleName(simpleName, out name, out arityUnused);
+            syntaxFacts.GetNameAndArityOfSimpleName(simpleName, out var name, out var arityUnused);
             if (cancellationToken.IsCancellationRequested)
             {
                 return ImmutableArray<SymbolResult>.Empty;
@@ -212,7 +233,7 @@ namespace Microsoft.CodeAnalysis.CodeFixes.FullyQualify
             {
                 return false;
             }
-            
+
             return BindsWithoutErrors(ns, rightName + "Attribute", isAttributeName: false);
         }
 
@@ -251,7 +272,15 @@ namespace Microsoft.CodeAnalysis.CodeFixes.FullyQualify
         private class MyCodeAction : CodeAction.DocumentChangeAction
         {
             public MyCodeAction(string title, Func<CancellationToken, Task<Document>> createChangedDocument) :
-                base(title, createChangedDocument)
+                base(title, createChangedDocument, equivalenceKey: title)
+            {
+            }
+        }
+
+        private class GroupingCodeAction : CodeAction.CodeActionWithNestedActions
+        {
+            public GroupingCodeAction(string title, ImmutableArray<CodeAction> nestedActions)
+                : base(title, nestedActions, isInlinable: true)
             {
             }
         }

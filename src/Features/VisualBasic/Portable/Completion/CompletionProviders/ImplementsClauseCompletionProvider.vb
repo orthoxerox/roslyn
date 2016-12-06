@@ -239,9 +239,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Completion.Providers
             Return parent IsNot Nothing AndAlso parent.IsKind(SyntaxKind.ImplementsClause)
         End Function
 
-        Protected Overrides Function GetDisplayAndInsertionText(symbol As ISymbol, context As SyntaxContext) As ValueTuple(Of String, String)
+        Protected Overrides Function GetDisplayAndInsertionText(symbol As ISymbol, context As SyntaxContext) As (displayText As String, insertionText As String)
             If IsGlobal(symbol) Then
-                Return ValueTuple.Create("Global", "Global")
+                Return ("Global", "Global")
             End If
 
             Dim displayText As String = Nothing
@@ -257,7 +257,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Completion.Providers
                 insertionText = displayAndInsertionText.Item2
             End If
 
-            Return ValueTuple.Create(displayText, insertionText)
+            Return (displayText, insertionText)
         End Function
 
         Private Shared Function IsGenericType(symbol As ISymbol) As Boolean
@@ -269,15 +269,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Completion.Providers
 
         Private Const InsertionTextOnOpenParen As String = NameOf(InsertionTextOnOpenParen)
 
-        Protected Overrides Function GetInitialProperties(symbol As ISymbol, context As SyntaxContext) As ImmutableDictionary(Of String, String)
-            If IsGenericType(symbol) Then
-                Dim text = symbol.ToMinimalDisplayString(context.SemanticModel, context.Position, MinimalFormatWithoutGenerics)
-                Return ImmutableDictionary(Of String, String).Empty.Add(InsertionTextOnOpenParen, text)
-            End If
-
-            Return MyBase.GetInitialProperties(symbol, context)
-        End Function
-
         Protected Overrides Async Function CreateContext(document As Document, position As Integer, cancellationToken As CancellationToken) As Task(Of SyntaxContext)
             Dim semanticModel = Await document.GetSemanticModelForSpanAsync(New TextSpan(position, 0), cancellationToken).ConfigureAwait(False)
             Return Await VisualBasicSyntaxContext.CreateContextAsync(document.Project.Solution.Workspace, semanticModel, position, cancellationToken).ConfigureAwait(False)
@@ -285,6 +276,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Completion.Providers
 
         Protected Overrides Function GetCompletionItemRules(symbols As IReadOnlyList(Of ISymbol), context As SyntaxContext) As CompletionItemRules
             Return CompletionItemRules.Default
+        End Function
+
+        Protected Overrides Function CreateItem(displayText As String, insertionText As String, symbols As List(Of ISymbol), context As SyntaxContext, preselect As Boolean, supportedPlatformData As SupportedPlatformData) As CompletionItem
+            Dim item = MyBase.CreateItem(displayText, insertionText, symbols, context, preselect, supportedPlatformData)
+
+            If IsGenericType(symbols(0)) Then
+                Dim text = symbols(0).ToMinimalDisplayString(context.SemanticModel, context.Position, MinimalFormatWithoutGenerics)
+                item = item.WithProperties(ImmutableDictionary(Of String, String).Empty.Add(InsertionTextOnOpenParen, text))
+            End If
+
+            Return item
         End Function
 
         Protected Overrides Function GetInsertionText(item As CompletionItem, ch As Char) As String

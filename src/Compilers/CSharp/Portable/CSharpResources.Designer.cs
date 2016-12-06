@@ -3311,6 +3311,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot infer the type of implicitly-typed discard..
+        /// </summary>
+        internal static string ERR_DiscardTypeInferenceFailed {
+            get {
+                return ResourceManager.GetString("ERR_DiscardTypeInferenceFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The DllImport attribute cannot be applied to a method that is generic or contained in a generic type..
         /// </summary>
         internal static string ERR_DllImportOnGenericMethod {
@@ -4670,7 +4679,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type &apos;{0}&apos; from assembly &apos;{1}&apos; cannot be used across assembly boundaries because it has a generic type parameter that is an embedded interop type..
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; from assembly &apos;{1}&apos; cannot be used across assembly boundaries because it has a generic type argument that is an embedded interop type..
         /// </summary>
         internal static string ERR_GenericsUsedAcrossAssemblies {
             get {
@@ -5741,7 +5750,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A local variable named &apos;{0}&apos; is already defined in this scope.
+        ///   Looks up a localized string similar to A local variable or function named &apos;{0}&apos; is already defined in this scope.
         /// </summary>
         internal static string ERR_LocalDuplicate {
             get {
@@ -5759,7 +5768,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos;: a parameter or local variable cannot have the same name as a method type parameter.
+        ///   Looks up a localized string similar to &apos;{0}&apos;: a parameter, local variable, or local function cannot have the same name as a method type parameter.
         /// </summary>
         internal static string ERR_LocalSameNameAsTypeParam {
             get {
@@ -6128,6 +6137,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot reference {0} in a deconstruction declaration.
+        /// </summary>
+        internal static string ERR_MixedDeconstructionDisallowed {
+            get {
+                return ResourceManager.GetString("ERR_MixedDeconstructionDisallowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot implement &apos;{1}&apos; because &apos;{2}&apos; is a Windows Runtime event and &apos;{3}&apos; is a regular .NET event..
         /// </summary>
         internal static string ERR_MixingWinRTEventWithRegular {
@@ -6403,6 +6421,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_NewVirtualInSealed {
             get {
                 return ResourceManager.GetString("ERR_NewVirtualInSealed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;new&apos; cannot be used with tuple type. Use a tuple literal expression instead..
+        /// </summary>
+        internal static string ERR_NewWithTupleTypeSyntax {
+            get {
+                return ResourceManager.GetString("ERR_NewWithTupleTypeSyntax", resourceCulture);
             }
         }
         
@@ -7451,6 +7478,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to To cast a negative value, you must enclose the value in parentheses..
+        /// </summary>
+        internal static string ERR_PossibleBadNegCast {
+            get {
+                return ResourceManager.GetString("ERR_PossibleBadNegCast", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot define/undefine preprocessor symbols after first token in file.
         /// </summary>
         internal static string ERR_PPDefFollowsToken {
@@ -7501,6 +7537,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_PredefinedTypeNotFound {
             get {
                 return ResourceManager.GetString("ERR_PredefinedTypeNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Predefined type &apos;{0}&apos; must be a struct..
+        /// </summary>
+        internal static string ERR_PredefinedValueTupleTypeMustBeStruct {
+            get {
+                return ResourceManager.GetString("ERR_PredefinedValueTupleTypeMustBeStruct", resourceCulture);
             }
         }
         
@@ -8810,11 +8855,11 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tuple member names must be unique..
+        ///   Looks up a localized string similar to Tuple element names must be unique..
         /// </summary>
-        internal static string ERR_TupleDuplicateMemberName {
+        internal static string ERR_TupleDuplicateElementName {
             get {
-                return ResourceManager.GetString("ERR_TupleDuplicateMemberName", resourceCulture);
+                return ResourceManager.GetString("ERR_TupleDuplicateElementName", resourceCulture);
             }
         }
         
@@ -8828,20 +8873,20 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tuple member name &apos;{0}&apos; is only allowed at position {1}..
+        ///   Looks up a localized string similar to Tuple element name &apos;{0}&apos; is only allowed at position {1}..
         /// </summary>
-        internal static string ERR_TupleReservedMemberName {
+        internal static string ERR_TupleReservedElementName {
             get {
-                return ResourceManager.GetString("ERR_TupleReservedMemberName", resourceCulture);
+                return ResourceManager.GetString("ERR_TupleReservedElementName", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tuple member name &apos;{0}&apos; is disallowed at any position..
+        ///   Looks up a localized string similar to Tuple element name &apos;{0}&apos; is disallowed at any position..
         /// </summary>
-        internal static string ERR_TupleReservedMemberNameAnyPosition {
+        internal static string ERR_TupleReservedElementNameAnyPosition {
             get {
-                return ResourceManager.GetString("ERR_TupleReservedMemberNameAnyPosition", resourceCulture);
+                return ResourceManager.GetString("ERR_TupleReservedElementNameAnyPosition", resourceCulture);
             }
         }
         
@@ -10616,15 +10661,6 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string SyntaxTreeSemanticModelMust {
             get {
                 return ResourceManager.GetString("SyntaxTreeSemanticModelMust", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The stream cannot be read from..
-        /// </summary>
-        internal static string TheStreamCannotBeReadFrom {
-            get {
-                return ResourceManager.GetString("TheStreamCannotBeReadFrom", resourceCulture);
             }
         }
         
@@ -12948,7 +12984,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The member &apos;{0}&apos; does not hide an inherited member. The new keyword is not required..
+        ///   Looks up a localized string similar to The member &apos;{0}&apos; does not hide an accessible member. The new keyword is not required..
         /// </summary>
         internal static string WRN_NewNotRequired {
             get {
