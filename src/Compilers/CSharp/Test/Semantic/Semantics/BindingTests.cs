@@ -3412,5 +3412,104 @@ class Program
             Assert.Null(symbolInfo1.Symbol);
             Assert.True(symbolInfo1.CandidateSymbols.IsEmpty);
         }
+
+        [Fact]
+        public void TestFunctor()
+        {
+            const string source = @"
+struct S
+{
+    public void Invoke(string x)
+    {
+        System.Console.Write(x);
+    }
+}
+
+class C
+{
+    void Invoke(string x)
+    {
+        System.Console.Write(x);
+    }
+
+    static void Main()
+    {
+        var c = new C();
+        c(""42"");
+        var s = new S();
+        s(""10"");
+    }
+}";
+
+            CompileAndVerify(source, expectedOutput: "4210");
+        }
+
+        [Fact]
+        public void TestOverloadedFunctor()
+        {
+            const string source = @"
+class C
+{
+    void Invoke(string x)
+    {
+        System.Console.Write(x);
+    }
+
+    void Invoke(int x)
+    {
+        System.Console.Write(x-1);
+    }
+
+    static void Main()
+    {
+        var c = new C();
+        c(43);
+    }
+}";
+
+            CompileAndVerify(source, expectedOutput: "42");
+        }
+
+        [Fact]
+        public void TestStaticFunctor()
+        {
+            const string source = @"
+class C
+{
+    public static void Invoke(string x)
+    {
+        System.Console.Write(x);
+    }
+
+    static void Main()
+    {
+        C(""42"");
+    }
+}";
+            CompileAndVerify(source, expectedOutput: "42");
+        }
+
+        [Fact]
+        public void TestExtensionFunctor()
+        {
+            const string source = @"
+static class X
+{
+    public static void Invoke(this C c, string x)
+    {
+        System.Console.Write(x);
+    }
+}
+
+class C
+{
+    static void Main()
+    {
+        var c = new C();
+        c(""42"");
+    }
+}";
+            CompileAndVerify(source, expectedOutput: "42", additionalRefs: new[] { SystemCoreRef });
+        }
     }
 }

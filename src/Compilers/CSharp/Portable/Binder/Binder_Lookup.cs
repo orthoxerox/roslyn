@@ -1388,6 +1388,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SymbolKind.Property:
                     type = ((PropertySymbol)symbol).Type;
                     break;
+
+                case SymbolKind.NamedType:
+                    type = (TypeSymbol)symbol;
+                    return type.GetMembers("Invoke").Length > 0;
             }
 
             return (object)type != null && (type.IsDelegateType() || type.IsDynamic());

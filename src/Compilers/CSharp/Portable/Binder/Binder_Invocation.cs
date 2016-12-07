@@ -8,6 +8,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslyn.Utilities;
+using Microsoft.CodeAnalysis;
 
 namespace Microsoft.CodeAnalysis.CSharp
 {
@@ -232,8 +233,9 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                 result = BindDelegateInvocation(node, expression, methodName, boundExpression, analyzedArguments, diagnostics, queryClause, delegateType);
             }
-            else
+            else if (!TryBindFunctorInvocation(node, expression, boundExpression, analyzedArguments, diagnostics, queryClause, out result)) 
             {
+
                 if (!boundExpression.HasAnyErrors)
                 {
                     diagnostics.Add(new CSDiagnosticInfo(ErrorCode.ERR_MethodNameExpected), expression.Location);
@@ -470,6 +472,39 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             return false;
+        }
+
+        bool TryBindFunctorInvocation(
+            SyntaxNode syntax, 
+            SyntaxNode expression, 
+            BoundExpression boundExpression, 
+            AnalyzedArguments analyzedArguments, 
+            DiagnosticBag diagnostics, 
+            CSharpSyntaxNode queryClause, 
+            out BoundExpression result)
+        {
+            const string methodName = "Invoke";
+
+            var diag = new DiagnosticBag();
+
+            var methodGroup = BindMethodGroup(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    (ExpressionSyntax)boundExpression.Syntax,
+                    SyntaxFactory.IdentifierName(methodName)),
+                invoked: true,
+                indexed: false,
+                diagnostics: diag) as BoundMethodGroup;
+
+            if (diag.HasAnyErrors() || methodGroup == null) 
+            {
+                result = null;
+                return false;
+            }
+
+            result = BindMethodGroupInvocation(syntax, expression, methodName, methodGroup, analyzedArguments, diagnostics, queryClause);
+            return true;
+
         }
 
         private BoundExpression BindMethodGroupInvocation(
