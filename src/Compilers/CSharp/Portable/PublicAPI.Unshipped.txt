@@ -9,6 +9,7 @@
 *REMOVED*static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.AccessorDeclaration(Microsoft.CodeAnalysis.CSharp.SyntaxKind kind, Microsoft.CodeAnalysis.CSharp.Syntax.BlockSyntax body = null) -> Microsoft.CodeAnalysis.CSharp.Syntax.AccessorDeclarationSyntax
 Microsoft.CodeAnalysis.CSharp.CSharpParseOptions.CSharpParseOptions(Microsoft.CodeAnalysis.CSharp.LanguageVersion languageVersion = Microsoft.CodeAnalysis.CSharp.LanguageVersion.Default, Microsoft.CodeAnalysis.DocumentationMode documentationMode = Microsoft.CodeAnalysis.DocumentationMode.Parse, Microsoft.CodeAnalysis.SourceCodeKind kind = Microsoft.CodeAnalysis.SourceCodeKind.Regular, System.Collections.Generic.IEnumerable<string> preprocessorSymbols = null) -> void
 Microsoft.CodeAnalysis.CSharp.CSharpParseOptions.SpecifiedLanguageVersion.get -> Microsoft.CodeAnalysis.CSharp.LanguageVersion
+Microsoft.CodeAnalysis.CSharp.Conversion.IsFunctor.get -> bool
 Microsoft.CodeAnalysis.CSharp.Conversion.IsThrow.get -> bool
 Microsoft.CodeAnalysis.CSharp.Conversion.IsTupleConversion.get -> bool
 Microsoft.CodeAnalysis.CSharp.Conversion.IsTupleLiteralConversion.get -> bool
@@ -129,8 +130,8 @@ Microsoft.CodeAnalysis.CSharp.Syntax.ThrowExpressionSyntax.WithThrowKeyword(Micr
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax.Identifier.get -> Microsoft.CodeAnalysis.SyntaxToken
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax.Type.get -> Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax
-Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax.WithIdentifier(Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax.Update(Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax type, Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax
+Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax.WithIdentifier(Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax.WithType(Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax type) -> Microsoft.CodeAnalysis.CSharp.Syntax.TupleElementSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleExpressionSyntax
 Microsoft.CodeAnalysis.CSharp.Syntax.TupleExpressionSyntax.AddArguments(params Microsoft.CodeAnalysis.CSharp.Syntax.ArgumentSyntax[] items) -> Microsoft.CodeAnalysis.CSharp.Syntax.TupleExpressionSyntax

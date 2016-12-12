@@ -3488,7 +3488,7 @@ class C
 }";
             CompileAndVerify(source, expectedOutput: "42");
         }
-
+        
         [Fact]
         public void TestExtensionFunctor()
         {
@@ -3511,5 +3511,45 @@ class C
 }";
             CompileAndVerify(source, expectedOutput: "42", additionalRefs: new[] { SystemCoreRef });
         }
+
+        [Fact]
+        public void TestFunctorAsDelegate()
+        {
+            const string source = @"
+using System;
+class C
+{
+    string Invoke() => ""42"";
+
+    static void Foo(Func<string> func) => Console.Write(func());
+
+    static void Main()
+    {
+        var c = new C();
+        Foo(c);
+    }
+}";
+            CompileAndVerify(source, expectedOutput: "42");
+        }
+
+        [Fact]
+        public void TestStaticFunctorAsDelegate()
+        {
+            const string source = @"
+using System;
+class C
+{
+    static string Invoke() => ""42"";
+
+    static void Foo(Func<string> func) => Console.Write(func());
+
+    static void Main()
+    {
+        Foo(C);
+    }
+}";
+            CompileAndVerify(source, expectedOutput: "42");
+        }
+
     }
 }

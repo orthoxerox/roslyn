@@ -632,6 +632,18 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         /// <summary>
+        /// Returns true if the conversion is an implicit functor conversion.
+        /// </summary>
+        /// <remarks>
+        /// Implicit functor conversions are not described in the C# language specification yet. TODO.
+        /// </remarks>
+        public bool IsFunctor {
+            get {
+                return Kind == ConversionKind.Functor;
+            }
+        }
+
+        /// <summary>
         /// Returns true if the conversion is a pointer conversion 
         /// </summary>
         /// <remarks>

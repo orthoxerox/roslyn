@@ -38,6 +38,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case ConversionKind.ImplicitUserDefined:
                 case ConversionKind.AnonymousFunction:
                 case ConversionKind.MethodGroup:
+                case ConversionKind.Functor:
                 case ConversionKind.PointerToVoid:
                 case ConversionKind.NullToPointer:
                 case ConversionKind.InterpolatedString:

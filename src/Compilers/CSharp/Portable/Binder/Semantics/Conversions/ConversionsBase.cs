@@ -27,6 +27,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public abstract Conversion GetMethodGroupConversion(BoundMethodGroup source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics);
 
+        public abstract Conversion GetFunctorConversion(BoundExpression source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics);
+
         protected abstract ConversionsBase CreateInstance(int currentRecursionDepth);
 
         protected abstract Conversion GetInterpolatedStringConversion(BoundInterpolatedString source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics);
@@ -34,6 +36,8 @@ namespace Microsoft.CodeAnalysis.CSharp
         protected abstract Conversion GetImplicitTupleLiteralConversion(BoundTupleLiteral source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics);
 
         protected abstract Conversion GetExplicitTupleLiteralConversion(BoundTupleLiteral source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics, bool forCast);
+
+
 
         internal AssemblySymbol CorLibrary {  get { return corLibrary; } }
 
@@ -840,6 +844,13 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                 case BoundKind.ThrowExpression:
                     return Conversion.ImplicitThrow;
+
+                default:
+                    Conversion functorConversion = GetFunctorConversion(sourceExpression, destination, ref useSiteDiagnostics);
+                    if (functorConversion.Exists) {
+                        return functorConversion;
+                    }
+                    break;
             }
 
             return Conversion.NoConversion;

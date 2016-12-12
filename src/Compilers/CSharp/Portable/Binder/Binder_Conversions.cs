@@ -86,6 +86,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return CreateMethodGroupConversion(syntax, source, conversion, isCast, destination, diagnostics);
             }
 
+            if (conversion.IsFunctor) {
+                return CreateFunctorConversion(syntax, source, conversion, isCast, destination, diagnostics);
+            }
+
             if (conversion.IsAnonymousFunction && source.Kind == BoundKind.UnboundLambda)
             {
                 return CreateAnonymousFunctionConversion(syntax, source, conversion, isCast, destination, diagnostics);
@@ -330,6 +334,27 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             return new BoundConversion(syntax, group, conversion, @checked: false, explicitCastInCode: isCast, constantValueOpt: ConstantValue.NotAvailable, type: destination, hasErrors: hasErrors) { WasCompilerGenerated = source.WasCompilerGenerated };
+        }
+
+        private BoundExpression CreateFunctorConversion(SyntaxNode syntax, BoundExpression source, Conversion conversion, bool isCast, TypeSymbol destination, DiagnosticBag diagnostics)
+        {
+            var diag = new DiagnosticBag();
+
+            var invocation = SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    (Syntax.ExpressionSyntax)source.Syntax,
+                    SyntaxFactory.IdentifierName(WellKnownMemberNames.DelegateInvokeName));
+
+            var methodGroup = BindMethodGroup(
+                invocation,
+                invoked: true,
+                indexed: false,
+                diagnostics: diag) as BoundMethodGroup;
+
+            Debug.Assert(methodGroup != null);
+            Debug.Assert(!diag.HasAnyErrors());
+
+            return CreateMethodGroupConversion(invocation, methodGroup, conversion, isCast, destination, diagnostics);
         }
 
         private BoundExpression CreateTupleLiteralConversion(SyntaxNode syntax, BoundTupleLiteral sourceTuple, Conversion conversion, bool isCast, TypeSymbol destination, DiagnosticBag diagnostics)

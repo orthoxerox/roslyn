@@ -1692,6 +1692,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                     Error(diagnostics, ErrorCode.ERR_BadSKknown, expr.Syntax, ((BoundNamespaceExpression)expr).NamespaceSymbol, MessageID.IDS_SK_NAMESPACE.Localize(), MessageID.IDS_SK_VARIABLE.Localize());
                     return false;
                 case BoundKind.TypeExpression:
+                    if (expr.Type.GetMembers(WellKnownMemberNames.DelegateInvokeName).Length != 0)
+                    {
+                        return true;
+                    }
                     Error(diagnostics, ErrorCode.ERR_BadSKunknown, expr.Syntax, expr.Type, MessageID.IDS_SK_TYPE.Localize());
                     return false;
                 default:

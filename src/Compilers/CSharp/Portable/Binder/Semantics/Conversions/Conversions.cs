@@ -264,6 +264,36 @@ namespace Microsoft.CodeAnalysis.CSharp
             return conversion;
         }
 
+        public override Conversion GetFunctorConversion(BoundExpression source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics)
+        {
+            var methods = source.Type.GetMembers(WellKnownMemberNames.DelegateInvokeName);
+            if (methods.Length == 0) {
+                return Conversion.NoConversion;
+            }
+
+            var diagnostics = new DiagnosticBag();
+
+            var methodGroup = _binder.BindExpression(SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    (ExpressionSyntax)source.Syntax,
+                    SyntaxFactory.IdentifierName(WellKnownMemberNames.DelegateInvokeName)), 
+                    diagnostics) as BoundMethodGroup;
+
+            if (diagnostics.HasAnyErrors() || methodGroup == null) {
+                return Conversion.NoConversion;
+            }
+
+            var methodGroupConversion = GetMethodGroupConversion(methodGroup, destination, ref useSiteDiagnostics);
+
+            if (methodGroupConversion.Kind != ConversionKind.MethodGroup) {
+                return Conversion.NoConversion;
+            }
+
+            return new Conversion(ConversionKind.Functor, methodGroupConversion.Method, methodGroupConversion.IsExtensionMethod);
+
+        }
+
+
         public static void GetDelegateArguments(SyntaxNode syntax, AnalyzedArguments analyzedArguments, ImmutableArray<ParameterSymbol> delegateParameters, CSharpCompilation compilation)
         {
             foreach (var p in delegateParameters)

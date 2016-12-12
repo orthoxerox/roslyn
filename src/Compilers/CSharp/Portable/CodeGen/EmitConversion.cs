@@ -13,6 +13,9 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
         {
             switch (conversion.ConversionKind)
             {
+                case ConversionKind.Functor:
+                    EmitMethodGroupConversion(conversion, used);
+                    return;
                 case ConversionKind.MethodGroup:
                     EmitMethodGroupConversion(conversion, used);
                     return;

@@ -29,6 +29,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         ImplicitUserDefined,
         AnonymousFunction,
         MethodGroup,
+        Functor,
         ExplicitNumeric,
         ExplicitEnumeration,
         ExplicitNullable,
