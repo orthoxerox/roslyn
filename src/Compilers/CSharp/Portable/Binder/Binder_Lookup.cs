@@ -1391,7 +1391,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                 case SymbolKind.NamedType:
                     type = (TypeSymbol)symbol;
-                    return type.GetMembers("Invoke").Length > 0;
+                    return type.GetMembers(WellKnownMemberNames.DelegateInvokeName).Length > 0;
             }
 
             return (object)type != null && (type.IsDelegateType() || type.IsDynamic());
