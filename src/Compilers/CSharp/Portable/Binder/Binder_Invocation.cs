@@ -483,7 +483,6 @@ namespace Microsoft.CodeAnalysis.CSharp
             CSharpSyntaxNode queryClause, 
             out BoundExpression result)
         {
-            const string methodName = "Invoke";
 
             var diag = new DiagnosticBag();
 
@@ -491,7 +490,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 SyntaxFactory.MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,
                     (ExpressionSyntax)boundExpression.Syntax,
-                    SyntaxFactory.IdentifierName(methodName)),
+                    SyntaxFactory.IdentifierName(WellKnownMemberNames.DelegateInvokeName)),
                 invoked: true,
                 indexed: false,
                 diagnostics: diag) as BoundMethodGroup;
@@ -502,7 +501,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 return false;
             }
 
-            result = BindMethodGroupInvocation(syntax, expression, methodName, methodGroup, analyzedArguments, diagnostics, queryClause);
+            result = BindMethodGroupInvocation(syntax, expression, WellKnownMemberNames.DelegateInvokeName, methodGroup, analyzedArguments, diagnostics, queryClause);
             return true;
 
         }
