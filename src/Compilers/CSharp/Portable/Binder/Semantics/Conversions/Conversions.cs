@@ -266,8 +266,8 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public override Conversion GetFunctorConversion(BoundExpression source, TypeSymbol destination, ref HashSet<DiagnosticInfo> useSiteDiagnostics)
         {
-            var methods = source.Type.GetMembers(WellKnownMemberNames.DelegateInvokeName);
-            if (methods.Length == 0) {
+            var methods = source.Type?.GetMembers(WellKnownMemberNames.DelegateInvokeName);
+            if (!methods.HasValue || methods.GetValueOrDefault().Length == 0) {
                 return Conversion.NoConversion;
             }
 
