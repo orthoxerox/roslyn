@@ -3104,6 +3104,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A declaration is not allowed in this context..
+        /// </summary>
+        internal static string ERR_DeclarationExpressionNotPermitted {
+            get {
+                return ResourceManager.GetString("ERR_DeclarationExpressionNotPermitted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Deconstruction &apos;var (...)&apos; form disallows a specific type for &apos;var&apos;..
         /// </summary>
         internal static string ERR_DeconstructionVarFormDisallowsSpecificType {
@@ -4216,6 +4225,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_ExpressionVariableInConstructorOrFieldInitializer {
             get {
                 return ResourceManager.GetString("ERR_ExpressionVariableInConstructorOrFieldInitializer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Out variable and pattern variable declarations are not allowed within a query clause..
+        /// </summary>
+        internal static string ERR_ExpressionVariableInQueryClause {
+            get {
+                return ResourceManager.GetString("ERR_ExpressionVariableInQueryClause", resourceCulture);
             }
         }
         
@@ -6038,7 +6056,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No Deconstruct instance or extension method was found for type &apos;{0}&apos;, with {1} out parameters..
+        ///   Looks up a localized string similar to No Deconstruct instance or extension method was found for type &apos;{0}&apos;, with {1} out parameters and a void return type..
         /// </summary>
         internal static string ERR_MissingDeconstruct {
             get {
@@ -6137,11 +6155,11 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot reference {0} in a deconstruction declaration.
+        ///   Looks up a localized string similar to A deconstruction cannot mix declarations and expressions on the left-hand-side..
         /// </summary>
-        internal static string ERR_MixedDeconstructionDisallowed {
+        internal static string ERR_MixedDeconstructionUnsupported {
             get {
-                return ResourceManager.GetString("ERR_MixedDeconstructionDisallowed", resourceCulture);
+                return ResourceManager.GetString("ERR_MixedDeconstructionUnsupported", resourceCulture);
             }
         }
         
@@ -6196,6 +6214,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         internal static string ERR_MultiTypeInDeclaration {
             get {
                 return ResourceManager.GetString("ERR_MultiTypeInDeclaration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A foreach loop must declare its iteration variables..
+        /// </summary>
+        internal static string ERR_MustDeclareForeachIteration {
+            get {
+                return ResourceManager.GetString("ERR_MustDeclareForeachIteration", resourceCulture);
             }
         }
         
@@ -8873,6 +8900,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tuple element names are not permitted on the left of a deconstruction..
+        /// </summary>
+        internal static string ERR_TupleElementNamesInDeconstruction {
+            get {
+                return ResourceManager.GetString("ERR_TupleElementNamesInDeconstruction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tuple element name &apos;{0}&apos; is only allowed at position {1}..
         /// </summary>
         internal static string ERR_TupleReservedElementName {
@@ -10386,7 +10422,7 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;throw&gt;.
+        ///   Looks up a localized string similar to &lt;throw expression&gt;.
         /// </summary>
         internal static string IDS_ThrowExpression {
             get {

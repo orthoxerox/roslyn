@@ -1235,7 +1235,7 @@ namespace Microsoft.Cci
 
         internal PrimitiveTypeCode GetConstantTypeCode(ILocalDefinition constant)
         {
-            return constant.CompileTimeValue.Type.TypeCode(Context);
+            return constant.CompileTimeValue.Type.TypeCode;
         }
 
         private BlobHandle GetPermissionSetBlobHandle(ImmutableArray<ICustomAttribute> permissionSet)
@@ -2733,7 +2733,7 @@ namespace Microsoft.Cci
                     ISpecializedNestedTypeReference sneTypeRef = nestedTypeRef.AsSpecializedNestedTypeReference;
                     if (sneTypeRef != null)
                     {
-                        scopeTypeRef = sneTypeRef.UnspecializedVersion.GetContainingType(Context);
+                        scopeTypeRef = sneTypeRef.GetUnspecializedVersion(Context).GetContainingType(Context);
                     }
                     else
                     {
@@ -3635,7 +3635,7 @@ namespace Microsoft.Cci
 
                 // TYPEDREF is only allowed in RetType, Param, LocalVarSig signatures
                 Debug.Assert(!module.IsPlatformType(typeReference, PlatformType.SystemTypedReference));
-				
+
                 var modifiedTypeReference = typeReference as IModifiedTypeReference;
                 if (modifiedTypeReference != null)
                 {
@@ -3644,7 +3644,7 @@ namespace Microsoft.Cci
                     continue;
                 }
 
-                var primitiveType = typeReference.TypeCode(Context);
+                var primitiveType = typeReference.TypeCode;
                 if (primitiveType != PrimitiveTypeCode.Pointer && primitiveType != PrimitiveTypeCode.NotPrimitive)
                 {
                     SerializePrimitiveType(encoder, primitiveType);
@@ -3655,16 +3655,8 @@ namespace Microsoft.Cci
                 if (pointerTypeReference != null)
                 {
                     typeReference = pointerTypeReference.GetTargetType(Context);
-                    if (module.IsPlatformType(typeReference, PlatformType.SystemVoid))
-                    {
-                        encoder.VoidPointer();
-                        return;
-                    }
-                    else
-                    {
-                        encoder = encoder.Pointer();
-                        continue;
-                    }
+                    encoder = encoder.Pointer();
+                    continue;
                 }
 
                 IGenericTypeParameterReference genericTypeParameterReference = typeReference.AsGenericTypeParameterReference;
@@ -3712,7 +3704,7 @@ namespace Microsoft.Cci
 
                 if (typeReference.IsTypeSpecification())
                 {
-                    ITypeReference uninstantiatedTypeReference = typeReference.GetUninstantiatedGenericType();
+                    ITypeReference uninstantiatedTypeReference = typeReference.GetUninstantiatedGenericType(Context);
 
                     // Roslyn's uninstantiated type is the same object as the instantiated type for
                     // types closed over their type parameters, so to speak.
@@ -3803,6 +3795,13 @@ namespace Microsoft.Cci
                     encoder.String();
                     break;
 
+                case PrimitiveTypeCode.Void:
+                    // "void" is handled specifically for "void*" with custom modifiers.
+                    // If SignatureTypeEncoder supports such cases directly, this can
+                    // be removed. See https://github.com/dotnet/corefx/issues/14571.
+                    encoder.Builder.WriteByte((byte)System.Reflection.Metadata.PrimitiveTypeCode.Void);
+                    break;
+
                 default:
                     throw ExceptionUtilities.UnexpectedValue(primitiveType);
             }
@@ -3837,7 +3836,7 @@ namespace Microsoft.Cci
             // ELEMENT_TYPE_U4, ELEMENT_TYPE_I8, ELEMENT_TYPE_U8, ELEMENT_TYPE_R4, ELEMENT_TYPE_R8, ELEMENT_TYPE_STRING.
             // An enum is specified as a single byte 0x55 followed by a SerString.
 
-            var primitiveType = typeReference.TypeCode(Context);
+            var primitiveType = typeReference.TypeCode;
             if (primitiveType != PrimitiveTypeCode.NotPrimitive)
             {
                 SerializePrimitiveType(encoder, primitiveType);
@@ -3933,7 +3932,7 @@ namespace Microsoft.Cci
             ISpecializedNestedTypeReference specializedNestedType = nestedType.AsSpecializedNestedTypeReference;
             if (specializedNestedType != null)
             {
-                nestedType = specializedNestedType.UnspecializedVersion;
+                nestedType = specializedNestedType.GetUnspecializedVersion(Context);
             }
 
             int result = 0;

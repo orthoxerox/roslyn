@@ -4,14 +4,15 @@
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{A1455D30-55FC-45EF-8759-3AEBDB13D940}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Roslyn.VisualStudio.Services.UnitTests</AssemblyName>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <ForceGenerationOfBindingRedirects>true</ForceGenerationOfBindingRedirects>
     <RoslynProjectType>UnitTest</RoslynProjectType>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\..\Compilers\Core\Portable\CodeAnalysis.csproj">
@@ -37,6 +38,10 @@
     <ProjectReference Include="..\..\..\Features\VisualBasic\Portable\BasicFeatures.vbproj">
       <Project>{a1bcd0ce-6c2f-4f8c-9a48-d9d93928e26d}</Project>
       <Name>BasicFeatures</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Test\Utilities\Portable\TestUtilities.csproj">
+      <Project>{ccbd3438-3e84-40a9-83ad-533f23bcfca5}</Project>
+      <Name>TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Workspaces\Core\Desktop\Workspaces.Desktop.csproj">
       <Project>{2e87fa96-50bb-4607-8676-46521599f998}</Project>
@@ -180,8 +185,6 @@
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.CSharp.UnitTests" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="envdte80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="microsoft.msxml, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>false</Private>
     </Reference>
@@ -419,7 +422,6 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="project.json" />
   </ItemGroup>
   <Import Project="..\..\..\..\build\Targets\Imports.targets" />

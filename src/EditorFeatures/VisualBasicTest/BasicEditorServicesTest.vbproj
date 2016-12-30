@@ -4,6 +4,7 @@
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{0BE66736-CDAA-4989-88B1-B3F46EBDCA4A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Roslyn.Services.Editor.VisualBasic.UnitTests</AssemblyName>
@@ -81,6 +82,10 @@
     <ProjectReference Include="..\..\Features\VisualBasic\Portable\BasicFeatures.vbproj">
       <Project>{A1BCD0CE-6C2F-4F8C-9A48-D9D93928E26D}</Project>
       <Name>BasicFeatures</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Test\Utilities\Portable\TestUtilities.csproj">
+      <Project>{ccbd3438-3e84-40a9-83ad-533f23bcfca5}</Project>
+      <Name>TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Workspaces\CoreTestUtilities\WorkspacesTestUtilities.csproj">
       <Project>{3f2fdc1c-dc6f-44cb-b4a1-a9026f25d66e}</Project>
@@ -577,7 +582,6 @@
     <Compile Include="Utilities\CodeSnippets.vb" />
     <Compile Include="Utils.vb" />
     <EmbeddedResource Include="Formatting\XmlLiterals.resx" />
-    <None Include="app.config" />
     <None Include="project.json" />
     <None Include="PerfTests\BasicPerfFindRefs.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

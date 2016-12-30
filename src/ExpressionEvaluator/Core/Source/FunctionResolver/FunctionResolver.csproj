@@ -2,7 +2,8 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\..\..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{6FC8E6F5-659C-424D-AEB5-331B95883E29}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis.ExpressionEvaluator</RootNamespace>
@@ -47,7 +48,13 @@
     <Compile Include="RequestSignature.cs" />
     <Compile Include="SpecialTypeExtensions.cs" />
     <Compile Include="TypeSignature.cs" />
-    <VsdConfigXml Include="FunctionResolver.vsdconfigxml" />
+    <Compile Include="VisualBasic\Keywords.cs" />
+    <Compile Include="VisualBasic\MemberSignatureParser.cs" />
+    <Compile Include="VisualBasic\Scanner.cs" />
+    <Compile Include="VisualBasic\SyntaxKind.cs" />
+    <Compile Include="VisualBasic\VisualBasicFunctionResolver.cs" />
+    <VsdConfigXml Include="CSharp\FunctionResolver.vsdconfigxml" />
+    <VsdConfigXml Include="VisualBasic\FunctionResolver.vsdconfigxml" />
   </ItemGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\Concord\Concord.csproj">
@@ -56,8 +63,10 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+  </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.FunctionResolver.UnitTests" />
   </ItemGroup>

@@ -3,7 +3,8 @@
   <Import Project="..\..\..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{4371944A-D3BA-4B5B-8285-82E5FFC6D1F9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis.CSharp.Test.Utilities</RootNamespace>
@@ -16,8 +17,10 @@
     <NoStdLib>true</NoStdLib>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "></PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+  </PropertyGroup>
   <ItemGroup>
     <None Include="project.json" />
     <!-- A reference to the entire .NET Framework is automatically included -->
@@ -33,7 +36,6 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="LocalVariableDeclaratorsCollector.cs" />
     <Compile Include="MetadataTestHelpers.cs" />
-    <Compile Include="ScriptTestFixtures.cs" />
     <Compile Include="SemanticModelTestBase.cs" />
     <Compile Include="SymbolUtilities.cs" />
     <Compile Include="SyntaxTreeExtensions.cs" />
@@ -70,6 +72,7 @@
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Symbol.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Syntax.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.CSharp.ExpressionCompiler.UnitTests" />
+    <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.FunctionResolver.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.InteractiveHost.UnitTests" />
     <InternalsVisibleToTest Include="Microsoft.CodeAnalysis.CSharp.Scripting.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Services.Editor.CSharp.UnitTests" />

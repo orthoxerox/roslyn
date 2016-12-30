@@ -4,6 +4,7 @@
   <Import Project="..\..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{5F8D2414-064A-4B3A-9B42-8E2A04246BE5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis</RootNamespace>
@@ -15,6 +16,10 @@
     <ServiceablePackage>true</ServiceablePackage>
     <!-- Temporary workaround for CLR bug, VSO #290723. Please remove the below line once this bug is fixed. -->
     <SkipApplyOptimizations>true</SkipApplyOptimizations>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
   </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\..\Compilers\Core\Portable\CodeAnalysis.csproj">
@@ -203,6 +208,7 @@
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.LiveUnitTesting.Orchestrator" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.LiveUnitTesting.Orchestrator.UnitTests" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.LiveUnitTesting.Test.Utilities" />
+    <InternalsVisibleTo Include="Microsoft.CodeAnalysis.Remote.Razor.ServiceHub" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.Remote.ServiceHub" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.Remote.Workspaces" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.VisualBasic.InteractiveEditorFeatures" />
@@ -216,6 +222,7 @@
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.Next" />
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.CSharp" />
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.Implementation" />
+    <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.Razor.RemoteClient" />
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.SolutionExplorer" />
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.VisualBasic" />
     <InternalsVisibleTo Include="Microsoft.VisualStudio.LanguageServices.Xaml" />
@@ -241,8 +248,8 @@
     <InternalsVisibleToTest Include="Roslyn.Services.VisualBasic.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.CSharp.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Closed.UnitTests" />
-    <InternalsVisibleToTest Include="Roslyn.VisualStudio.Test.Setup" />
-    <InternalsVisibleToTest Include="Roslyn.VisualStudio.Test.Utilities" />
+    <InternalsVisibleToTest Include="Microsoft.VisualStudio.IntegrationTest.Setup" />
+    <InternalsVisibleToTest Include="Microsoft.VisualStudio.IntegrationTest.Utilities" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Next.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Services.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Test.Utilities2" />
@@ -368,6 +375,15 @@
     <Compile Include="Execution\SolutionAsset.cs" />
     <Compile Include="Execution\WellKnownSynchronizationKinds.cs" />
     <Compile Include="Experiments\IExperimentationService.cs" />
+    <Compile Include="NamingStyles\EditorConfig\EditorConfigSeverityStrings.cs" />
+    <Compile Include="NamingStyles\EditorConfig\EditorConfigNamingStyleParser.cs" />
+    <Compile Include="NamingStyles\EditorConfig\EditorConfigNamingStyleParser_NamingRule.cs" />
+    <Compile Include="NamingStyles\EditorConfig\EditorConfigNamingStyleParser_NamingStyle.cs" />
+    <Compile Include="NamingStyles\EditorConfig\EditorConfigNamingStyleParser_SymbolSpec.cs" />
+    <Compile Include="NamingStyles\NamingStyle.cs" />
+    <Compile Include="NamingStyles\NamingStyle.WordSpanEnumerable.cs" />
+    <Compile Include="NamingStyles\NamingStyle.WordSpanEnumerator.cs" />
+    <Compile Include="NamingStyles\Serialization\AccessibilityExtensions.cs" />
     <Compile Include="LanguageServices\TypeInferenceService\AbstractTypeInferenceService.AbstractTypeInferrer.cs" />
     <Compile Include="FindSymbols\SyntaxTree\SyntaxTreeIndex_Persistence.cs" />
     <Compile Include="FindSymbols\SyntaxTree\SyntaxTreeIndex_Forwarders.cs" />
@@ -382,6 +398,14 @@
     <Compile Include="PatternMatching\PatternMatcher.TextChunk.cs" />
     <Compile Include="PatternMatching\PatternMatches.cs" />
     <Compile Include="PatternMatching\PatternMatchKind.cs" />
+    <Compile Include="Remote\RemoteSupportedLanguages.cs" />
+    <Compile Include="NamingStyles\Capitalization.cs" />
+    <Compile Include="NamingStyles\NamingRule.cs" />
+    <Compile Include="NamingStyles\NamingStyleRules.cs" />
+    <Compile Include="NamingStyles\Serialization\MutableNamingStyle.cs" />
+    <Compile Include="NamingStyles\Serialization\SerializableNamingRule.cs" />
+    <Compile Include="NamingStyles\Serialization\NamingStylePreferences.cs" />
+    <Compile Include="NamingStyles\Serialization\SymbolSpecification.cs" />
     <Compile Include="Shared\Extensions\SolutionExtensions.cs" />
     <Compile Include="SymbolKey\SymbolKey.AnonymousFunctionOrDelegateSymbolKey.cs" />
     <Compile Include="Tags\WellKnownTags.cs" />
@@ -655,7 +679,6 @@
     <Compile Include="FindSymbols\SymbolTree\SymbolTreeInfo.cs" />
     <Compile Include="FindSymbols\SymbolTree\SymbolTreeInfo.Node.cs" />
     <Compile Include="FindSymbols\SymbolTree\SymbolTreeInfo_Serialization.cs" />
-    <Compile Include="FindSymbols\SyntaxTree\AbstractPersistableState.cs" />
     <Compile Include="Formatting\AbstractSyntaxFormattingService.cs" />
     <Compile Include="Formatting\BottomUpBaseIndentationFinder.cs" />
     <Compile Include="Formatting\Context\FormattingContext.AnchorData.cs" />

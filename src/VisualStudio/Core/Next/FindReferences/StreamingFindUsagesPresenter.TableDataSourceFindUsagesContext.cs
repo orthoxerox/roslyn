@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -197,12 +198,23 @@ namespace Microsoft.VisualStudio.LanguageServices.FindUsages
 
             #region FindUsagesContext overrides.
 
-            public override void SetSearchLabel(string displayName)
+            public override void SetSearchTitle(string title)
             {
-                var labelProperty = _findReferencesWindow.GetType().GetProperty("Label");
-                if (labelProperty != null)
+                try
                 {
-                    labelProperty.SetValue(_findReferencesWindow, displayName);
+                    // Editor renamed their property from Label to Title, and made it public.
+                    // However, we don't have access to that property yet until they publish
+                    // their next SDK.  In the meantime, use reflection to get at the right
+                    // property.
+                    var titleProperty = _findReferencesWindow.GetType().GetProperty(
+                        "Title", BindingFlags.Public | BindingFlags.Instance);
+                    if (titleProperty != null)
+                    {
+                        titleProperty.SetValue(_findReferencesWindow, title);
+                    }
+                }
+                catch (Exception)
+                {
                 }
             }
 
@@ -679,6 +691,12 @@ namespace Microsoft.VisualStudio.LanguageServices.FindUsages
 
             public override Task ReportProgressAsync(int current, int maximum)
             {
+                // https://devdiv.visualstudio.com/web/wi.aspx?pcguid=011b8bdf-6d56-4f87-be0d-0092136884d9&id=359162
+                // Right now VS actually responds to each SetProgess call by enqueueing a UI task
+                // to do the progress bar update.  This can made FindReferences feel extremely slow
+                // when thousands of SetProgress calls are made.  So, for now, we're removing
+                // the progress update until the FindRefs window fixes that perf issue.
+#if false
                 try
                 {
                     // The original FAR window exposed a SetProgress(double). Ensure that we 
@@ -688,6 +706,7 @@ namespace Microsoft.VisualStudio.LanguageServices.FindUsages
                 catch
                 {
                 }
+#endif
 
                 return SpecializedTasks.EmptyTask;
             }

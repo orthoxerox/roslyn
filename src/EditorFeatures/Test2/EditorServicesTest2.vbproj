@@ -4,6 +4,7 @@
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{3CEA0D69-00D3-40E5-A661-DC41EA07269B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Roslyn.Services.Editor2.UnitTests</AssemblyName>
@@ -32,6 +33,10 @@
     <ProjectReference Include="..\..\Test\Utilities\Desktop\TestUtilities.Desktop.csproj">
       <Project>{76C6F005-C89D-4348-BB4A-391898DBEB52}</Project>
       <Name>TestUtilities.Desktop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Test\Utilities\Portable\TestUtilities.csproj">
+      <Project>{ccbd3438-3e84-40a9-83ad-533f23bcfca5}</Project>
+      <Name>TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\VisualStudio\VisualBasic\Impl\BasicVisualStudio.vbproj">
       <Project>{d49439d7-56d2-450f-a4f0-74cb95d620e6}</Project>
@@ -322,7 +327,6 @@
     <Folder Include="My Project\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>

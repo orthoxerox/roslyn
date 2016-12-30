@@ -4,6 +4,7 @@
   <Import Project="..\..\..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{4371944A-D3BA-4B5B-8285-82E5FFC6D1F8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis.VisualBasic.UnitTests</RootNamespace>
@@ -20,6 +21,10 @@
     <ProjectReference Include="..\..\..\..\Test\Utilities\Desktop\TestUtilities.Desktop.csproj">
       <Project>{76C6F005-C89D-4348-BB4A-391898DBEB52}</Project>
       <Name>TestUtilities.Desktop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Test\Utilities\Portable\TestUtilities.csproj">
+      <Project>{ccbd3438-3e84-40a9-83ad-533f23bcfca5}</Project>
+      <Name>TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Core\Portable\CodeAnalysis.csproj">
       <Project>{1EE8CAD3-55F9-4D91-96B2-084641DA9A6C}</Project>
@@ -46,19 +51,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <Optimize>true</Optimize>
     <DefineTrace>true</DefineTrace>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineDebug>true</DefineDebug>
-    <DefineTrace>true</DefineTrace>
-    <DefineConstants>$(DefineConstants),ARM</DefineConstants>
-    <PlatformTarget>ARM</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
-    <Optimize>true</Optimize>
-    <DefineTrace>true</DefineTrace>
-    <DefineConstants>$(DefineConstants),ARM</DefineConstants>
-    <PlatformTarget>ARM</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -99,6 +91,7 @@
     <InternalsVisibleToTest Include="Roslyn.Compilers.VisualBasic.Semantic.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.VisualBasic.Symbol.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.VisualBasic.Syntax.UnitTests" />
+    <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.FunctionResolver.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.VisualBasic.ExpressionCompiler.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.ExpressionEvaluator.VisualBasic.ResultProvider.UnitTests" />
     <InternalsVisibleToTest Include="Microsoft.CodeAnalysis.VisualBasic.Scripting.UnitTests" />

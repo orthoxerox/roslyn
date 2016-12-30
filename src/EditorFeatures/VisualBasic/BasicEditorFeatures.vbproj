@@ -3,6 +3,7 @@
   <Import Project="..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{49BFAE50-1BCE-48AE-BC89-78B7D90A3ECD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Microsoft.CodeAnalysis.VisualBasic.EditorFeatures</AssemblyName>
@@ -46,12 +47,10 @@
     <DebugSymbols>true</DebugSymbols>
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
-    <DocumentationFile>Microsoft.CodeAnalysis.VisualBasic.EditorFeatures.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
-    <DocumentationFile>Microsoft.CodeAnalysis.VisualBasic.EditorFeatures.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AutomaticCompletion\AutomaticLineEnderCommandHandler.vb" />

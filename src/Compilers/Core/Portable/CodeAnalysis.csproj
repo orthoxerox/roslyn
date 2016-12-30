@@ -4,6 +4,7 @@
   <Import Project="..\..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{1EE8CAD3-55F9-4D91-96B2-084641DA9A6C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis</RootNamespace>
@@ -16,6 +17,10 @@
     <DefineConstants>$(DefineConstants);COMPILERCORE</DefineConstants>
     <CodeAnalysisRuleSet>..\CodeAnalysisRules.ruleset</CodeAnalysisRuleSet>
     <NoStdLib>true</NoStdLib>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
   </PropertyGroup>
   <ItemGroup>
     <Content Include="$(NuGetPackageRoot)\Microsoft.DiaSymReader.Native\$(MicrosoftDiaSymReaderNativeVersion)\runtimes\win\native\Microsoft.DiaSymReader.Native.x86.dll">
@@ -40,7 +45,7 @@
     <Compile Include="Serialization\StreamObjectReader.cs" />
     <Compile Include="Serialization\StreamObjectWriter.cs" />
     <Compile Include="Serialization\TypeKey.cs" />
-    <Compile Include="Symbols\IDiscardedSymbol.cs" />
+    <Compile Include="Symbols\IDiscardSymbol.cs" />
     <Compile Include="Syntax\InternalSyntax\GreenNodeExtensions.cs" />
     <Compile Include="Syntax\InternalSyntax\SyntaxListPool.cs" />
     <Compile Include="Syntax\SyntaxList.SeparatedWithManyWeakChildren.cs" />
@@ -766,6 +771,7 @@
     <InternalsVisibleToTest Include="Microsoft.CodeAnalysis.CSharp.Scripting.Desktop.UnitTests" />
     <InternalsVisibleToTest Include="Microsoft.CodeAnalysis.VisualBasic.Scripting.UnitTests" />
     <InternalsVisibleToTest Include="Microsoft.CodeAnalysis.VisualBasic.Scripting.Desktop.UnitTests" />
+    <InternalsVisibleToTest Include="Roslyn.Test.Utilities.CoreClr" />
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities.Desktop" />
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities.FX45" />
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities" />

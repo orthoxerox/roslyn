@@ -209,11 +209,8 @@ namespace Microsoft.Cci
         /// Returns the generic type of which this type is an instance.
         /// Equivalent to Symbol.OriginalDefinition
         /// </summary>
-        INamedTypeReference GenericType
-        {
-            get;
-            // ^ ensures result.ResolvedType.IsGeneric;
-        }
+        INamedTypeReference GetGenericType(EmitContext context);
+        // ^ ensures result.ResolvedType.IsGeneric;
     }
 
     /// <summary>
@@ -323,10 +320,7 @@ namespace Microsoft.Cci
         /// type of a generic type instance), then the unspecialized member refers to a member from the unspecialized containing type. (I.e. the unspecialized member always
         /// corresponds to a definition that is not obtained via specialization.)
         /// </summary>
-        INestedTypeReference/*!*/ UnspecializedVersion
-        {
-            get;
-        }
+        INestedTypeReference/*!*/ GetUnspecializedVersion(EmitContext context);
     }
 
     /// <summary>
@@ -611,7 +605,7 @@ namespace Microsoft.Cci
         /// Unless the value of TypeCode is PrimitiveTypeCode.NotPrimitive, the type corresponds to a "primitive" CLR type (such as System.Int32) and
         /// the type code identifies which of the primitive types it corresponds to.
         /// </summary>
-        PrimitiveTypeCode TypeCode(EmitContext context);
+        PrimitiveTypeCode TypeCode { get; }
 
         /// <summary>
         /// TypeDefs defined in modules linked to the assembly being emitted are listed in the ExportedTypes table.

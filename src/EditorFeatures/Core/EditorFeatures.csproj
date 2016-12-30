@@ -6,6 +6,7 @@
   <Import Project="..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{3CDEEAB7-2256-418A-BEB2-620B5CB16302}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis.Editor</RootNamespace>
@@ -34,10 +35,10 @@
       <Name>TextEditorFeatures</Name>
     </ProjectReference>
   </ItemGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
@@ -89,7 +90,7 @@
     <InternalsVisibleToTest Include="Roslyn.Test.Utilities.Desktop" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.CSharp.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Services.UnitTests" />
-    <InternalsVisibleToTest Include="Roslyn.VisualStudio.Test.Utilities" />
+    <InternalsVisibleToTest Include="Microsoft.VisualStudio.IntegrationTest.Utilities" />
     <InternalsVisibleToTest Include="Roslyn.VisualStudio.Test.Utilities2" />
     <!-- Eventually a bunch of these unit tests should move into Roslyn.Services.Implementation.UnitTests
          and this should be removed. -->
@@ -109,6 +110,7 @@
     <Compile Include="FindUsages\IFindUsagesContext.cs" />
     <Compile Include="FindUsages\IFindUsagesService.cs" />
     <Compile Include="FindUsages\SimpleFindUsagesContext.cs" />
+    <Compile Include="Implementation\Structure\BlockTagState.cs" />
     <Compile Include="Tags\ExportImageMonikerServiceAttribute.cs" />
     <Compile Include="Implementation\NavigateTo\AbstractNavigateToItemDisplay.cs" />
     <Compile Include="CommandArgs.cs" />

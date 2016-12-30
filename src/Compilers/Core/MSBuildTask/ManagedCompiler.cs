@@ -26,6 +26,11 @@ namespace Microsoft.CodeAnalysis.BuildTasks
 
         internal abstract RequestLanguage Language { get; }
 
+        static ManagedCompiler()
+        {
+            AssemblyResolution.Install();
+        }
+
         public ManagedCompiler()
         {
             TaskResources = ErrorString.ResourceManager;
@@ -535,6 +540,11 @@ namespace Microsoft.CodeAnalysis.BuildTasks
         /// </summary>
         private int HandleResponse(BuildResponse response, string pathToTool, string responseFileCommands, string commandLineCommands)
         {
+            if (response.Type != BuildResponse.ResponseType.Completed)
+            {
+                ValidateBootstrapUtil.AddFailedServerConnection();
+            }
+
             switch (response.Type)
             {
                 case BuildResponse.ResponseType.Completed:

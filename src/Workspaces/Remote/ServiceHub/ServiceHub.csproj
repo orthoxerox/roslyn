@@ -6,6 +6,7 @@
   <Import Project="..\..\..\..\build\Targets\Settings.props" />
   <PropertyGroup>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{80FDDD00-9393-47F7-8BAF-7E87CE011068}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis.Remote</RootNamespace>
@@ -38,10 +39,10 @@
       <Name>RemoteWorkspaces</Name>
     </ProjectReference>
   </ItemGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
@@ -66,9 +67,11 @@
     <Compile Include="Services\CodeAnalysisService.cs" />
     <Compile Include="Services\CodeAnalysisService_Diagnostics.cs" />
     <Compile Include="Services\RemoteHostService.cs" />
-    <Compile Include="Services\ServiceHubServiceBase.cs" />
+    <Compile Include="Shared\ServiceHubServiceBase.cs" />
     <Compile Include="Services\SnapshotService.cs" />
     <Compile Include="Shared\Extensions.cs" />
+    <Compile Include="Shared\RoslynJsonConverter.cs" />
+    <Compile Include="Shared\RoslynJsonConverter.SolutionIdConverters.cs" />
     <Compile Include="Shared\ServerDirectStream.cs" />
     <Compile Include="Shared\ClientDirectStream.cs" />
   </ItemGroup>

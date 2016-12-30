@@ -37,38 +37,16 @@
       <Project>{afde6bea-5038-4a4a-a88e-dbd2e4088eed}</Project>
       <Name>PdbUtilities</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Portable\TestUtilities.csproj">
+      <Project>{ccbd3438-3e84-40a9-83ad-533f23bcfca5}</Project>
+      <Name>TestUtilities</Name>
+    </ProjectReference>
   </ItemGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|ARM' ">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>$(DefineConstants);ARM</DefineConstants>
-    <PlatformTarget>ARM</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|ARM' ">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>$(DefineConstants);ARM</DefineConstants>
-    <PlatformTarget>ARM</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutDir>..\..\..\..\Binaries\Debug\amd64</OutDir>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutDir>..\..\..\..\Binaries\Release\amd64</OutDir>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -83,36 +61,24 @@
     </Compile>
     <Compile Include="AppDomainUtils.cs" />
     <Compile Include="CLRHelpers.cs" />
-    <Compile Include="CompilerTraitAttribute.cs" />
+    <Compile Include="CodeRuntime\DesktopRuntimeEnvironmentFactory.cs" />
+    <Compile Include="CodeRuntime\RuntimeModuleData.cs" />
+    <Compile Include="DesktopRuntimeUtil.cs" />
+    <Compile Include="InstrumentationChecker.cs" />
     <Compile Include="ConditionalFactAttribute.cs" />
     <Compile Include="ObjectReference.cs" />
-    <Compile Include="ProcessUtilities.cs" />
-    <Compile Include="AppDomainAssemblyCache.cs" />
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="ModuleData.cs" />
+    <Compile Include="CodeRuntime\AppDomainAssemblyCache.cs" />
+    <Compile Include="CodeRuntime\Exceptions.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="RuntimeAssemblyManager.cs" />
+    <Compile Include="CodeRuntime\RuntimeAssemblyManager.cs" />
     <Compile Include="SharedResourceHelpers.cs" />
     <Compile Include="CommonDiagnosticAnalyzers.cs" />
-    <Compile Include="CommonTestBase.CompilationVerifier.cs" />
-    <Compile Include="CommonTestBase.cs" />
     <Compile Include="CultureContext.cs" />
     <Compile Include="ErrorDiagnostics.cs" />
-    <Compile Include="HostedRuntimeEnvironment.cs" />
+    <Compile Include="CodeRuntime\DesktopRuntimeEnvironment.cs" />
     <Compile Include="MetadataSignatureHelper.cs" />
-    <Compile Include="MetadataSignatureUnitTestHelper.cs" />
-    <Compile Include="ProcessResult.cs" />
-    <Compile Include="..\Portable\ReflectionAssert.cs">
-      <Link>ReflectionAssert.cs</Link>
-    </Compile>
-    <Compile Include="IlasmUtilities.cs" />
     <Compile Include="SigningTestHelpers.cs" />
     <Compile Include="TestHelpers.cs" />
-    <Compile Include="TestResource.Designer.cs">
-      <DependentUpon>TestResource.resx</DependentUpon>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <Compile Include="ThrowingTraceListener.cs" />
     <Compile Include="Traits.cs" />
     <Compile Include="Win32Res.cs" />
@@ -154,16 +120,7 @@
     <InternalsVisibleToTest Include="Roslyn.Services.UnitTests" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\app.config" />
     <None Include="project.json" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="TestResource.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>TestResource.Designer.cs</LastGenOutput>
-      <CustomToolNamespace>Roslyn.Test.Utilities</CustomToolNamespace>
-    </EmbeddedResource>
-  </ItemGroup>
-  <Import Project="..\Shared\TestUtilities.projitems" Label="Shared" />
   <Import Project="..\..\..\..\build\Targets\Imports.targets" />
 </Project>

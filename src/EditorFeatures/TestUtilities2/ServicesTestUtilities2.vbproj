@@ -4,6 +4,7 @@
   <PropertyGroup>
     <Nonshipping>true</Nonshipping>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ProjectGuid>{3DFB4701-E3D6-4435-9F70-A6E35822C4F2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>
@@ -33,6 +34,10 @@
     <ProjectReference Include="..\..\Test\Utilities\Desktop\TestUtilities.Desktop.csproj">
       <Project>{76C6F005-C89D-4348-BB4A-391898DBEB52}</Project>
       <Name>TestUtilities.Desktop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Test\Utilities\Portable\TestUtilities.csproj">
+      <Project>{ccbd3438-3e84-40a9-83ad-533f23bcfca5}</Project>
+      <Name>TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\VisualStudio\VisualBasic\Impl\BasicVisualStudio.vbproj">
       <Project>{d49439d7-56d2-450f-a4f0-74cb95d620e6}</Project>
