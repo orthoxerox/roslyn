@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
@@ -3562,6 +3563,126 @@ public class Program
                 );
         }
 
+        [Fact, WorkItem(15956, "https://github.com/dotnet/roslyn/issues/15956")]
+        public void ThrowExpressionWithNullableDecimal()
+        {
+            var source = @"
+using System;
+public class ITest
+{
+    public decimal Test() => 1m;
+}
+
+public class TestClass
+{
+    public void Test(ITest test)
+    {
+        var result = test?.Test() ?? throw new Exception();
+    }
+}";
+            // DEBUG
+            var compilation = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            compilation.VerifyDiagnostics();
+            compilation.VerifyEmitDiagnostics();
+
+            var verifier = CompileAndVerify(compilation);
+            verifier.VerifyIL("TestClass.Test", @"{
+    // Code size       18 (0x12)
+    .maxstack  1
+    .locals init (decimal V_0, //result
+                    decimal V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  brtrue.s   IL_000a
+    IL_0004:  newobj     ""System.Exception..ctor()""
+    IL_0009:  throw
+    IL_000a:  ldarg.1
+    IL_000b:  call       ""decimal ITest.Test()""
+    IL_0010:  stloc.0
+    IL_0011:  ret
+}");
+
+            // RELEASE
+            compilation = CreateCompilationWithMscorlib(source, options: TestOptions.ReleaseDll);
+            compilation.VerifyDiagnostics();
+            compilation.VerifyEmitDiagnostics();
+
+            verifier = CompileAndVerify(compilation);
+            verifier.VerifyIL("TestClass.Test", @"{
+    // Code size       17 (0x11)
+    .maxstack  1
+    IL_0000:  ldarg.1
+    IL_0001:  brtrue.s   IL_0009
+    IL_0003:  newobj     ""System.Exception..ctor()""
+    IL_0008:  throw
+    IL_0009:  ldarg.1
+    IL_000a:  call       ""decimal ITest.Test()""
+    IL_000f:  pop
+    IL_0010:  ret
+}");
+        }
+
+        [Fact, WorkItem(15956, "https://github.com/dotnet/roslyn/issues/15956")]
+        public void ThrowExpressionWithNullableDateTime()
+        {
+            var source = @"
+using System;
+public class ITest
+{
+    public DateTime Test() => new DateTime(2008, 5, 1, 8, 30, 52);
+}
+
+public class TestClass
+{
+    public void Test(ITest test)
+    {
+        var result = test?.Test() ?? throw new Exception();
+    }
+}";
+            // DEBUG
+            var compilation = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            compilation.VerifyDiagnostics();
+            compilation.VerifyEmitDiagnostics();
+
+            var verifier = CompileAndVerify(compilation);
+            verifier.VerifyIL("TestClass.Test", @"{
+    // Code size       18 (0x12)
+    .maxstack  1
+    .locals init (System.DateTime V_0, //result
+                    System.DateTime V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  brtrue.s   IL_000a
+    IL_0004:  newobj     ""System.Exception..ctor()""
+    IL_0009:  throw
+    IL_000a:  ldarg.1
+    IL_000b:  call       ""System.DateTime ITest.Test()""
+    IL_0010:  stloc.0
+    IL_0011:  ret
+}");
+
+            
+            // RELEASE
+            compilation = CreateCompilationWithMscorlib(source, options: TestOptions.ReleaseDll);
+            compilation.VerifyDiagnostics();
+            compilation.VerifyEmitDiagnostics();
+
+            verifier = CompileAndVerify(compilation);
+            verifier.VerifyIL("TestClass.Test", @"{
+    // Code size       17 (0x11)
+    .maxstack  1
+    IL_0000:  ldarg.1
+    IL_0001:  brtrue.s   IL_0009
+    IL_0003:  newobj     ""System.Exception..ctor()""
+    IL_0008:  throw
+    IL_0009:  ldarg.1
+    IL_000a:  call       ""System.DateTime ITest.Test()""
+    IL_000f:  pop
+    IL_0010:  ret
+}");
+    
+        }
+
         [Fact]
         public void ThrowExpressionForParameterValidation()
         {
@@ -4010,7 +4131,7 @@ public class C
                 Write(""case int _, "");
                 break;
         }
-        switch (3)
+        switch (3L)
         {
             case var _:
                 Write(""case var _"");
@@ -4029,25 +4150,31 @@ public class C
             Assert.Null(model.GetDeclaredSymbol(discard1));
             var declaration1 = (DeclarationPatternSyntax)discard1.Parent;
             Assert.Equal("int _", declaration1.ToString());
-            //Assert.Equal("", model.GetTypeInfo(declaration1).Type.ToTestDisplayString()); //  https://github.com/dotnet/roslyn/issues/15450
+            Assert.Null(model.GetTypeInfo(declaration1).Type);
+            Assert.Equal("System.Int32", model.GetTypeInfo(declaration1.Type).Type.ToTestDisplayString());
 
             var discard2 = GetDiscardDesignations(tree).Skip(1).First();
             Assert.Null(model.GetDeclaredSymbol(discard2));
+            Assert.Null(model.GetSymbolInfo(discard2).Symbol);
             var declaration2 = (DeclarationPatternSyntax)discard2.Parent;
             Assert.Equal("var _", declaration2.ToString());
-            //Assert.Equal("", model.GetTypeInfo(declaration2).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+            Assert.Null(model.GetTypeInfo(declaration2).Type);
+            Assert.Equal("System.Int32", model.GetTypeInfo(declaration2.Type).Type.ToTestDisplayString());
+            Assert.Null(model.GetSymbolInfo(declaration2).Symbol);
 
             var discard3 = GetDiscardDesignations(tree).Skip(2).First();
             Assert.Null(model.GetDeclaredSymbol(discard3));
             var declaration3 = (DeclarationPatternSyntax)discard3.Parent;
             Assert.Equal("int _", declaration3.ToString());
-            //Assert.Equal("", model.GetTypeInfo(declaration3).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+            Assert.Null(model.GetTypeInfo(declaration3).Type);
+            Assert.Equal("System.Int32", model.GetTypeInfo(declaration3.Type).Type.ToTestDisplayString());
 
             var discard4 = GetDiscardDesignations(tree).Skip(3).First();
             Assert.Null(model.GetDeclaredSymbol(discard4));
             var declaration4 = (DeclarationPatternSyntax)discard4.Parent;
             Assert.Equal("var _", declaration4.ToString());
-            //Assert.Equal("", model.GetTypeInfo(declaration4).Type.ToTestDisplayString()); // https://github.com/dotnet/roslyn/issues/15450
+            Assert.Null(model.GetTypeInfo(declaration4).Type);
+            Assert.Equal("System.Int64", model.GetTypeInfo(declaration4.Type).Type.ToTestDisplayString());
         }
 
         [Fact]
@@ -4169,6 +4296,40 @@ unsafe public class Typ
         }
 
         [Fact]
+        [WorkItem(16513, "https://github.com/dotnet/roslyn/issues/16513")]
+        public void OrderOfPatternOperands()
+        {
+            var source = @"
+using System;
+class Program
+{
+    public static void Main(string[] args)
+    {
+        object c = new C();
+        Console.WriteLine(c is 3);
+        c = 2;
+        Console.WriteLine(c is 3);
+        c = 3;
+        Console.WriteLine(c is 3);
+    }
+}
+class C
+{
+    override public bool Equals(object other)
+    {
+        return other is int x;
+    }
+    override public int GetHashCode() => 0;
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe);
+            compilation.VerifyDiagnostics();
+            var comp = CompileAndVerify(compilation, expectedOutput: @"False
+False
+True");
+        }
+
+        [Fact]
         public void MultiplyInPattern()
         {
             // pointer types are not supported in patterns. Therefore an attempt to use
@@ -4191,6 +4352,317 @@ public class Program
             var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe);
             compilation.VerifyDiagnostics();
             var comp = CompileAndVerify(compilation, expectedOutput: "True");
+        }
+
+        [Fact]
+        public void ColorColorConstantPattern()
+        {
+            var source =
+@"
+public class Program
+{
+    public static Color Color { get; }
+
+    public static void M(object o)
+    {
+        System.Console.WriteLine(o is Color.Constant);
+    }
+
+    public static void Main()
+    {
+        M(Color.Constant);
+    }
+}
+
+public class Color
+{
+    public const string Constant = ""abc"";
+}
+";
+            var compilation = CreateCompilationWithMscorlib45(source, options: TestOptions.DebugExe);
+            compilation.VerifyDiagnostics();
+            var comp = CompileAndVerify(compilation, expectedOutput: "True");
+        }
+
+        [Fact]
+        [WorkItem(336030, "https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_workitems/edit/336030")]
+        public void NullOperand()
+        {
+            var source = @"
+class C
+{
+    void M()
+    {
+        System.Console.Write(null is Missing x);
+        System.Console.Write(null is Missing);
+        switch(null)
+        {
+            case Missing:
+            case Missing y:
+                break;
+        }
+    }
+}
+";
+            var comp = CreateCompilationWithMscorlib(source);
+            comp.VerifyDiagnostics(
+                // (6,30): error CS8117: Invalid operand for pattern match; value required, but found '<null>'.
+                //         System.Console.Write(null is Missing x);
+                Diagnostic(ErrorCode.ERR_BadIsPatternExpression, "null").WithArguments("<null>").WithLocation(6, 30),
+                // (6,38): error CS0246: The type or namespace name 'Missing' could not be found (are you missing a using directive or an assembly reference?)
+                //         System.Console.Write(null is Missing x);
+                Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "Missing").WithArguments("Missing").WithLocation(6, 38),
+                // (7,38): error CS0246: The type or namespace name 'Missing' could not be found (are you missing a using directive or an assembly reference?)
+                //         System.Console.Write(null is Missing);
+                Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "Missing").WithArguments("Missing").WithLocation(7, 38),
+                // (8,16): error CS8119: The switch expression must be a value; found <null>.
+                //         switch(null)
+                Diagnostic(ErrorCode.ERR_SwitchExpressionValueExpected, "null").WithArguments("<null>").WithLocation(8, 16),
+                // (10,18): error CS0103: The name 'Missing' does not exist in the current context
+                //             case Missing:
+                Diagnostic(ErrorCode.ERR_NameNotInContext, "Missing").WithArguments("Missing").WithLocation(10, 18),
+                // (11,18): error CS0246: The type or namespace name 'Missing' could not be found (are you missing a using directive or an assembly reference?)
+                //             case Missing y:
+                Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "Missing").WithArguments("Missing").WithLocation(11, 18)
+                );
+        }
+
+        [Fact]
+        [WorkItem(336030, "https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_workitems?id=336030")]
+        [WorkItem(294570, "https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_workitems?id=294570")]
+        public void Fuzz46()
+        {
+            var program = @"
+public class Program46
+{
+    public static void Main(string[] args)
+    {
+        switch ((() => 1))
+        {
+            case int x4:
+            case string x9:
+            case M:
+            case ((int)M()):
+                break;
+        }
+    }
+    private static object M() => null;
+}";
+            CreateCompilationWithMscorlib45(program).VerifyDiagnostics(
+                // (6,17): error CS8119: The switch expression must be a value; found lambda expression.
+                //         switch ((() => 1))
+                Diagnostic(ErrorCode.ERR_SwitchExpressionValueExpected, "(() => 1)").WithArguments("lambda expression").WithLocation(6, 17),
+                // (10,18): error CS0150: A constant value is expected
+                //             case M:
+                Diagnostic(ErrorCode.ERR_ConstantExpected, "M").WithLocation(10, 18),
+                // (11,18): error CS0150: A constant value is expected
+                //             case ((int)M()):
+                Diagnostic(ErrorCode.ERR_ConstantExpected, "((int)M())").WithLocation(11, 18)
+                );
+        }
+
+        [Fact]
+        [WorkItem(363714, "https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_workitems?id=363714")]
+        public void Fuzz46b()
+        {
+            var program = @"
+public class Program46
+{
+    public static void Main(string[] args)
+    {
+        switch ((() => 1))
+        {
+            case M:
+                break;
+        }
+    }
+    private static object M() => null;
+}";
+            CreateCompilationWithMscorlib45(program).VerifyDiagnostics(
+                // (6,17): error CS8119: The switch expression must be a value; found lambda expression.
+                //         switch ((() => 1))
+                Diagnostic(ErrorCode.ERR_SwitchExpressionValueExpected, "(() => 1)").WithArguments("lambda expression").WithLocation(6, 17),
+                // (8,18): error CS0150: A constant value is expected
+                //             case M:
+                Diagnostic(ErrorCode.ERR_ConstantExpected, "M").WithLocation(8, 18),
+                // (9,17): warning CS0162: Unreachable code detected
+                //                 break;
+                Diagnostic(ErrorCode.WRN_UnreachableCode, "break").WithLocation(9, 17)
+                );
+        }
+
+        [Fact]
+        [WorkItem(336030, "https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_workitems?id=336030")]
+        public void Fuzz401()
+        {
+            var program = @"
+public class Program401
+{
+    public static void Main(string[] args)
+    {
+        if (null is M) {}
+    }
+    private static object M() => null;
+}";
+            CreateCompilationWithMscorlib45(program).VerifyDiagnostics(
+                // (6,13): error CS8117: Invalid operand for pattern match; value required, but found '<null>'.
+                //         if (null is M) {}
+                Diagnostic(ErrorCode.ERR_BadIsPatternExpression, "null").WithArguments("<null>").WithLocation(6, 13),
+                // (6,21): error CS0150: A constant value is expected
+                //         if (null is M) {}
+                Diagnostic(ErrorCode.ERR_ConstantExpected, "M").WithLocation(6, 21)
+                );
+        }
+
+        [Fact]
+        [WorkItem(364165, "https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_workitems?id=364165")]
+        [WorkItem(16296, "https://github.com/dotnet/roslyn/issues/16296")]
+        public void Fuzz1717()
+        {
+            var program = @"
+public class Program1717
+{
+    public static void Main(string[] args)
+    {
+        switch (default(int?))
+        {
+            case 2:
+                break;
+            case double.NaN:
+                break;
+            case var x9:
+            case string _:
+                break;
+        }
+    }
+    private static object M() => null;
+}";
+            CreateCompilationWithMscorlib45(program).VerifyDiagnostics(
+                // (10,18): error CS0266: Cannot implicitly convert type 'double' to 'int?'. An explicit conversion exists (are you missing a cast?)
+                //             case double.NaN:
+                Diagnostic(ErrorCode.ERR_NoImplicitConvCast, "double.NaN").WithArguments("double", "int?").WithLocation(10, 18),
+                // (13,18): error CS8121: An expression of type int? cannot be handled by a pattern of type string.
+                //             case string _:
+                Diagnostic(ErrorCode.ERR_PatternWrongType, "string").WithArguments("int?", "string").WithLocation(13, 18)
+                );
+        }
+
+        [Fact(Skip = "https://github.com/dotnet/roslyn/issues/16559")]
+        public void Fuzz5815()
+        {
+            var program = @"
+public class Program5815
+{
+    public static void Main(string[] args)
+    {
+        switch ((int)M())
+        {
+            case var x3:
+            case true ? x3 : 4:
+                break;
+        }
+    }
+    private static object M() => null;
+}";
+            CreateCompilationWithMscorlib45(program).VerifyDiagnostics(
+                );
+        }
+
+        [Fact(Skip = "This test generator is capable of producing crashes that are not yet fixed; see, for example, Fuzz5815")]
+        public void Fuzz()
+        {
+            int dt = Math.Abs(new DateTime().Ticks.GetHashCode() % 10000000);
+            for (int i = 1; i < 100000; i++)
+            {
+                PatternMatchingFuzz(i + dt);
+            }
+        }
+
+        public void PatternMatchingFuzz(int dt)
+        {
+            Random r = new Random(dt);
+
+            // generate a pattern-matching switch randomly from templates
+            string[] expressions = new[]
+            {
+                "M",              // a method group
+                "(() => 1)",      // a lambda expression
+                "1",              // a constant
+                "2",              // a constant
+                "null",           // the null constant
+                "default(int?)",  // a null constant of type int?
+                "((int?)1)",      // a constant of type int?
+                "M()",            // a method invocation
+                "double.NaN",     // a scary constant
+                "1.1",            // a double constant
+                "NotFound"        // an unbindable expression
+            };
+            string Expression()
+            {
+                int index = r.Next(expressions.Length + 1) - 1;
+                return (index < 0) ? $"(({Type()})M())" : expressions[index];
+            }
+            string[] types = new[]
+            {
+                "object",
+                "var",
+                "int",
+                "int?",
+                "double",
+                "string",
+                "NotFound"
+            };
+            string Type() => types[r.Next(types.Length)];
+            string Pattern()
+            {
+                switch (r.Next(3))
+                {
+                    case 0:
+                        return Expression(); // a "constant" pattern
+                    case 1:
+                        return Type() + " x" + r.Next(10);
+                    case 2:
+                        return Type() + " _";
+                    default:
+                        throw null;
+                }
+            }
+            string body = @"
+public class Program{0}
+{{
+    public static void Main(string[] args)
+    {{
+        {1}
+    }}
+    private static object M() => null;
+}}";
+            var statement = new StringBuilder();
+            switch (r.Next(2))
+            {
+                case 0:
+                    // test the "is-pattern" expression
+                    statement.Append($"if ({Expression()} is {Pattern()}) {{}}");
+                    break;
+                case 1:
+                    // test the pattern switch statement
+                    statement.AppendLine($"switch ({Expression()})");
+                    statement.AppendLine("{");
+                    var nCases = r.Next(5);
+                    for (int i = 1; i <= nCases; i++)
+                    {
+                        statement.AppendLine($"    case {Pattern()}:");
+                        if (i == nCases || r.Next(2) == 0)
+                        {
+                            statement.AppendLine($"        break;");
+                        }
+                    }
+                    statement.AppendLine("}");
+                    break;
+                default:
+                    throw null;
+            }
+            var program = string.Format(body, dt, statement);
+            CreateCompilationWithMscorlib45(program).GetDiagnostics();
         }
     }
 }
