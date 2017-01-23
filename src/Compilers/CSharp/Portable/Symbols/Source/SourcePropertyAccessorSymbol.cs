@@ -66,6 +66,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             SourcePropertySymbol property,
             DeclarationModifiers propertyModifiers,
             string propertyName,
+            bool isGetMethod,
             ArrowExpressionClauseSyntax syntax,
             PropertySymbol explicitlyImplementedPropertyOpt,
             string aliasQualifierOpt,
@@ -78,10 +79,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 propertyName,
                 property.IsCompilationOutputWinMdObj(),
                 aliasQualifierOpt,
-                isGetMethod: true,
+                isGetMethod: isGetMethod,
                 name: out name,
                 explicitInterfaceImplementations:
                 out explicitInterfaceImplementations);
+
+            var methodKind = isGetMethod ? MethodKind.PropertyGet : MethodKind.PropertySet;
 
             return new SourcePropertyAccessorSymbol(
                 containingType,
@@ -91,6 +94,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 explicitInterfaceImplementations,
                 syntax.Expression.GetLocation(),
                 syntax,
+                methodKind,
                 diagnostics);
         }
 
@@ -142,6 +146,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             ImmutableArray<MethodSymbol> explicitInterfaceImplementations,
             Location location,
             ArrowExpressionClauseSyntax syntax,
+            MethodKind methodKind,
             DiagnosticBag diagnostics) :
             base(containingType, syntax.GetReference(), syntax.GetReference(), location)
         {
@@ -157,7 +162,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
             // ReturnsVoid property is overridden in this class so
             // returnsVoid argument to MakeFlags is ignored.
-            this.MakeFlags(MethodKind.PropertyGet, declarationModifiers, returnsVoid: false, isExtensionMethod: false,
+            this.MakeFlags(methodKind, declarationModifiers, returnsVoid: false, isExtensionMethod: false,
                 isMetadataVirtualIgnoringModifiers: explicitInterfaceImplementations.Any());
 
             CheckModifiersForBody(location, diagnostics);

@@ -683,7 +683,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     if (TextWindow.PeekChar() == '=')
                     {
                         TextWindow.AdvanceChar();
-                        info.Kind = SyntaxKind.LessThanEqualsToken;
+                        if (TextWindow.PeekChar() == '>')
+                        {
+                            TextWindow.AdvanceChar();
+                            info.Kind = SyntaxKind.LessThanEqualsGreaterThanToken;
+                        }
+                        else
+                        {
+                            info.Kind = SyntaxKind.LessThanEqualsToken;
+                        }
                     }
                     else if (TextWindow.PeekChar() == '<')
                     {

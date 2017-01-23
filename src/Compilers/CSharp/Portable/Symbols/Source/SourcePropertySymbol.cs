@@ -263,16 +263,36 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                         this,
                         _modifiers,
                         _sourceName,
+                        true,
                         arrowExpression,
                         explicitlyImplementedProperty,
                         aliasQualifierOpt,
                         diagnostics);
+
+                    if (arrowExpression.ArrowToken.Kind() == 
+                        SyntaxKind.LessThanEqualsGreaterThanToken) 
+                    {
+                        _setMethod = SourcePropertyAccessorSymbol.CreateAccessorSymbol(
+                        containingType,
+                        this,
+                        _modifiers,
+                        _sourceName,
+                        false,
+                        arrowExpression,
+                        explicitlyImplementedProperty,
+                        aliasQualifierOpt,
+                        diagnostics);
+                    }
+                    else
+                    {
+                        _setMethod = null;
+                    }
                 }
                 else
                 {
                     _getMethod = null;
+                    _setMethod = null;
                 }
-                _setMethod = null;
             }
             else
             {

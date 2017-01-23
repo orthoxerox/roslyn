@@ -3239,7 +3239,8 @@ parse_member_name:;
             SyntaxToken semicolon = null;
             // Try to parse accessor list unless there is an expression
             // body and no accessor list
-            if (this.CurrentToken.Kind == SyntaxKind.EqualsGreaterThanToken)
+            if (this.CurrentToken.Kind == SyntaxKind.EqualsGreaterThanToken ||
+                this.CurrentToken.Kind == SyntaxKind.LessThanEqualsGreaterThanToken)
             {
                 expressionBody = this.ParseArrowExpressionClause();
                 expressionBody = CheckFeatureAvailability(expressionBody, MessageID.IDS_FeatureExpressionBodiedIndexer);
@@ -3297,6 +3298,7 @@ parse_member_name:;
             // We know we are parsing a property because we have seen either an
             // open brace or an arrow token
             Debug.Assert(this.CurrentToken.Kind == SyntaxKind.EqualsGreaterThanToken ||
+                         this.CurrentToken.Kind == SyntaxKind.LessThanEqualsGreaterThanToken ||
                          this.CurrentToken.Kind == SyntaxKind.OpenBraceToken);
 
             AccessorListSyntax accessorList = null;
@@ -3309,7 +3311,8 @@ parse_member_name:;
             EqualsValueClauseSyntax initializer = null;
 
             // Check for expression body
-            if (this.CurrentToken.Kind == SyntaxKind.EqualsGreaterThanToken)
+            if (this.CurrentToken.Kind == SyntaxKind.EqualsGreaterThanToken ||
+                this.CurrentToken.Kind == SyntaxKind.LessThanEqualsGreaterThanToken)
             {
                 expressionBody = this.ParseArrowExpressionClause();
                 expressionBody = CheckFeatureAvailability(expressionBody, MessageID.IDS_FeatureExpressionBodiedProperty);
@@ -3393,7 +3396,7 @@ parse_member_name:;
 
         private ArrowExpressionClauseSyntax ParseArrowExpressionClause()
         {
-            var arrowToken = this.EatToken(SyntaxKind.EqualsGreaterThanToken);
+            var arrowToken = this.EatToken();
             return _syntaxFactory.ArrowExpressionClause(arrowToken, ParsePossibleRefExpression());
         }
 

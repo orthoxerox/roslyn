@@ -3438,6 +3438,7 @@
     <Kind Name="ArrowExpressionClause" />
     <Field Name="ArrowToken" Type="SyntaxToken">
       <Kind Name="EqualsGreaterThanToken" />
+      <Kind Name="LessThanEqualsGreaterThanToken" />
     </Field>
     <Field Name="Expression" Type="ExpressionSyntax" />
   </Node>

@@ -45,5 +45,38 @@ class C
 }
 ");
         }
+
+        [Fact]
+        public void BidirectionalProperty()
+        {
+            var source = @"
+class C
+{
+    public int x;
+    public int X => x;
+}";
+            var compilation = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
+            var verifier = CompileAndVerify(compilation);
+            verifier.VerifyIL("C.X.get", @"
+{
+  // Code size        7 (0x7)
+  .maxstack  1
+  IL_0000:  ldarg.0
+  IL_0001:  ldfld      ""int C.x""
+  IL_0006:  ret
+}
+");
+            verifier.VerifyIL("C.X.set", @"
+{
+  // Code size        8 (0x8)
+  .maxstack  2
+  IL_0000:  ldarg.0
+  IL_0001:  ldarg.1
+  IL_0002:  stfld      ""int C.x""
+  IL_0007:  ret
+}
+");
+        }
+
     }
 }
