@@ -9988,10 +9988,38 @@ tryAgain:
                     return this.ParseLambdaExpression();
                 }
 
-                // Doesn't look like a cast, so parse this as a parenthesized expression or tuple.
+                // Try parsing this as a statement expression
                 {
                     this.Reset(ref resetPoint);
                     var openParen = this.EatToken(SyntaxKind.OpenParenToken);
+                    var statements = SyntaxListBuilder<StatementSyntax>.Create();
+
+                    while(true) {
+                        if (IsPossibleDeclarationStatement()) {
+                            statements.Add(ParseStatementCore());
+                        } else {
+                            var expression = ParseSubExpression(Precedence.Expression);
+                            if (CurrentToken.Kind == SyntaxKind.SemicolonToken) {
+                                var semicolon = this.EatToken(SyntaxKind.SemicolonToken);
+                                var statement = _syntaxFactory.ExpressionStatement(expression, semicolon);
+                                statements.Add(statement);
+                            } else if (CurrentToken.Kind == SyntaxKind.CloseParenToken
+                                && statements.Count > 0) { //We need at least one statement
+                                var closeParen = this.EatToken(SyntaxKind.CloseParenToken);
+                                return _syntaxFactory.StatementExpression(openParen, statements.ToList(), expression, closeParen);
+                            } else {
+                                break; //should we report an error?
+                            }
+                        }
+                    }
+
+                }
+
+                // Doesn't look like a cast, so parse this as a parenthesized expression or tuple
+                {
+                    this.Reset(ref resetPoint);
+                    var openParen = this.EatToken(SyntaxKind.OpenParenToken);
+                    
                     var expression = this.ParseExpressionOrDeclaration(ParseTypeMode.FirstElementOfPossibleTupleLiteral, feature: 0, permitTupleDesignation: true);
 
                     //  ( <expr>,    must be a tuple

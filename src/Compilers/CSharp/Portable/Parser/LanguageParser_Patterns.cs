@@ -157,6 +157,37 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
+        private bool IsPossibleDeclarationStatement()
+        {
+            if (this.IsInAsync && this.CurrentToken.ContextualKind == SyntaxKind.AwaitKeyword) {
+                // can't be a declaration expression.
+                return false;
+            }
+
+            var resetPoint = this.GetResetPoint();
+            try {
+                bool typeIsVar = IsVarType();
+                SyntaxToken lastTokenOfType;
+                if (ScanType(out lastTokenOfType) == ScanTypeFlags.NotType) {
+                    return false;
+                }
+
+                // check for a designation
+                if (!ScanDesignation(typeIsVar || IsPredefinedType(lastTokenOfType.Kind))) {
+                    return false;
+                }
+
+                return this.CurrentToken.Kind == SyntaxKind.EqualsToken // type name = value ;
+                    || this.CurrentToken.Kind == SyntaxKind.SemicolonToken //type name ;
+                    || this.CurrentToken.Kind == SyntaxKind.CommaToken; // type name1, name2;
+
+            }
+            finally {
+                this.Reset(ref resetPoint);
+                this.Release(ref resetPoint);
+            }
+        }
+
         /// <summary>
         /// Is the following set of tokens, interpreted as a type, the type `var`?
         /// </summary>

@@ -62,6 +62,22 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(0, expr.Errors().Length);
         }
 
+        [Fact]
+        private void TestSequenceExpression()
+        {
+            var text = "(int foo; foo = 2; foo)";
+            var expr = this.ParseExpression(text) as StatementExpressionSyntax;
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.StatementExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            Assert.Equal(SyntaxKind.LocalDeclarationStatement, expr.Statements[0].Kind());
+            Assert.Equal(SyntaxKind.ExpressionStatement, expr.Statements[1].Kind());
+            Assert.Equal(SyntaxKind.IdentifierName, expr.Expression.Kind());
+        }
+
         private void TestLiteralExpression(SyntaxKind kind)
         {
             var text = SyntaxFacts.GetText(kind);

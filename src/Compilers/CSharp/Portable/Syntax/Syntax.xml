@@ -335,6 +335,37 @@
       <summary>Creates a ParenthesizedExpressionSyntax node.</summary>
     </FactoryComment>
   </Node>
+  <Node Name="StatementExpressionSyntax" Base="ExpressionSyntax">
+    <Kind Name="StatementExpression"/>
+    <Field Name="OpenParenToken" Type="SyntaxToken">
+      <Kind Name="OpenParenToken"/>
+      <PropertyComment>
+        <summary>SyntaxToken representing the open parenthesis.</summary>
+      </PropertyComment>
+    </Field>
+    <Field Name="Statements" Type="SyntaxList&lt;StatementSyntax&gt;">
+      <PropertyComment>
+        <summary>A list of StatementSyntax nodes representing the inner statements</summary>
+      </PropertyComment>
+    </Field>
+    <Field Name="Expression" Type="ExpressionSyntax">
+      <PropertyComment>
+        <summary>ExpressionSyntax node representing the inner expression.</summary>
+      </PropertyComment>
+    </Field>
+    <Field Name="CloseParenToken" Type="SyntaxToken">
+      <Kind Name="CloseParenToken"/>
+      <PropertyComment>
+        <summary>SyntaxToken representing the close parenthesis.</summary>
+      </PropertyComment>
+    </Field>
+    <TypeComment>
+      <summary>Class which represents the syntax node for statement expression.</summary>
+    </TypeComment>
+    <FactoryComment>
+      <summary>Creates a StatementExpressionSyntax node.</summary>
+    </FactoryComment>
+  </Node>
   <Node Name="TupleExpressionSyntax" Base="ExpressionSyntax">
     <Kind Name="TupleExpression"/>
     <Field Name="OpenParenToken" Type="SyntaxToken">
