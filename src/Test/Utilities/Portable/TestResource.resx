@@ -809,6 +809,7 @@ namespace Comments.XmlComments.UndocumentedKeywords
                 p-&gt;x = 10;/*-&gt;*/
             }
             IO::BinaryReader br = null;
+			(i;i)
         }
 
         struct Point { public int X; public int Y; public void ThisAccess() { this = this; } }

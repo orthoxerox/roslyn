@@ -172,14 +172,22 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     return false;
                 }
 
+                bool moreDesignations = false;
                 // check for a designation
-                if (!ScanDesignation(typeIsVar || IsPredefinedType(lastTokenOfType.Kind))) {
-                    return false;
-                }
+                do {
+                    if (!ScanDesignation(typeIsVar || IsPredefinedType(lastTokenOfType.Kind))) {
+                        return false;
+                    }
+                    if (this.CurrentToken.Kind == SyntaxKind.CommaToken) {
+                        this.EatToken(SyntaxKind.CommaToken);
+                        moreDesignations = true;
+                    } else {
+                        moreDesignations = false;
+                    }
+                } while (moreDesignations);
 
                 return this.CurrentToken.Kind == SyntaxKind.EqualsToken // type name = value ;
-                    || this.CurrentToken.Kind == SyntaxKind.SemicolonToken //type name ;
-                    || this.CurrentToken.Kind == SyntaxKind.CommaToken; // type name1, name2;
+                    || this.CurrentToken.Kind == SyntaxKind.SemicolonToken; //type name ;
 
             }
             finally {
