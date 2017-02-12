@@ -623,6 +623,12 @@
     <!-- Wrapped expression. -->
     <Field Name="Expression" Type="BoundExpression" Null="disallow"/>
   </Node>
+  
+  <Node Name="BoundStatementExpression" Base="BoundExpression">
+    <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
+    <Field Name="Block" Type="BoundBlock" Null="disallow"/>
+    <Field Name="Expression" Type="BoundExpression" Null="disallow"/>
+  </Node>
 
   <AbstractNode Name="BoundStatement" Base="BoundNode"/>
 

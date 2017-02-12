@@ -640,6 +640,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.DeclarationExpression:
                     return BindDeclarationExpression((DeclarationExpressionSyntax)node, diagnostics);
 
+                case SyntaxKind.StatementExpression:
+                    return BindStatementExpression((StatementExpressionSyntax)node, diagnostics);
+
                 default:
                     // NOTE: We could probably throw an exception here, but it's conceivable
                     // that a non-parser syntax tree could reach this point with an unexpected
@@ -1002,6 +1005,18 @@ namespace Microsoft.CodeAnalysis.CSharp
             // parenthesis and keep on trucking.
             CheckNotNamespaceOrType(result, diagnostics);
             return result;
+        }
+
+        BoundExpression BindStatementExpression(StatementExpressionSyntax node, DiagnosticBag diagnostics)
+        {
+            var block = BindBlock(SyntaxFactory.Block(node.Statements), diagnostics);
+            var expression = BindExpression(node.Expression, diagnostics);
+
+            if (block.HasErrors || expression.HasErrors) {
+                return BadExpression(node);
+            }
+
+            return new BoundStatementExpression(node, block, expression, expression.Type);
         }
 
         private BoundExpression BindTypeOf(TypeOfExpressionSyntax node, DiagnosticBag diagnostics)

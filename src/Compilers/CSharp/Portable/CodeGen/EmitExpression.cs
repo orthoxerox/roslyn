@@ -306,6 +306,10 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
                     EmitThrowExpression((BoundThrowExpression)expression, used);
                     break;
 
+                case BoundKind.StatementExpression:
+                    EmitStatementExpression((BoundStatementExpression)expression, used);
+                    break;
+
                 default:
                     // Code gen should not be invoked if there are errors.
                     Debug.Assert(expression.Kind != BoundKind.BadExpression);
@@ -321,6 +325,12 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
 
             // to satisfy invariants, we push a default value to pretend to adjust the stack height
             EmitDefaultValue(node.Type, used, node.Syntax);
+        }
+
+        void EmitStatementExpression(BoundStatementExpression node, bool used)
+        {
+            this.EmitBlock(node.Block);
+            this.EmitExpression(node.Expression, used);
         }
 
         private void EmitComplexConditionalReceiver(BoundComplexConditionalReceiver expression, bool used)
