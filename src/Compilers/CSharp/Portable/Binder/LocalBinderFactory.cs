@@ -704,6 +704,19 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
+        public override void VisitStatementExpression(StatementExpressionSyntax node)
+        {
+            Debug.Assert((object)_containingMemberOrLambda == _enclosing.ContainingMemberOrLambda);
+            var blockBinder = new StatementExpressionBinder(_enclosing, node);
+            AddToMap(node, blockBinder);
+
+            // Visit all the statements inside this statement expression
+            foreach (StatementSyntax statement in node.Statements) {
+                Visit(statement, blockBinder);
+            }
+            Visit(node.Expression, blockBinder);
+        }
+
         public override void DefaultVisit(SyntaxNode node)
         {
             // We should only get here for statements that don't introduce new scopes.

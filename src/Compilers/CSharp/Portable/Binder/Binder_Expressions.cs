@@ -1009,14 +1009,26 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         BoundExpression BindStatementExpression(StatementExpressionSyntax node, DiagnosticBag diagnostics)
         {
-            var block = BindBlock(SyntaxFactory.Block(node.Statements), diagnostics);
-            var expression = BindExpression(node.Expression, diagnostics);
+            var binder = GetBinder(node);
 
-            if (block.HasErrors || expression.HasErrors) {
-                return BadExpression(node);
+            var nStatements = node.Statements.Count;
+            var statements = ArrayBuilder<BoundStatement>.GetInstance(nStatements);
+
+            for (int i = 0; i < nStatements; i++) {
+                var statement = binder.BindStatement(node.Statements[i], diagnostics);
+                statements.Add(statement);
             }
 
-            return new BoundStatementExpression(node, block, expression, expression.Type);
+            var expression = binder.BindExpression(node.Expression, diagnostics);
+
+            ImmutableArray<LocalSymbol> locals = binder.GetDeclaredLocalsForScope(node);
+
+            return new BoundStatementExpression(
+                node, 
+                locals,
+                statements.ToImmutableAndFree(), 
+                expression, 
+                expression.Type);
         }
 
         private BoundExpression BindTypeOf(TypeOfExpressionSyntax node, DiagnosticBag diagnostics)

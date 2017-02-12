@@ -329,7 +329,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
 
         void EmitStatementExpression(BoundStatementExpression node, bool used)
         {
-            this.EmitBlock(node.Block);
+            this.EmitStatements(node.Statements);
             this.EmitExpression(node.Expression, used);
         }
 

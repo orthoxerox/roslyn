@@ -597,6 +597,13 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeGen
             return base.VisitBlock(node);
         }
 
+        public override BoundNode VisitStatementExpression(BoundStatementExpression node)
+        {
+            DeclareLocals(node.Locals, 0);
+
+            return base.VisitStatementExpression(node);
+        }
+
         // here we have a case of indirect assignment:  *t1 = expr;
         // normally we would need to push t1 and that will cause spilling of t2
         //

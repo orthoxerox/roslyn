@@ -625,8 +625,9 @@
   </Node>
   
   <Node Name="BoundStatementExpression" Base="BoundExpression">
+    <Field Name="Locals" Type="ImmutableArray&lt;LocalSymbol&gt;"/>
     <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
-    <Field Name="Block" Type="BoundBlock" Null="disallow"/>
+    <Field Name="Statements" Type="ImmutableArray&lt;BoundStatement&gt;"/>
     <Field Name="Expression" Type="BoundExpression" Null="disallow"/>
   </Node>
 

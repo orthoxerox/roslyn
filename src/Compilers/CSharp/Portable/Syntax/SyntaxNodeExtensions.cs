@@ -70,6 +70,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 kind == SyntaxKind.Attribute ||
                 kind == SyntaxKind.ArgumentList ||
                 kind == SyntaxKind.ArrowExpressionClause ||
+                kind == SyntaxKind.StatementExpression ||
                 IsValidScopeDesignator(syntax as ExpressionSyntax);
         }
 
