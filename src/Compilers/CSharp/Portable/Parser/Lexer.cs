@@ -724,7 +724,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                     {
                         this.ScanVerbatimStringLiteral(ref info);
                     }
-                    else if (!SyntaxFacts.IsIdentifierPartCharacter(TextWindow.PeekChar(1)))
+                    else if (!SyntaxFacts.IsIdentifierPartCharacter(TextWindow.PeekChar(1))
+                        && TextWindow.PeekChar(1) != '\\')
                     {
                         TextWindow.AdvanceChar();
                         info.Kind = SyntaxKind.AtToken;

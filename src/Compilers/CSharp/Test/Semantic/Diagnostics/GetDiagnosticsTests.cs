@@ -30,8 +30,8 @@ class C
             var compilation = CreateCompilationWithMscorlib45(source);
             var model = compilation.GetSemanticModel(compilation.SyntaxTrees.Single());
 
-            DiagnosticsHelper.VerifyDiagnostics(model, source, @"(?s)^.*$", "CS1646", "CS1024", "CS1525", "CS1002");
-            DiagnosticsHelper.VerifyDiagnostics(model, source, @"\s*(?=@)", "CS1646");
+            DiagnosticsHelper.VerifyDiagnostics(model, source, @"(?s)^.*$", "CS1002", "CS1024", "CS1525", "CS1002", "CS8205");
+            DiagnosticsHelper.VerifyDiagnostics(model, source, @"\s*(?=@)", "CS8205");
             DiagnosticsHelper.VerifyDiagnostics(model, source, @"#", "CS1024");
             DiagnosticsHelper.VerifyDiagnostics(model, source, @"(?<=\!)", "CS1525", "CS1002");
         }

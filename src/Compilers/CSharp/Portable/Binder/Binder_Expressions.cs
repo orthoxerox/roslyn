@@ -1750,6 +1750,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual BoundExpression BindPlaceholder(PlaceholderNameSyntax node, DiagnosticBag diagnostics)
         {
             //We cannot bind a placeholder in a regular expression
+            diagnostics.Add(ErrorCode.ERR_UnboundPlaceholder, node.Location);
             return BadExpression(node);
         }
 
@@ -2532,6 +2533,20 @@ namespace Microsoft.CodeAnalysis.CSharp
         private BoundExpression BindArgumentExpression(DiagnosticBag diagnostics, ExpressionSyntax argumentExpression, RefKind refKind, bool allowArglist)
         {
             BindValueKind valueKind = refKind == RefKind.None ? BindValueKind.RValue : BindValueKind.RefOrOut;
+
+            //We transform expressions with placeholders into lambdas only when the argument is not a lambda
+            if (!argumentExpression.IsAnonymousFunction() &&
+                PlaceholderLocationVisitor.Default.Visit(argumentExpression))
+            {
+                SyntaxToken identifier = SyntaxFactory.Identifier("@");
+                var parameter = SyntaxFactory.Parameter(identifier);
+                var visitor = new PlaceholderReplacementVisitor(
+                    SyntaxFactory.IdentifierName(identifier));
+
+                argumentExpression = SyntaxFactory.SimpleLambdaExpression(
+                    parameter, 
+                    (CSharpSyntaxNode)visitor.Visit(argumentExpression));
+            }
 
             BoundExpression argument;
             if (allowArglist)

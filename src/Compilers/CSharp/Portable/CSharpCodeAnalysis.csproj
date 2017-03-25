@@ -108,6 +108,7 @@
     <Compile Include="Binder\NameofBinder.cs" />
     <Compile Include="Binder\NamespaceOrTypeAndUsingDirective.cs" />
     <Compile Include="Binder\ExpressionVariableFinder.cs" />
+    <Compile Include="Binder\PlaceholderReplacementVisitor.cs" />
     <Compile Include="Binder\ScriptLocalScopeBinder.cs" />
     <Compile Include="Binder\ExpressionVariableBinder.cs" />
     <Compile Include="Binder\Semantics\AccessCheck.cs" />

@@ -1485,5 +1485,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         ERR_PatternWrongGenericTypeInVersion = 9003,
 
         #endregion diagnostics for C# 7.1
+
+        ERR_UnboundPlaceholder = 9101,
     }
 }

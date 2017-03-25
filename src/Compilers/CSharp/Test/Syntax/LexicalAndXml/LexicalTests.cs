@@ -1195,7 +1195,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(text, token.Text);
         }
 
-        [Fact]
+        [Fact(Skip = "Placeholders")]
         [Trait("Feature", "Literals")]
         public void TestVerbatimIdentifierWithNoCharacters()
         {
@@ -1210,7 +1210,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(text, token.Text);
         }
 
-        [Fact]
+        [Fact(Skip = "Placeholder")]
         [Trait("Feature", "Literals")]
         public void TestVerbatimIdentifierWithNoCharactersAndTrivia()
         {

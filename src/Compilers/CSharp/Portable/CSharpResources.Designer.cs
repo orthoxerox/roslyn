@@ -14489,5 +14489,14 @@ namespace Microsoft.CodeAnalysis.CSharp {
                 return ResourceManager.GetString("XML_WhitespaceMissing", resourceCulture);
             }
         }
+		
+        /// <summary>
+        ///   Looks up a localized string similar to This placeholder couldn't be bound to a value..
+        /// </summary>
+        internal static string ERR_UnboundPlaceholder {
+            get {
+                return ResourceManager.GetString("ERR_UnboundPlaceholder", resourceCulture);
+            }
+        }
     }
 }

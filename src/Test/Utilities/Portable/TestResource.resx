@@ -577,6 +577,15 @@ namespace My
                     yield return result;
                 }
             }
+			public static int Foo(Func&lt;int, int&gt; func)
+			{
+				return func(2);
+			}
+
+			public static void Bar()
+			{
+				Foo(@ + 1);
+			}
             static void Main()
             {
                 foreach (int i in Power(2, 8))
@@ -590,6 +599,7 @@ namespace My
             }
         }
     }
+	
 }
 
 namespace ConsoleApplication1

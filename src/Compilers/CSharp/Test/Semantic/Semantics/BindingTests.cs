@@ -3550,5 +3550,45 @@ public class Class1
                 //         System.Func<object> delegateConversion2 = "string literal".ExtensionMethod2<>;
                 Diagnostic(ErrorCode.ERR_NoSuchMemberOrExtension, "ExtensionMethod2<>").WithArguments("string", "ExtensionMethod2").WithLocation(34, 68));
         }
+
+        [Fact]
+        public void OrphanedPlaceholder()
+        {
+            var source = @"
+static class Program
+{
+    public static void Main(string[] args)
+    {
+        var x = @;
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib(source);
+            compilation.VerifyDiagnostics(
+                Diagnostic(ErrorCode.ERR_UnboundPlaceholder, "@").WithLocation(6, 17));
+        }
+
+        [Fact]
+        public void LambdaPlaceholder()
+        {
+            var source = @"
+using System;
+
+static class Program
+{
+    public static int Foo(Func<int, int> func)
+    {
+        return func(2);
+    }
+
+    public static void Main(string[] args)
+    {
+        Foo(@ + 1);
+    }
+}
+";
+            var compilation = CreateCompilationWithMscorlib(source);
+            compilation.VerifyDiagnostics();
+        }
     }
 }
