@@ -51,6 +51,19 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
 
         [Fact]
+        public void TestPlaceholder()
+        {
+            var text = "@";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.PlaceholderName, expr.Kind());
+            Assert.False(((PlaceholderNameSyntax)expr).Identifier.IsMissing);
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+        }
+
+        [Fact]
         public void TestParenthesizedExpression()
         {
             var text = "(foo)";

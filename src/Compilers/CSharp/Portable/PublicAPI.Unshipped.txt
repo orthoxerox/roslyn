@@ -7,3 +7,15 @@ static Microsoft.CodeAnalysis.CSharp.LanguageVersionFacts.ToDisplayString(this M
 static Microsoft.CodeAnalysis.CSharp.LanguageVersionFacts.TryParse(this string version, out Microsoft.CodeAnalysis.CSharp.LanguageVersion result) -> bool
 static Microsoft.CodeAnalysis.CSharp.SyntaxFacts.IsReservedTupleElementName(string elementName) -> bool
 static Microsoft.CodeAnalysis.CSharp.SyntaxFacts.TryGetInferredMemberName(this Microsoft.CodeAnalysis.SyntaxNode syntax) -> string
+Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax
+Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax.Update(Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax
+Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax.WithIdentifier(Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.PlaceholderName = 8627 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
+override Microsoft.CodeAnalysis.CSharp.CSharpSyntaxRewriter.VisitPlaceholderName(Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax node) -> Microsoft.CodeAnalysis.SyntaxNode
+override Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax.Accept(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor visitor) -> void
+override Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax.Accept<TResult>(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult> visitor) -> TResult
+override Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax.Identifier.get -> Microsoft.CodeAnalysis.SyntaxToken
+static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.PlaceholderName() -> Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax
+static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.PlaceholderName(Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax
+virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitPlaceholderName(Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax node) -> void
+virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitPlaceholderName(Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax node) -> TResult

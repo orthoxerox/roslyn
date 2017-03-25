@@ -8685,6 +8685,7 @@ tryAgain:
                 case SyntaxKind.DelegateKeyword:
                 case SyntaxKind.ColonColonToken: // bad aliased name
                 case SyntaxKind.ThrowKeyword:
+                case SyntaxKind.AtToken:
                     return true;
                 case SyntaxKind.IdentifierToken:
                     // Specifically allow the from contextual keyword, because it can always be the start of an
@@ -9185,6 +9186,9 @@ tryAgain:
                     // misplaced ::
                     // TODO: this should not be a compound name.. (disallow dots)
                     expr = this.ParseQualifiedName(NameOptions.InExpression);
+                    break;
+                case SyntaxKind.AtToken:
+                    expr = _syntaxFactory.PlaceholderName(this.EatToken());
                     break;
                 case SyntaxKind.IdentifierToken:
                     if (this.IsTrueIdentifier())

@@ -376,6 +376,21 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
         [Fact]
         [Trait("Feature", "Identifiers")]
+        public void TestPlaceholder()
+        {
+            var text = "@";
+            var token = LexToken(text);
+
+            Assert.NotNull(token);
+            Assert.Equal(SyntaxKind.AtToken, token.Kind());
+            Assert.Equal(text, token.Text);
+            var errors = token.Errors();
+            Assert.Equal(0, errors.Length);
+            Assert.Equal("@", token.ValueText);
+        }
+
+        [Fact]
+        [Trait("Feature", "Identifiers")]
         public void TestUnicodeEscapeIdentifier()
         {
             var text = "\\u1234";

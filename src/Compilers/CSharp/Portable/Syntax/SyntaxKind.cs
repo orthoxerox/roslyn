@@ -38,6 +38,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         QuestionToken = 8219,
         HashToken = 8220,
         SlashToken = 8221,
+        AtToken = 8222,
 
         // additional xml tokens
         SlashGreaterThanToken = 8232, // xml empty element end
@@ -303,6 +304,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         PointerType = 8624,
         NullableType = 8625,
         OmittedTypeArgument = 8626,
+        PlaceholderName = 8627,
 
         // expressions
         ParenthesizedExpression = 8632,

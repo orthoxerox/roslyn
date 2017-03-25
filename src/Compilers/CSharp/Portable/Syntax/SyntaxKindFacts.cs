@@ -1260,6 +1260,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return "#";
                 case SyntaxKind.SlashToken:
                     return "/";
+                case SyntaxKind.AtToken:
+                    return "@";
                 case SyntaxKind.SlashGreaterThanToken:
                     return "/>";
                 case SyntaxKind.LessThanSlashToken:
