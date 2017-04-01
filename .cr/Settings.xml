@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Containers>
+  <Container Key="942383484">
+    <Sessions>
+      <Item Id="MainSession">
+        <Filter Type="DevExpress.CodeRush.TestRunner.Data.Filters.TestFilterAnd" Assembly="DevExpress.CodeRush.TestRunner.Data, Version=16.2.6.0, Culture=neutral, PublicKeyToken=79868b8147b5eae4">
+          <Filter Type="DevExpress.CodeRush.TestRunner.Data.Filters.TestFilterOr" Assembly="DevExpress.CodeRush.TestRunner.Data, Version=16.2.6.0, Culture=neutral, PublicKeyToken=79868b8147b5eae4" />
+          <Filter Type="DevExpress.CodeRush.TestRunner.Data.Filters.TestFilterNot" Assembly="DevExpress.CodeRush.TestRunner.Data, Version=16.2.6.0, Culture=neutral, PublicKeyToken=79868b8147b5eae4">
+            <Filter Type="DevExpress.CodeRush.TestRunner.Data.Filters.TestFilterAnd" Assembly="DevExpress.CodeRush.TestRunner.Data, Version=16.2.6.0, Culture=neutral, PublicKeyToken=79868b8147b5eae4" />
+          </Filter>
+        </Filter>
+        <SessionName>Main</SessionName>
+        <ShowExplicit>False</ShowExplicit>
+        <ShowIgnored>False</ShowIgnored>
+        <ShowNone>False</ShowNone>
+        <ShowPassed>False</ShowPassed>
+        <GroupCaption>Project</GroupCaption>
+      </Item>
+    </Sessions>
+    <ActiveSessionName>Main</ActiveSessionName>
+  </Container>
+</Containers>

@@ -451,7 +451,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.GenericName:
                     return BindIdentifier((SimpleNameSyntax)node, invoked, diagnostics);
                 case SyntaxKind.PlaceholderName:
-                    return BindPlaceholder((PlaceholderNameSyntax)node, diagnostics);
+                    return BindPlaceholder((PlaceholderNameSyntax)node, invoked, diagnostics);
                 case SyntaxKind.SimpleMemberAccessExpression:
                 case SyntaxKind.PointerMemberAccessExpression:
                     return BindMemberAccess((MemberAccessExpressionSyntax)node, invoked, indexed, diagnostics: diagnostics);
@@ -1193,7 +1193,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <summary>
         /// Binds a simple identifier.
         /// </summary>
-        private BoundExpression BindIdentifier(
+        protected BoundExpression BindIdentifier(
             SimpleNameSyntax node,
             bool invoked,
             DiagnosticBag diagnostics)
@@ -1747,11 +1747,18 @@ namespace Microsoft.CodeAnalysis.CSharp
             return null;
         }
 
-        public virtual BoundExpression BindPlaceholder(PlaceholderNameSyntax node, DiagnosticBag diagnostics)
+        public virtual BoundExpression BindPlaceholder(PlaceholderNameSyntax node, bool invoked, DiagnosticBag diagnostics)
         {
-            //We cannot bind a placeholder in a regular expression
-            diagnostics.Add(ErrorCode.ERR_UnboundPlaceholder, node.Location);
-            return BadExpression(node);
+            if (this.Flags.HasFlag(BinderFlags.InPlaceholderExpression))
+            {
+                return BindIdentifier(SyntaxFactory.IdentifierName("@"), invoked, diagnostics);
+            }
+            else
+            {
+                //We cannot bind a placeholder in a regular expression
+                diagnostics.Add(ErrorCode.ERR_UnboundPlaceholder, node.Location);
+                return BadExpression(node);
+            }
         }
 
         public BoundExpression BindNamespaceOrTypeOrExpression(ExpressionSyntax node, DiagnosticBag diagnostics)
@@ -2534,21 +2541,17 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             BindValueKind valueKind = refKind == RefKind.None ? BindValueKind.RValue : BindValueKind.RefOrOut;
 
+            BoundExpression argument;
+
             //We transform expressions with placeholders into lambdas only when the argument is not a lambda
             if (!argumentExpression.IsAnonymousFunction() &&
                 PlaceholderLocationVisitor.Default.Visit(argumentExpression))
             {
-                SyntaxToken identifier = SyntaxFactory.Identifier("@");
-                var parameter = SyntaxFactory.Parameter(identifier);
-                var visitor = new PlaceholderReplacementVisitor(
-                    SyntaxFactory.IdentifierName(identifier));
+                argument = this.BindShorthandAnonymousFunction(argumentExpression, diagnostics);
 
-                argumentExpression = SyntaxFactory.SimpleLambdaExpression(
-                    parameter, 
-                    (CSharpSyntaxNode)visitor.Visit(argumentExpression));
+                return CheckValue(argument, valueKind, diagnostics);
             }
 
-            BoundExpression argument;
             if (allowArglist)
             {
                 argument = this.BindValueAllowArgList(argumentExpression, diagnostics, valueKind);

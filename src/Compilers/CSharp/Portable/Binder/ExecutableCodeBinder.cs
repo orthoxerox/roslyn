@@ -24,14 +24,14 @@ namespace Microsoft.CodeAnalysis.CSharp
         private SmallDictionary<SyntaxNode, Binder> _lazyBinderMap;
         private ImmutableArray<MethodSymbol> _methodSymbolsWithYield;
 
-        internal ExecutableCodeBinder(SyntaxNode root, Symbol memberSymbol, Binder next, Func<Binder, SyntaxNode, Binder> rootBinderAdjusterOpt = null)
-            : this(root, memberSymbol, next, next.Flags)
+        internal ExecutableCodeBinder(SyntaxNode root, Symbol memberSymbol, Binder next, Func<Binder, SyntaxNode, Binder> rootBinderAdjusterOpt = null, BinderFlags additionalFlags = BinderFlags.None)
+            : this(root, memberSymbol, next, additionalFlags)
         {
             _rootBinderAdjusterOpt = rootBinderAdjusterOpt;
         }
 
         internal ExecutableCodeBinder(SyntaxNode root, Symbol memberSymbol, Binder next, BinderFlags additionalFlags)
-            : base(next, (next.Flags | additionalFlags) & ~BinderFlags.AllClearedAtExecutableCodeBoundary)
+            : base(next, (next.Flags & ~BinderFlags.AllClearedAtExecutableCodeBoundary) | additionalFlags)
         {
             Debug.Assert((object)memberSymbol == null ||
                          (memberSymbol.Kind != SymbolKind.Local && memberSymbol.Kind != SymbolKind.RangeVariable && memberSymbol.Kind != SymbolKind.Parameter));

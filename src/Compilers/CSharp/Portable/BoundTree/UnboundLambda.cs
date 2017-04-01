@@ -272,7 +272,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             : base(BoundKind.UnboundLambda, syntax, null, hasErrors || !types.IsDefault && types.Any(SymbolKind.ErrorType))
         {
             Debug.Assert(binder != null);
-            Debug.Assert(syntax.IsAnonymousFunction());
+            Debug.Assert(syntax.IsAnonymousFunction()||PlaceholderLocationVisitor.Default.Visit(syntax));
             this.Data = new PlainUnboundLambdaState(this, binder, names, types, refKinds, isAsync);
         }
 
@@ -451,7 +451,11 @@ namespace Microsoft.CodeAnalysis.CSharp
                 cacheKey.ParameterRefKinds,
                 refKind,
                 returnType);
-            lambdaBodyBinder = new ExecutableCodeBinder(_unboundLambda.Syntax, lambdaSymbol, ParameterBinder(lambdaSymbol, binder));
+            lambdaBodyBinder = new ExecutableCodeBinder(
+                _unboundLambda.Syntax, 
+                lambdaSymbol, 
+                ParameterBinder(lambdaSymbol, binder),
+                _unboundLambda.Syntax.IsAnonymousFunction() ? BinderFlags.None : BinderFlags.InPlaceholderExpression);
             block = BindLambdaBody(lambdaSymbol, lambdaBodyBinder, diagnostics);
 
             ((ExecutableCodeBinder)lambdaBodyBinder).ValidateIteratorMethods(diagnostics);
@@ -526,7 +530,11 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             var diagnostics = DiagnosticBag.GetInstance();
             var lambdaSymbol = new LambdaSymbol(binder.Compilation, binder.ContainingMemberOrLambda, _unboundLambda, parameterTypes, parameterRefKinds, refKind: Microsoft.CodeAnalysis.RefKind.None, returnType: null);
-            Binder lambdaBodyBinder = new ExecutableCodeBinder(_unboundLambda.Syntax, lambdaSymbol, ParameterBinder(lambdaSymbol, binder));
+            Binder lambdaBodyBinder = new ExecutableCodeBinder(
+                _unboundLambda.Syntax,
+                lambdaSymbol,
+                ParameterBinder(lambdaSymbol, binder),
+                _unboundLambda.Syntax.IsAnonymousFunction() ? BinderFlags.None : BinderFlags.InPlaceholderExpression);
             var block = BindLambdaBody(lambdaSymbol, lambdaBodyBinder, diagnostics);
 
             var result = new BoundLambda(_unboundLambda.Syntax, block, diagnostics.ToReadOnlyAndFree(), lambdaBodyBinder, delegateType, inferReturnType: true)
@@ -903,7 +911,22 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             get
             {
+/*
                 return UnboundLambda.Syntax.AnonymousFunctionBody();
+*/
+                var syntax = UnboundLambda.Syntax;
+                switch (syntax.Kind())
+                {
+                    default:
+                        //Shorthand lambda
+                        return (CSharpSyntaxNode)syntax;
+                    case SyntaxKind.SimpleLambdaExpression:
+                        return ((SimpleLambdaExpressionSyntax)syntax).Body;
+                    case SyntaxKind.ParenthesizedLambdaExpression:
+                        return ((ParenthesizedLambdaExpressionSyntax)syntax).Body;
+                    case SyntaxKind.AnonymousMethodExpression:
+                        return ((AnonymousMethodExpressionSyntax)syntax).Block;
+                }
             }
         }
 
@@ -914,6 +937,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             switch (syntax.Kind())
             {
                 default:
+                    //Shorthand Lambda
+                    return Location.None;
                 case SyntaxKind.SimpleLambdaExpression:
                     return ((SimpleLambdaExpressionSyntax)syntax).Parameter.Identifier.GetLocation();
                 case SyntaxKind.ParenthesizedLambdaExpression:

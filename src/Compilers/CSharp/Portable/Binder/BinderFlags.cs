@@ -98,8 +98,10 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// </summary>
         InLoadedSyntaxTree = 1 << 28,
 
+        InPlaceholderExpression = 1 << 29,
+
         // Groups
 
-        AllClearedAtExecutableCodeBoundary = InLockBody | InCatchBlock | InCatchFilter | InFinallyBlock | InTryBlockOfTryCatch | InNestedFinallyBlock,
+        AllClearedAtExecutableCodeBoundary = InLockBody | InCatchBlock | InCatchFilter | InFinallyBlock | InTryBlockOfTryCatch | InNestedFinallyBlock | InPlaceholderExpression,
     }
 }

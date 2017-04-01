@@ -235,5 +235,19 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             return lambda;
         }
+
+        private UnboundLambda BindShorthandAnonymousFunction(CSharpSyntaxNode syntax, DiagnosticBag diagnostics)
+        {
+            Debug.Assert(syntax != null);
+
+            var refKinds = default(ImmutableArray<RefKind>);
+            var types = default(ImmutableArray<TypeSymbol>);
+            var names = ArrayBuilder<string>.GetInstance(1, "@").ToImmutableAndFree();
+            var isAsync = false;
+
+            var lambda = new UnboundLambda(syntax, this, refKinds, types, names, isAsync);
+
+            return lambda;
+        }
     }
 }
