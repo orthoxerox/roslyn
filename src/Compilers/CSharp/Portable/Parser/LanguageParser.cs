@@ -10417,7 +10417,7 @@ tryAgain:
                 if (argumentList == null && initializer == null)
                 {
                     argumentList = _syntaxFactory.ArgumentList(
-                        this.EatToken(SyntaxKind.OpenParenToken, ErrorCode.ERR_BadNewExpr),
+                        SyntaxFactory.MissingToken(SyntaxKind.OpenParenToken),
                         default(SeparatedSyntaxList<ArgumentSyntax>),
                         SyntaxFactory.MissingToken(SyntaxKind.CloseParenToken));
                 }
