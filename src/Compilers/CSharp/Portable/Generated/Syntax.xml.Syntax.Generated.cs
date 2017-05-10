@@ -32,6 +32,65 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     public abstract SyntaxToken Identifier { get; }
   }
 
+  /// <summary>Class that represents placeholder syntax nodes for pipe expressions and shorthand lambdas.</summary>
+  public sealed partial class PlaceholderNameSyntax : SimpleNameSyntax
+  {
+    internal PlaceholderNameSyntax(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CSharpSyntaxNode green, SyntaxNode parent, int position)
+        : base(green, parent, position)
+    {
+    }
+
+    /// <summary>SyntaxToken representing the keyword for the kind of the identifier name.</summary>
+    public override SyntaxToken Identifier 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PlaceholderNameSyntax)this.Green).identifier, this.Position, 0); }
+    }
+
+    internal override SyntaxNode GetNodeSlot(int index)
+    {
+        switch (index)
+        {
+            default: return null;
+        }
+    }
+    internal override SyntaxNode GetCachedSlot(int index)
+    {
+        switch (index)
+        {
+            default: return null;
+        }
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitPlaceholderName(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitPlaceholderName(this);
+    }
+
+    public PlaceholderNameSyntax Update(SyntaxToken identifier)
+    {
+        if (identifier != this.Identifier)
+        {
+            var newNode = SyntaxFactory.PlaceholderName(identifier);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               return newNode.WithAnnotations(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    public PlaceholderNameSyntax WithIdentifier(SyntaxToken identifier)
+    {
+        return this.Update(identifier);
+    }
+  }
+
   /// <summary>Class which represents the syntax node for identifier name.</summary>
   public sealed partial class IdentifierNameSyntax : SimpleNameSyntax
   {

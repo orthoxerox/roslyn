@@ -49,6 +49,116 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     public abstract SyntaxToken Identifier { get; }
   }
 
+  /// <summary>Class that represents placeholder syntax nodes for pipe expressions and shorthand lambdas.</summary>
+  internal sealed partial class PlaceholderNameSyntax : SimpleNameSyntax
+  {
+    internal readonly SyntaxToken identifier;
+
+    internal PlaceholderNameSyntax(SyntaxKind kind, SyntaxToken identifier, DiagnosticInfo[] diagnostics, SyntaxAnnotation[] annotations)
+        : base(kind, diagnostics, annotations)
+    {
+        this.SlotCount = 1;
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+    }
+
+
+    internal PlaceholderNameSyntax(SyntaxKind kind, SyntaxToken identifier, SyntaxFactoryContext context)
+        : base(kind)
+    {
+        this.SetFactoryContext(context);
+        this.SlotCount = 1;
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+    }
+
+
+    internal PlaceholderNameSyntax(SyntaxKind kind, SyntaxToken identifier)
+        : base(kind)
+    {
+        this.SlotCount = 1;
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+    }
+
+    /// <summary>SyntaxToken representing the keyword for the kind of the identifier name.</summary>
+    public override SyntaxToken Identifier { get { return this.identifier; } }
+
+    internal override GreenNode GetSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.identifier;
+            default: return null;
+        }
+    }
+
+    internal override SyntaxNode CreateRed(SyntaxNode parent, int position)
+    {
+      return new CSharp.Syntax.PlaceholderNameSyntax(this, parent, position);
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitPlaceholderName(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitPlaceholderName(this);
+    }
+
+    public PlaceholderNameSyntax Update(SyntaxToken identifier)
+    {
+        if (identifier != this.Identifier)
+        {
+            var newNode = SyntaxFactory.PlaceholderName(identifier);
+            var diags = this.GetDiagnostics();
+            if (diags != null && diags.Length > 0)
+               newNode = newNode.WithDiagnosticsGreen(diags);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               newNode = newNode.WithAnnotationsGreen(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    internal override GreenNode SetDiagnostics(DiagnosticInfo[] diagnostics)
+    {
+         return new PlaceholderNameSyntax(this.Kind, this.identifier, diagnostics, GetAnnotations());
+    }
+
+    internal override GreenNode SetAnnotations(SyntaxAnnotation[] annotations)
+    {
+         return new PlaceholderNameSyntax(this.Kind, this.identifier, GetDiagnostics(), annotations);
+    }
+
+    internal PlaceholderNameSyntax(ObjectReader reader)
+        : base(reader)
+    {
+      this.SlotCount = 1;
+      var identifier = (SyntaxToken)reader.ReadValue();
+      if (identifier != null)
+      {
+         AdjustFlagsAndWidth(identifier);
+         this.identifier = identifier;
+      }
+    }
+
+    internal override void WriteTo(ObjectWriter writer)
+    {
+      base.WriteTo(writer);
+      writer.WriteValue(this.identifier);
+    }
+
+    static PlaceholderNameSyntax()
+    {
+       ObjectBinder.RegisterTypeReader(typeof(PlaceholderNameSyntax), r => new PlaceholderNameSyntax(r));
+    }
+  }
+
   /// <summary>Class which represents the syntax node for identifier name.</summary>
   internal sealed partial class IdentifierNameSyntax : SimpleNameSyntax
   {
@@ -33587,6 +33697,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
   internal partial class CSharpSyntaxVisitor<TResult>
   {
+    public virtual TResult VisitPlaceholderName(PlaceholderNameSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     public virtual TResult VisitIdentifierName(IdentifierNameSyntax node)
     {
       return this.DefaultVisit(node);
@@ -34611,6 +34726,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
   internal partial class CSharpSyntaxVisitor
   {
+    public virtual void VisitPlaceholderName(PlaceholderNameSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
     public virtual void VisitIdentifierName(IdentifierNameSyntax node)
     {
       this.DefaultVisit(node);
@@ -35634,6 +35754,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
   internal partial class CSharpSyntaxRewriter : CSharpSyntaxVisitor<CSharpSyntaxNode>
   {
+    public override CSharpSyntaxNode VisitPlaceholderName(PlaceholderNameSyntax node)
+    {
+      var identifier = (SyntaxToken)this.Visit(node.Identifier);
+      return node.Update(identifier);
+    }
+
     public override CSharpSyntaxNode VisitIdentifierName(IdentifierNameSyntax node)
     {
       var identifier = (SyntaxToken)this.Visit(node.Identifier);
@@ -37391,6 +37517,33 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     {
         this.context = context;
     }
+    public PlaceholderNameSyntax PlaceholderName(SyntaxToken identifier)
+    {
+#if DEBUG
+      if (identifier == null)
+        throw new ArgumentNullException(nameof(identifier));
+      switch (identifier.Kind)
+      {
+        case SyntaxKind.AtToken:
+          break;
+        default:
+          throw new ArgumentException("identifier");
+      }
+#endif
+
+      int hash;
+      var cached = CSharpSyntaxNodeCache.TryGetNode((int)SyntaxKind.PlaceholderName, identifier, this.context, out hash);
+      if (cached != null) return (PlaceholderNameSyntax)cached;
+
+      var result = new PlaceholderNameSyntax(SyntaxKind.PlaceholderName, identifier, this.context);
+      if (hash >= 0)
+      {
+          SyntaxNodeCache.AddNode(result, hash);
+      }
+
+      return result;
+    }
+
     public IdentifierNameSyntax IdentifierName(SyntaxToken identifier)
     {
 #if DEBUG
@@ -44304,6 +44457,33 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
   internal static partial class SyntaxFactory
   {
+    public static PlaceholderNameSyntax PlaceholderName(SyntaxToken identifier)
+    {
+#if DEBUG
+      if (identifier == null)
+        throw new ArgumentNullException(nameof(identifier));
+      switch (identifier.Kind)
+      {
+        case SyntaxKind.AtToken:
+          break;
+        default:
+          throw new ArgumentException("identifier");
+      }
+#endif
+
+      int hash;
+      var cached = SyntaxNodeCache.TryGetNode((int)SyntaxKind.PlaceholderName, identifier, out hash);
+      if (cached != null) return (PlaceholderNameSyntax)cached;
+
+      var result = new PlaceholderNameSyntax(SyntaxKind.PlaceholderName, identifier);
+      if (hash >= 0)
+      {
+          SyntaxNodeCache.AddNode(result, hash);
+      }
+
+      return result;
+    }
+
     public static IdentifierNameSyntax IdentifierName(SyntaxToken identifier)
     {
 #if DEBUG
@@ -51217,6 +51397,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     internal static IEnumerable<Type> GetNodeTypes()
     {
         return new Type[] {
+           typeof(PlaceholderNameSyntax),
            typeof(IdentifierNameSyntax),
            typeof(QualifiedNameSyntax),
            typeof(GenericNameSyntax),

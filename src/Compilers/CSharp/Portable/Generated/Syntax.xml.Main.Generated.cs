@@ -16,6 +16,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
   public partial class CSharpSyntaxVisitor<TResult>
   {
+    /// <summary>Called when the visitor visits a PlaceholderNameSyntax node.</summary>
+    public virtual TResult VisitPlaceholderName(PlaceholderNameSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     /// <summary>Called when the visitor visits a IdentifierNameSyntax node.</summary>
     public virtual TResult VisitIdentifierName(IdentifierNameSyntax node)
     {
@@ -1243,6 +1249,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
   public partial class CSharpSyntaxVisitor
   {
+    /// <summary>Called when the visitor visits a PlaceholderNameSyntax node.</summary>
+    public virtual void VisitPlaceholderName(PlaceholderNameSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
     /// <summary>Called when the visitor visits a IdentifierNameSyntax node.</summary>
     public virtual void VisitIdentifierName(IdentifierNameSyntax node)
     {
@@ -2470,6 +2482,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
   public partial class CSharpSyntaxRewriter : CSharpSyntaxVisitor<SyntaxNode>
   {
+    public override SyntaxNode VisitPlaceholderName(PlaceholderNameSyntax node)
+    {
+      var identifier = this.VisitToken(node.Identifier);
+      return node.Update(identifier);
+    }
+
     public override SyntaxNode VisitIdentifierName(IdentifierNameSyntax node)
     {
       var identifier = this.VisitToken(node.Identifier);
@@ -4220,6 +4238,26 @@ namespace Microsoft.CodeAnalysis.CSharp
 
   public static partial class SyntaxFactory
   {
+    /// <summary>Creates a new PlaceholderNameSyntax instance.</summary>
+    public static PlaceholderNameSyntax PlaceholderName(SyntaxToken identifier)
+    {
+      switch (identifier.Kind())
+      {
+        case SyntaxKind.AtToken:
+          break;
+        default:
+          throw new ArgumentException("identifier");
+      }
+      return (PlaceholderNameSyntax)Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PlaceholderName((Syntax.InternalSyntax.SyntaxToken)identifier.Node).CreateRed();
+    }
+
+
+    /// <summary>Creates a new PlaceholderNameSyntax instance.</summary>
+    public static PlaceholderNameSyntax PlaceholderName()
+    {
+      return SyntaxFactory.PlaceholderName(SyntaxFactory.Token(SyntaxKind.AtToken));
+    }
+
     /// <summary>Creates a new IdentifierNameSyntax instance.</summary>
     public static IdentifierNameSyntax IdentifierName(SyntaxToken identifier)
     {

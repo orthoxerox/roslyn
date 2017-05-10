@@ -3563,7 +3563,7 @@ static class Program
     }
 }
 ";
-            var compilation = CreateCompilationWithMscorlib(source);
+            var compilation = CreateStandardCompilation(source, new[] { SystemCoreRef });
             compilation.VerifyDiagnostics(
                 Diagnostic(ErrorCode.ERR_UnboundPlaceholder, "@").WithLocation(6, 17));
         }
@@ -3587,7 +3587,7 @@ static class Program
     }
 }
 ";
-            var compilation = CreateCompilationWithMscorlib(source);
+            var compilation = CreateStandardCompilation(source, new[] { SystemCoreRef });
             compilation.VerifyDiagnostics();
         }
     }
