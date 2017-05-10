@@ -9120,5 +9120,80 @@ namespace ForwardPipeTest
 }";
             CompileAndVerify(source: source, expectedOutput: "hello");
         }
+
+        [Fact]
+        public void ForwardPipeSideEffects()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    static int GetParameter()
+    {
+      Console.Write(""1"");
+      return 3;
+    }
+
+    static Action<int> GetMethod()
+    {
+      Console.Write(""2"");
+      return Method;
+    }
+
+    static void Method(int i)
+    {
+      Console.Write(i.ToString());
+    }
+
+    public static void Main()
+    {
+      GetParameter() |> GetMethod();
+    }
+  }
+}";
+
+            CompileAndVerify(source: source, expectedOutput: "123");
+        }
+
+        [Fact]
+        public void ForwardPipeToParameter()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      ""hello"" |> Console.WriteLine(""{0}, world"", @);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello, world");
+        }
+
+        [Fact]
+        public void ForwardPipeToExpression()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Console.WriteLine(""hello"" |> @ + "", world"");
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello, world");
+        }
     }
 }
