@@ -38334,6 +38334,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         case SyntaxKind.IsExpression:
         case SyntaxKind.AsExpression:
         case SyntaxKind.CoalesceExpression:
+        case SyntaxKind.ForwardPipeExpression:
           break;
         default:
           throw new ArgumentException("kind");
@@ -38366,6 +38367,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         case SyntaxKind.IsKeyword:
         case SyntaxKind.AsKeyword:
         case SyntaxKind.QuestionQuestionToken:
+        case SyntaxKind.BarGreaterThanToken:
           break;
         default:
           throw new ArgumentException("operatorToken");
@@ -45274,6 +45276,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         case SyntaxKind.IsExpression:
         case SyntaxKind.AsExpression:
         case SyntaxKind.CoalesceExpression:
+        case SyntaxKind.ForwardPipeExpression:
           break;
         default:
           throw new ArgumentException("kind");
@@ -45306,6 +45309,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         case SyntaxKind.IsKeyword:
         case SyntaxKind.AsKeyword:
         case SyntaxKind.QuestionQuestionToken:
+        case SyntaxKind.BarGreaterThanToken:
           break;
         default:
           throw new ArgumentException("operatorToken");
