@@ -571,6 +571,7 @@
     <Kind Name="IsExpression"/>
     <Kind Name="AsExpression"/>
     <Kind Name="CoalesceExpression"/>
+    <Kind Name="ForwardPipeExpression"/>
     <Field Name="Left" Type="ExpressionSyntax">
       <PropertyComment>
         <summary>ExpressionSyntax node representing the expression on the left of the binary operator.</summary>
@@ -598,6 +599,7 @@
       <Kind Name="IsKeyword"/>
       <Kind Name="AsKeyword"/>
       <Kind Name="QuestionQuestionToken"/>
+      <Kind Name="BarGreaterThanToken"/>
       <PropertyComment>
         <summary>SyntaxToken representing the operator of the binary expression.</summary>
       </PropertyComment>

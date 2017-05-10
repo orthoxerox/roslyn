@@ -8895,5 +8895,230 @@ public enum FlagsEnum
             var verifier = CompileAndVerify(source, expectedOutput: "Foo, Bar");
             verifier.VerifyDiagnostics();
         }
+
+        [Fact]
+        public void ForwardPipe()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      ""hello"" |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello");
+        }
+
+        [Fact]
+        public void ForwardPipeToDelegate()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> louder = (s) => s + ""!"";
+      Action<string> echo = (s) => Console.WriteLine(s);
+      ""hello"" |> louder |> echo;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeGeneric()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    static T Helper<T>(T value) {
+        return value;
+    }
+
+    public static void Main(string[] args)
+    {
+      var x = ""hello"" |> Helper;
+      Console.WriteLine(x);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello");
+        }
+
+        [Fact]
+        public void ForwardPipeFromCall()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    static string Helper(string value) {
+        return value + ""!"";
+    }
+
+    public static void Main(string[] args)
+    {
+      Console.WriteLine(Helper(""hello"") |> Helper);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!!");
+        }
+
+        [Fact]
+        public void ForwardPipeToConditionalAccessOfMethodGroup()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  class Foo
+  {
+    public string Bar(int i) => i.ToString() + i.ToString();
+    public string Bar(string s) => s + ""!"";
+  }
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      var foo = new Foo();
+      Console.WriteLine(""hello"" |> foo?.Bar);
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeToConditionalAccessOfDelegate()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t?.Item1 |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+        
+        [Fact]
+        public void ForwardPipeToConditionalAccessOfNestedMethodGroup()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t?.Item1.Invoke |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeToConditionalAccessInsideAnotherMember()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t.Item1?.Invoke |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeToNestedConditionalAccess()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Func<string, string> foo = (s => s + ""!"");
+      var t = Tuple.Create(foo);
+      ""hello"" |> t?.Item1?.Invoke |> Console.WriteLine;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello!");
+        }
+
+        [Fact]
+        public void ForwardPipeToConstuctor()
+        {
+            string source = @"
+using System;
+
+namespace ForwardPipeTest
+{
+  class Foo
+  {
+    public string Bar { get; }
+    public Foo(string s) {
+      Bar = s;
+    }
+  }
+  public class Program
+  {
+    public static void Main(string[] args)
+    {
+      Action<Foo> print = f => Console.WriteLine(f.Bar);
+      ""hello"" 
+      |> new Foo 
+      |> print;
+    }
+  }
+}";
+            CompileAndVerify(source: source, expectedOutput: "hello");
+        }
     }
 }

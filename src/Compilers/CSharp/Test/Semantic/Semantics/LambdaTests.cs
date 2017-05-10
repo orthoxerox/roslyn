@@ -1655,7 +1655,7 @@ class C { C() { string.Empty.Select(() => { new Unbound1 }); } }";
             CreateCompilationWithMscorlibAndSystemCore(source).VerifyDiagnostics(
     // (2,58): error CS1526: A new expression requires (), [], or {} after type
     // class C { C() { string.Empty.Select(() => { new Unbound1 }); } }
-    Diagnostic(ErrorCode.ERR_BadNewExpr, "}").WithLocation(2, 58),
+    Diagnostic(ErrorCode.ERR_BadNewExpr, "new Unbound1 ").WithLocation(2, 45),
     // (2,58): error CS1002: ; expected
     // class C { C() { string.Empty.Select(() => { new Unbound1 }); } }
     Diagnostic(ErrorCode.ERR_SemicolonExpected, "}").WithLocation(2, 58),

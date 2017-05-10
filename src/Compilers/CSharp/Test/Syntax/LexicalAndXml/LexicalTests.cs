@@ -622,7 +622,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             TestPunctuation(SyntaxKind.LessThanLessThanToken);
             TestPunctuation(SyntaxKind.LessThanLessThanEqualsToken);
             TestPunctuation(SyntaxKind.GreaterThanEqualsToken);
-
+            TestPunctuation(SyntaxKind.BarGreaterThanToken);
+            
             // TestPunctuation(ParseKind.GreaterThanGreaterThan);  not directly lexed  (generics)
             // TestPunctuation(ParseKind.GreaterThanGreaterThanEquals);  not directly lexed (generics)
             TestPunctuation(SyntaxKind.SlashEqualsToken);

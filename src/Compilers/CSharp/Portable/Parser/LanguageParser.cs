@@ -8755,6 +8755,7 @@ tryAgain:
             Assignment,
             Lambda = Assignment, // "The => operator has the same precedence as assignment (=) and is right-associative."
             Ternary,
+            Pipe,
             Coalescing,
             ConditionalOr,
             ConditionalAnd,
@@ -8789,6 +8790,8 @@ tryAgain:
                 case SyntaxKind.LeftShiftAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
                     return Precedence.Assignment;
+                case SyntaxKind.ForwardPipeExpression:
+                    return Precedence.Pipe;
                 case SyntaxKind.CoalesceExpression:
                     return Precedence.Coalescing;
                 case SyntaxKind.LogicalOrExpression:
@@ -10241,6 +10244,7 @@ tryAgain:
                 case SyntaxKind.DotToken:
                 case SyntaxKind.MinusGreaterThanToken:
                 case SyntaxKind.QuestionQuestionToken:
+                case SyntaxKind.BarGreaterThanToken:
                 case SyntaxKind.EndOfFileToken:
                     return false;
                 default:

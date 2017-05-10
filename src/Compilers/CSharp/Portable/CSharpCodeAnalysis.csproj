@@ -53,6 +53,7 @@
     <Compile Include="Binder\Binder_Crefs.cs" />
     <Compile Include="Binder\Binder_Expressions.cs" />
     <Compile Include="Binder\Binder_Flags.cs" />
+    <Compile Include="Binder\Binder_ForwardPipe.cs" />
     <Compile Include="Binder\Binder_Initializers.cs" />
     <Compile Include="Binder\Binder_InterpolatedString.cs" />
     <Compile Include="Binder\Binder_Invocation.cs" />

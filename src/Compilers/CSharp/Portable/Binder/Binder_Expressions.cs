@@ -498,6 +498,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.AsExpression:
                     return BindAsOperator((BinaryExpressionSyntax)node, diagnostics);
 
+                case SyntaxKind.ForwardPipeExpression:
+                    return BindForwardPipeOperator((BinaryExpressionSyntax)node, diagnostics);
+
                 case SyntaxKind.UnaryPlusExpression:
                 case SyntaxKind.UnaryMinusExpression:
                 case SyntaxKind.LogicalNotExpression:
@@ -3485,6 +3488,11 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         protected BoundExpression BindObjectCreationExpression(ObjectCreationExpressionSyntax node, DiagnosticBag diagnostics)
         {
+            if (node.ArgumentList?.OpenParenToken.IsMissing ?? false) //no argument list or initializer are present
+            {
+                diagnostics.Add(ErrorCode.ERR_BadNewExpr, node.Location);
+            }
+
             var type = BindType(node.Type, diagnostics);
 
             BoundExpression boundInitializerOpt = node.Initializer == null ?

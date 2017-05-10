@@ -174,6 +174,29 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
 
         [Fact]
+        public void TestForwardPipe()
+        {
+            var text = "a |> b;";
+            var statement = this.ParseStatement(text);
+
+            Assert.NotNull(statement);
+            Assert.Equal(SyntaxKind.ExpressionStatement, statement.Kind());
+            Assert.Equal(text, statement.ToString());
+            Assert.Equal(0, statement.Errors().Length);
+
+            var es = (ExpressionStatementSyntax)statement;
+            Assert.NotNull(es.Expression);
+            Assert.NotNull(es.SemicolonToken);
+            Assert.False(es.SemicolonToken.IsMissing);
+
+            Assert.Equal(SyntaxKind.ForwardPipeExpression, es.Expression.Kind());
+            var bs = (BinaryExpressionSyntax)es.Expression;
+            Assert.Equal("a", bs.Left.ToString());
+            Assert.Equal(SyntaxKind.BarGreaterThanToken, bs.OperatorToken.Kind());
+            Assert.Equal("b", bs.Right.ToString());
+        }
+
+        [Fact]
         public void TestLocalDeclarationStatement()
         {
             var text = "T a;";

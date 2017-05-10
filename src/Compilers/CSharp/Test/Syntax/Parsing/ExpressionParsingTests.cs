@@ -287,6 +287,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             TestBinary(SyntaxKind.IsKeyword);
             TestBinary(SyntaxKind.AsKeyword);
             TestBinary(SyntaxKind.QuestionQuestionToken);
+            TestBinary(SyntaxKind.BarGreaterThanToken);
         }
 
         private void TestAssignment(SyntaxKind kind)
@@ -346,6 +347,25 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             TestMemberAccess(SyntaxKind.DotToken);
             TestMemberAccess(SyntaxKind.MinusGreaterThanToken);
+        }
+
+        [Fact]
+        public void TestForwardPipe()
+        {
+            var text = "\"test\" |> Print";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var e = (BinaryExpressionSyntax)expr;
+
+            Assert.NotNull(e.OperatorToken);
+            Assert.NotNull(e.Left);
+            Assert.NotNull(e.Right);
+            Assert.Equal("\"test\"", e.Left.ToString());
+            Assert.Equal("Print", e.Right.ToString());
         }
 
         [Fact]
