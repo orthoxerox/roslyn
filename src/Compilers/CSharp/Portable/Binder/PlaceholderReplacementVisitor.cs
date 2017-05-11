@@ -9,12 +9,17 @@ namespace Microsoft.CodeAnalysis.CSharp
 {
     class PlaceholderReplacementVisitor : CSharpSyntaxRewriter
     {
-        private readonly IdentifierNameSyntax node;
+        private readonly SyntaxNode node;
 
-        public PlaceholderReplacementVisitor(IdentifierNameSyntax node)
+        public PlaceholderReplacementVisitor(SyntaxNode node)
             : base(visitIntoStructuredTrivia: false)
         {
             this.node = node;
+        }
+
+        public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax node)
+        {
+            return node.WithLeft((ExpressionSyntax)Visit(node.Left));
         }
 
         public override SyntaxNode VisitPlaceholderName(PlaceholderNameSyntax node)
@@ -30,6 +35,15 @@ namespace Microsoft.CodeAnalysis.CSharp
         public override bool VisitPlaceholderName(PlaceholderNameSyntax node)
         {
             return true;
+        }
+
+        public override bool VisitBinaryExpression(BinaryExpressionSyntax node)
+        {
+            if (node.Kind() == SyntaxKind.ForwardPipeExpression)
+            {
+                return Visit(node.Left);
+            }
+            return base.VisitBinaryExpression(node);
         }
 
         public override bool DefaultVisit(SyntaxNode node)

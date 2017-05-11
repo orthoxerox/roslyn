@@ -21,7 +21,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             var arg = node.Left;
             var func = node.Right;
 
-            
+            //We can just create a sequence outright
+            if (func.HasPlaceholders())
+            {
+                return BindExpression(
+                    (ExpressionSyntax)new PlaceholderReplacementVisitor(arg).Visit(func), 
+                    diagnostics);
+            }
+                        
             //first we have to check for the ugly case of  `arg |> obj?.Method`
             if (func.Kind() == SyntaxKind.ConditionalAccessExpression) {
                 var ca = (ConditionalAccessExpressionSyntax)func;
