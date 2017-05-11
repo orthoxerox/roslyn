@@ -96,7 +96,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return ((CommonForEachStatementSyntax)parent).Expression == expression;
 
                 case SyntaxKind.Argument:
-                    return PlaceholderLocationVisitor.Default.Visit(expression);
+                    return expression.HasPlaceholders();
 
                 default:
                     return false;

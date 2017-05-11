@@ -387,5 +387,10 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             return p.Designation.Kind() == SyntaxKind.SingleVariableDesignation && p.IsOutDeclaration();
         }
+
+        internal static bool HasPlaceholders(this SyntaxNode node)
+        {
+            return PlaceholderLocationVisitor.Default.Visit(node);
+        }
     }
 }

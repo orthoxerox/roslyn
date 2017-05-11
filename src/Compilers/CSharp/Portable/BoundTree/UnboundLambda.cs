@@ -272,7 +272,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             : base(BoundKind.UnboundLambda, syntax, null, hasErrors || !types.IsDefault && types.Any(SymbolKind.ErrorType))
         {
             Debug.Assert(binder != null);
-            Debug.Assert(syntax.IsAnonymousFunction()||PlaceholderLocationVisitor.Default.Visit(syntax));
+            Debug.Assert(syntax.IsAnonymousFunction()||syntax.HasPlaceholders());
             this.Data = new PlainUnboundLambdaState(this, binder, names, types, refKinds, isAsync);
         }
 

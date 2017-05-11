@@ -2548,7 +2548,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             //We transform expressions with placeholders into lambdas only when the argument is not a lambda
             if (!argumentExpression.IsAnonymousFunction() &&
-                PlaceholderLocationVisitor.Default.Visit(argumentExpression))
+                argumentExpression.HasPlaceholders())
             {
                 argument = this.BindShorthandAnonymousFunction(argumentExpression, diagnostics);
 
