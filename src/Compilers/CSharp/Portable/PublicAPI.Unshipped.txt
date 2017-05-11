@@ -20,3 +20,5 @@ static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.PlaceholderName(Microsoft.Cod
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitPlaceholderName(Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax node) -> void
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitPlaceholderName(Microsoft.CodeAnalysis.CSharp.Syntax.PlaceholderNameSyntax node) -> TResult
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.ForwardPipeExpression = 8692 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.AtToken = 8222 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.BarGreaterThanToken = 8284 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
