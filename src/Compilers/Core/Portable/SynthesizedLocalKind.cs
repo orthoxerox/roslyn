@@ -209,6 +209,8 @@ namespace Microsoft.CodeAnalysis
         /// </summary>
         PatternMatching = 35,
 
+        PipePlaceholder = 36,
+
         /// <summary>
         /// All values have to be less than or equal to <see cref="MaxValidValueForLocalVariableSerializedToDebugInformation"/> 
         /// (<see cref="EditAndContinueMethodDebugInformation"/>)

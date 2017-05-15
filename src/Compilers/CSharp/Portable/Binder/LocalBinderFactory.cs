@@ -684,6 +684,14 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public override void VisitBinaryExpression(BinaryExpressionSyntax node)
         {
+            if (node.Kind() == SyntaxKind.ForwardPipeExpression)
+            {
+                Visit(node.Left);
+                var binder = new ForwardPipeBinder(_enclosing, node);
+                AddToMap(node, binder);
+                Visit(node.Right, binder);
+            }
+
             // The binary operators (except ??) are left-associative, and expressions of the form
             // a + b + c + d .... are relatively common in machine-generated code. The parser can handle
             // creating a deep-on-the-left syntax tree no problem, and then we promptly blow the stack.

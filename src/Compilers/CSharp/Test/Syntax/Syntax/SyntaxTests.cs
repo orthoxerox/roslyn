@@ -75,7 +75,7 @@ void foo()
             AssertIncompleteSubmission("new");
             AssertIncompleteSubmission("new T(");
             AssertIncompleteSubmission("new T {");
-            AssertIncompleteSubmission("new T");
+            //AssertIncompleteSubmission("new T"); //has to be complete for |>
             AssertIncompleteSubmission("1 + new T");
 
             // invalid escape sequence in a string

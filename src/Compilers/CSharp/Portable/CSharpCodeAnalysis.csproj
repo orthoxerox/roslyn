@@ -89,6 +89,7 @@
     <Compile Include="Binder\ForEachEnumeratorInfo.cs" />
     <Compile Include="Binder\ForEachLoopBinder.cs" />
     <Compile Include="Binder\ForLoopBinder.cs" />
+    <Compile Include="Binder\ForwardPipeBinder.cs" />
     <Compile Include="Binder\HostObjectModeBinder.cs" />
     <Compile Include="Binder\ImplicitlyTypedFieldBinder.cs" />
     <Compile Include="Binder\ImportChain.cs" />

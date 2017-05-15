@@ -110,7 +110,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         public override string Name
         {
-            get { return null; }
+            get { return _kind == SynthesizedLocalKind.PipePlaceholder ? "@" : null; }
         }
 
         public override TypeSymbol Type

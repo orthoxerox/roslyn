@@ -8986,7 +8986,7 @@ namespace ForwardPipeTest
         [Fact]
         public void ForwardPipeToConditionalAccessOfMethodGroup()
         {
-            string source = @"
+            string source = @" 
 using System;
 
 namespace ForwardPipeTest
