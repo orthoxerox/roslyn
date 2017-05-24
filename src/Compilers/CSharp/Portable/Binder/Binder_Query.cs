@@ -238,6 +238,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.JoinClause:
                     ReduceJoin((JoinClauseSyntax)topClause, state, diagnostics);
                     break;
+                case SyntaxKind.WithClause:
+                    ReduceWith((WithClauseSyntax)topClause, state, diagnostics);
+                    break;
                 case SyntaxKind.OrderByClause:
                     ReduceOrderBy((OrderByClauseSyntax)topClause, state, diagnostics);
                     break;
@@ -263,6 +266,73 @@ namespace Microsoft.CodeAnalysis.CSharp
             var lambda = MakeQueryUnboundLambda(state.RangeVariableMap(), state.rangeVariable, where.Condition);
             var invocation = MakeQueryInvocation(where, state.fromExpression, "Where", lambda, diagnostics);
             state.fromExpression = MakeQueryClause(where, invocation, queryInvocation: invocation);
+        }
+
+        private void ReduceWith(WithClauseSyntax with, QueryTranslationState state, DiagnosticBag diagnostics)
+        {
+            var x1 = state.rangeVariable;
+            var withExpression = BindValue(with.Expression, diagnostics, BindValueKind.RValue);
+
+            var x2 = state.AddRangeVariable(this, with.Identifier, diagnostics);
+
+            if (state.clauses.IsEmpty() && state.selectOrGroup.IsKind(SyntaxKind.SelectClause)) {
+                var select = (SelectClauseSyntax)state.selectOrGroup;
+
+                // A query expression with a second from clause followed by a select clause
+                //     from x1 in e1
+                //     with x2 in e2
+                //     select v
+                // is translated into
+                //     ( e1 ) . Zip( e2 , ( x1 , x2 ) => v )
+                var resultSelectorLambda = MakeQueryUnboundLambda(state.RangeVariableMap(), ImmutableArray.Create(x1, x2), select.Expression);
+
+                var invocation = MakeQueryInvocation(
+                    with,
+                    state.fromExpression,
+                    "Zip",
+                    ImmutableArray.Create(withExpression, resultSelectorLambda),
+                    diagnostics);
+
+                // Adjust the second-to-last parameter to be a query clause (if it was an extension method, an extra parameter was added)
+                BoundExpression castInvocation = (with.Type != null) ? ExtractCastInvocation(invocation) : null;
+
+                var arguments = invocation.Arguments;
+                invocation = invocation.Update(
+                    invocation.ReceiverOpt,
+                    invocation.Method,
+                    arguments.SetItem(arguments.Length - 2, MakeQueryClause(with, arguments[arguments.Length - 2], x2, invocation, castInvocation)));
+
+                state.Clear();
+                state.fromExpression = MakeQueryClause(with, invocation, definedSymbol: x2, queryInvocation: invocation);
+                state.fromExpression = MakeQueryClause(select, state.fromExpression);
+            } else {
+                // A query expression with a second from clause followed by something other than a select clause:
+                //     from x1 in e1
+                //     with x2 in e2
+                //     ...
+                // is translated into
+                //     from * in ( e1 ) . Zip( e2 , ( x1 , x2 ) => new { x1 , x2 } )
+                //     ...
+
+                // We use a slightly different translation strategy.  We produce
+                //     from * in ( e1 ) . Zip ( e2, ( x1 , x2 ) => new Pair<X1,X2>(x1, x2) )
+                // Where X1 is the type of x1, and X2 is the type of x2.
+                // Subsequently, x1 (or members of x1, if it is a transparent identifier)
+                // are accessed as TRID.Item1 (or members of that), and x2 is accessed
+                // as TRID.Item2, where TRID is the compiler-generated identifier used
+                // to represent the transparent identifier in the result.
+                var resultSelectorLambda = MakePairLambda(with, state, x1, x2);
+
+                var invocation = MakeQueryInvocation(
+                    with,
+                    state.fromExpression,
+                    "Zip",
+                    ImmutableArray.Create(withExpression, resultSelectorLambda),
+                    diagnostics);
+
+                BoundExpression castInvocation = (with.Type != null) ? ExtractCastInvocation(invocation) : null;
+                state.fromExpression = MakeQueryClause(with, invocation, x2, invocation, castInvocation);
+            }
         }
 
         private void ReduceJoin(JoinClauseSyntax join, QueryTranslationState state, DiagnosticBag diagnostics)

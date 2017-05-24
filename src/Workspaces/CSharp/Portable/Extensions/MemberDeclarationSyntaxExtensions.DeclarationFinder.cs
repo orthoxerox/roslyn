@@ -65,6 +65,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
                 Add(node.Identifier);
             }
 
+            public override void VisitWithClause(WithClauseSyntax node)
+            {
+                base.VisitWithClause(node);
+                Add(node.Identifier);
+            }
+            
             public override void VisitLetClause(LetClauseSyntax node)
             {
                 base.VisitLetClause(node);

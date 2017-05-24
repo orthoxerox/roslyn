@@ -175,6 +175,7 @@
     <Compile Include="Completion\CompletionProviders\SpeculativeTCompletionProvider.cs" />
     <Compile Include="Completion\CompletionProviders\XmlDocCommentCompletionProvider.cs" />
     <Compile Include="Completion\KeywordRecommenders\AbstractSpecialTypePreselectingKeywordRecommender.cs" />
+    <Compile Include="Completion\KeywordRecommenders\WithKeywordRecommender.cs" />
     <Compile Include="Completion\KeywordRecommenders\LoadKeywordRecommender.cs" />
     <Compile Include="Completion\SuggestionMode\CSharpSuggestionModeCompletionProvider.cs" />
     <Compile Include="Completion\CompletionProviders\SymbolCompletionProvider.cs" />

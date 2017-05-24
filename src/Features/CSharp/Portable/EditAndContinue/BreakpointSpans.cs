@@ -265,6 +265,10 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
                     var fromClause = (FromClauseSyntax)node;
                     return TryCreateSpanForNode(fromClause.Expression, position);
 
+                case SyntaxKind.WithClause:
+                    var withClause = (WithClauseSyntax)node;
+                    return TryCreateSpanForNode(withClause.Expression, position);
+
                 case SyntaxKind.JoinClause:
                     var joinClause = (JoinClauseSyntax)node;
                     return TryCreateSpanForNode(joinClause.LeftExpression, position);

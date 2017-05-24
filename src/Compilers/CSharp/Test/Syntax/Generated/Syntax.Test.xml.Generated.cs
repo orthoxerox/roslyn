@@ -304,6 +304,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.FromClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.FromKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
         }
         
+        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithClauseSyntax GenerateWithClause()
+        {
+            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WithClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WithKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
+        }
+        
         private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LetClauseSyntax GenerateLetClause()
         {
             return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LetClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LetKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
@@ -1718,6 +1723,20 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateFromClause();
             
             Assert.Equal(SyntaxKind.FromKeyword, node.FromKeyword.Kind);
+            Assert.Null(node.Type);
+            Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
+            Assert.Equal(SyntaxKind.InKeyword, node.InKeyword.Kind);
+            Assert.NotNull(node.Expression);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestWithClauseFactoryAndProperties()
+        {
+            var node = GenerateWithClause();
+            
+            Assert.Equal(SyntaxKind.WithKeyword, node.WithKeyword.Kind);
             Assert.Null(node.Type);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Equal(SyntaxKind.InKeyword, node.InKeyword.Kind);
@@ -5146,6 +5165,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestFromClauseIdentityRewriter()
         {
             var oldNode = GenerateFromClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestWithClauseTokenDeleteRewriter()
+        {
+            var oldNode = GenerateWithClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestWithClauseIdentityRewriter()
+        {
+            var oldNode = GenerateWithClause();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             
@@ -9222,6 +9267,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             return SyntaxFactory.FromClause(SyntaxFactory.Token(SyntaxKind.FromKeyword), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
         }
         
+        private static WithClauseSyntax GenerateWithClause()
+        {
+            return SyntaxFactory.WithClause(SyntaxFactory.Token(SyntaxKind.WithKeyword), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
+        }
+        
         private static LetClauseSyntax GenerateLetClause()
         {
             return SyntaxFactory.LetClause(SyntaxFactory.Token(SyntaxKind.LetKeyword), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
@@ -10641,6 +10691,20 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.InKeyword, node.InKeyword.Kind());
             Assert.NotNull(node.Expression);
             var newNode = node.WithFromKeyword(node.FromKeyword).WithType(node.Type).WithIdentifier(node.Identifier).WithInKeyword(node.InKeyword).WithExpression(node.Expression);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestWithClauseFactoryAndProperties()
+        {
+            var node = GenerateWithClause();
+            
+            Assert.Equal(SyntaxKind.WithKeyword, node.WithKeyword.Kind());
+            Assert.Null(node.Type);
+            Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
+            Assert.Equal(SyntaxKind.InKeyword, node.InKeyword.Kind());
+            Assert.NotNull(node.Expression);
+            var newNode = node.WithWithKeyword(node.WithKeyword).WithType(node.Type).WithIdentifier(node.Identifier).WithInKeyword(node.InKeyword).WithExpression(node.Expression);
             Assert.Equal(node, newNode);
         }
         
@@ -14064,6 +14128,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestFromClauseIdentityRewriter()
         {
             var oldNode = GenerateFromClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestWithClauseTokenDeleteRewriter()
+        {
+            var oldNode = GenerateWithClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestWithClauseIdentityRewriter()
+        {
+            var oldNode = GenerateWithClause();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             

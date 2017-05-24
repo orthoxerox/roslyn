@@ -170,6 +170,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.LetClause:
                     clauseKind = SyntaxFacts.GetText(SyntaxKind.LetKeyword);
                     break;
+                case SyntaxKind.WithClause:
+                    clauseKind = SyntaxFacts.GetText(SyntaxKind.WithKeyword);
+                    break;
                 case SyntaxKind.SelectClause:
                     clauseKind = SyntaxFacts.GetText(SyntaxKind.SelectKeyword);
                     break;

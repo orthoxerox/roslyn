@@ -1530,6 +1530,23 @@
     </Field>
     <Field Name="Expression" Type="ExpressionSyntax"/>
   </Node>
+  <Node Name="WithClauseSyntax" Base="QueryClauseSyntax">
+    <Kind Name="WithClause"/>
+    <Field Name="WithKeyword" Type="SyntaxToken">
+      <Kind Name="WithKeyword"/>
+    </Field>
+    <Field Name="Type" Type="TypeSyntax" Optional="true"/>
+    <Field Name="Identifier" Type="SyntaxToken">
+      <PropertyComment>
+        <summary>Gets the identifier.</summary>
+      </PropertyComment>
+      <Kind Name="IdentifierToken"/>
+    </Field>
+    <Field Name="InKeyword" Type="SyntaxToken">
+      <Kind Name="InKeyword"/>
+    </Field>
+    <Field Name="Expression" Type="ExpressionSyntax"/>
+  </Node>
   <Node Name="LetClauseSyntax" Base="QueryClauseSyntax">
     <Kind Name="LetClause"/>
     <Field Name="LetKeyword" Type="SyntaxToken">

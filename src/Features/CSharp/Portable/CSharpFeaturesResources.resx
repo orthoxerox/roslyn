@@ -347,6 +347,10 @@
   <data name="from_clause" xml:space="preserve">
     <value>from clause</value>
   </data>
+  <data name="with_clause" xml:space="preserve">
+    <value>with clause</value>
+    <comment>{Locked="with"} "with" is a C# keyword and should not be localized.</comment>
+  </data>
   <data name="join_clause" xml:space="preserve">
     <value>join clause</value>
     <comment>{Locked="join"} "join" is a C# keyword and should not be localized.</comment>

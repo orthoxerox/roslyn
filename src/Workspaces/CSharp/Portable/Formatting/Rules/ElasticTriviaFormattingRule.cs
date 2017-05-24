@@ -336,6 +336,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
             }
 
             if ((currentToken.Kind() == SyntaxKind.FromKeyword && currentToken.Parent.Kind() == SyntaxKind.FromClause) ||
+                (currentToken.Kind() == SyntaxKind.WithKeyword && currentToken.Parent.Kind() == SyntaxKind.WithClause) ||
                 (currentToken.Kind() == SyntaxKind.LetKeyword && currentToken.Parent.Kind() == SyntaxKind.LetClause) ||
                 (currentToken.Kind() == SyntaxKind.WhereKeyword && currentToken.Parent.Kind() == SyntaxKind.WhereClause) ||
                 (currentToken.Kind() == SyntaxKind.JoinKeyword && currentToken.Parent.Kind() == SyntaxKind.JoinClause) ||

@@ -34,6 +34,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             {
                 case SyntaxKind.FromClause:
                 case SyntaxKind.GroupClause:
+                case SyntaxKind.WithClause:
                 case SyntaxKind.JoinClause:
                 case SyntaxKind.JoinIntoClause:
                 case SyntaxKind.LetClause:

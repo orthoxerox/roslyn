@@ -11,7 +11,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 {
     /// <summary>
     /// A RangeVariableSymbol represents an identifier introduced in a query expression as the
-    /// identifier of a "from" clause, an "into" query continuation, a "let" clause, or a "join" clause.
+    /// identifier of a "from" clause, an "into" query continuation, 
+    /// a "let" clause, a "with" clause or a "join" clause.
     /// </summary>
     internal class RangeVariableSymbol : Symbol, IRangeVariableSymbol
     {

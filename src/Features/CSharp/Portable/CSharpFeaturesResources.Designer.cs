@@ -1208,6 +1208,15 @@ namespace Microsoft.CodeAnalysis.CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to with clause.
+        /// </summary>
+        internal static string with_clause {
+            get {
+                return ResourceManager.GetString("with_clause", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to yield statement.
         /// </summary>
         internal static string yield_statement {

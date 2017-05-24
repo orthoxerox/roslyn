@@ -269,6 +269,7 @@ namespace My
             var value = 0;
             var var = 0;
             var where = 0;
+			var with = 0;
             var yield = 0;
             where = yield = 0;
 
@@ -413,6 +414,7 @@ namespace My
                 C = 3,
             };
             var query = from c in customers
+			            with p in products
                         let d = c
                         where d != null
                         join c1 in customers on c1.GetHashCode() equals c.GetHashCode()

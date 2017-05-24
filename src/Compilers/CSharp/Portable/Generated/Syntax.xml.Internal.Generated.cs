@@ -8670,6 +8670,188 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     }
   }
 
+  internal sealed partial class WithClauseSyntax : QueryClauseSyntax
+  {
+    internal readonly SyntaxToken withKeyword;
+    internal readonly TypeSyntax type;
+    internal readonly SyntaxToken identifier;
+    internal readonly SyntaxToken inKeyword;
+    internal readonly ExpressionSyntax expression;
+
+    internal WithClauseSyntax(SyntaxKind kind, SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, DiagnosticInfo[] diagnostics, SyntaxAnnotation[] annotations)
+        : base(kind, diagnostics, annotations)
+    {
+        this.SlotCount = 5;
+        this.AdjustFlagsAndWidth(withKeyword);
+        this.withKeyword = withKeyword;
+        if (type != null)
+        {
+            this.AdjustFlagsAndWidth(type);
+            this.type = type;
+        }
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+        this.AdjustFlagsAndWidth(inKeyword);
+        this.inKeyword = inKeyword;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+    }
+
+
+    internal WithClauseSyntax(SyntaxKind kind, SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxFactoryContext context)
+        : base(kind)
+    {
+        this.SetFactoryContext(context);
+        this.SlotCount = 5;
+        this.AdjustFlagsAndWidth(withKeyword);
+        this.withKeyword = withKeyword;
+        if (type != null)
+        {
+            this.AdjustFlagsAndWidth(type);
+            this.type = type;
+        }
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+        this.AdjustFlagsAndWidth(inKeyword);
+        this.inKeyword = inKeyword;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+    }
+
+
+    internal WithClauseSyntax(SyntaxKind kind, SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression)
+        : base(kind)
+    {
+        this.SlotCount = 5;
+        this.AdjustFlagsAndWidth(withKeyword);
+        this.withKeyword = withKeyword;
+        if (type != null)
+        {
+            this.AdjustFlagsAndWidth(type);
+            this.type = type;
+        }
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+        this.AdjustFlagsAndWidth(inKeyword);
+        this.inKeyword = inKeyword;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+    }
+
+    public SyntaxToken WithKeyword { get { return this.withKeyword; } }
+    public TypeSyntax Type { get { return this.type; } }
+    /// <summary>Gets the identifier.</summary>
+    public SyntaxToken Identifier { get { return this.identifier; } }
+    public SyntaxToken InKeyword { get { return this.inKeyword; } }
+    public ExpressionSyntax Expression { get { return this.expression; } }
+
+    internal override GreenNode GetSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.withKeyword;
+            case 1: return this.type;
+            case 2: return this.identifier;
+            case 3: return this.inKeyword;
+            case 4: return this.expression;
+            default: return null;
+        }
+    }
+
+    internal override SyntaxNode CreateRed(SyntaxNode parent, int position)
+    {
+      return new CSharp.Syntax.WithClauseSyntax(this, parent, position);
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitWithClause(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitWithClause(this);
+    }
+
+    public WithClauseSyntax Update(SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression)
+    {
+        if (withKeyword != this.WithKeyword || type != this.Type || identifier != this.Identifier || inKeyword != this.InKeyword || expression != this.Expression)
+        {
+            var newNode = SyntaxFactory.WithClause(withKeyword, type, identifier, inKeyword, expression);
+            var diags = this.GetDiagnostics();
+            if (diags != null && diags.Length > 0)
+               newNode = newNode.WithDiagnosticsGreen(diags);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               newNode = newNode.WithAnnotationsGreen(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    internal override GreenNode SetDiagnostics(DiagnosticInfo[] diagnostics)
+    {
+         return new WithClauseSyntax(this.Kind, this.withKeyword, this.type, this.identifier, this.inKeyword, this.expression, diagnostics, GetAnnotations());
+    }
+
+    internal override GreenNode SetAnnotations(SyntaxAnnotation[] annotations)
+    {
+         return new WithClauseSyntax(this.Kind, this.withKeyword, this.type, this.identifier, this.inKeyword, this.expression, GetDiagnostics(), annotations);
+    }
+
+    internal WithClauseSyntax(ObjectReader reader)
+        : base(reader)
+    {
+      this.SlotCount = 5;
+      var withKeyword = (SyntaxToken)reader.ReadValue();
+      if (withKeyword != null)
+      {
+         AdjustFlagsAndWidth(withKeyword);
+         this.withKeyword = withKeyword;
+      }
+      var type = (TypeSyntax)reader.ReadValue();
+      if (type != null)
+      {
+         AdjustFlagsAndWidth(type);
+         this.type = type;
+      }
+      var identifier = (SyntaxToken)reader.ReadValue();
+      if (identifier != null)
+      {
+         AdjustFlagsAndWidth(identifier);
+         this.identifier = identifier;
+      }
+      var inKeyword = (SyntaxToken)reader.ReadValue();
+      if (inKeyword != null)
+      {
+         AdjustFlagsAndWidth(inKeyword);
+         this.inKeyword = inKeyword;
+      }
+      var expression = (ExpressionSyntax)reader.ReadValue();
+      if (expression != null)
+      {
+         AdjustFlagsAndWidth(expression);
+         this.expression = expression;
+      }
+    }
+
+    internal override void WriteTo(ObjectWriter writer)
+    {
+      base.WriteTo(writer);
+      writer.WriteValue(this.withKeyword);
+      writer.WriteValue(this.type);
+      writer.WriteValue(this.identifier);
+      writer.WriteValue(this.inKeyword);
+      writer.WriteValue(this.expression);
+    }
+
+    static WithClauseSyntax()
+    {
+       ObjectBinder.RegisterTypeReader(typeof(WithClauseSyntax), r => new WithClauseSyntax(r));
+    }
+  }
+
   internal sealed partial class LetClauseSyntax : QueryClauseSyntax
   {
     internal readonly SyntaxToken letKeyword;
@@ -33882,6 +34064,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
       return this.DefaultVisit(node);
     }
 
+    public virtual TResult VisitWithClause(WithClauseSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     public virtual TResult VisitLetClause(LetClauseSyntax node)
     {
       return this.DefaultVisit(node);
@@ -34902,6 +35089,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     }
 
     public virtual void VisitFromClause(FromClauseSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
+    public virtual void VisitWithClause(WithClauseSyntax node)
     {
       this.DefaultVisit(node);
     }
@@ -36091,6 +36283,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
       var inKeyword = (SyntaxToken)this.Visit(node.InKeyword);
       var expression = (ExpressionSyntax)this.Visit(node.Expression);
       return node.Update(fromKeyword, type, identifier, inKeyword, expression);
+    }
+
+    public override CSharpSyntaxNode VisitWithClause(WithClauseSyntax node)
+    {
+      var withKeyword = (SyntaxToken)this.Visit(node.WithKeyword);
+      var type = (TypeSyntax)this.Visit(node.Type);
+      var identifier = (SyntaxToken)this.Visit(node.Identifier);
+      var inKeyword = (SyntaxToken)this.Visit(node.InKeyword);
+      var expression = (ExpressionSyntax)this.Visit(node.Expression);
+      return node.Update(withKeyword, type, identifier, inKeyword, expression);
     }
 
     public override CSharpSyntaxNode VisitLetClause(LetClauseSyntax node)
@@ -39349,6 +39551,43 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 #endif
 
       return new FromClauseSyntax(SyntaxKind.FromClause, fromKeyword, type, identifier, inKeyword, expression, this.context);
+    }
+
+    public WithClauseSyntax WithClause(SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression)
+    {
+#if DEBUG
+      if (withKeyword == null)
+        throw new ArgumentNullException(nameof(withKeyword));
+      switch (withKeyword.Kind)
+      {
+        case SyntaxKind.WithKeyword:
+          break;
+        default:
+          throw new ArgumentException("withKeyword");
+      }
+      if (identifier == null)
+        throw new ArgumentNullException(nameof(identifier));
+      switch (identifier.Kind)
+      {
+        case SyntaxKind.IdentifierToken:
+          break;
+        default:
+          throw new ArgumentException("identifier");
+      }
+      if (inKeyword == null)
+        throw new ArgumentNullException(nameof(inKeyword));
+      switch (inKeyword.Kind)
+      {
+        case SyntaxKind.InKeyword:
+          break;
+        default:
+          throw new ArgumentException("inKeyword");
+      }
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+#endif
+
+      return new WithClauseSyntax(SyntaxKind.WithClause, withKeyword, type, identifier, inKeyword, expression, this.context);
     }
 
     public LetClauseSyntax LetClause(SyntaxToken letKeyword, SyntaxToken identifier, SyntaxToken equalsToken, ExpressionSyntax expression)
@@ -46264,6 +46503,43 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
       return new FromClauseSyntax(SyntaxKind.FromClause, fromKeyword, type, identifier, inKeyword, expression);
     }
 
+    public static WithClauseSyntax WithClause(SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression)
+    {
+#if DEBUG
+      if (withKeyword == null)
+        throw new ArgumentNullException(nameof(withKeyword));
+      switch (withKeyword.Kind)
+      {
+        case SyntaxKind.WithKeyword:
+          break;
+        default:
+          throw new ArgumentException("withKeyword");
+      }
+      if (identifier == null)
+        throw new ArgumentNullException(nameof(identifier));
+      switch (identifier.Kind)
+      {
+        case SyntaxKind.IdentifierToken:
+          break;
+        default:
+          throw new ArgumentException("identifier");
+      }
+      if (inKeyword == null)
+        throw new ArgumentNullException(nameof(inKeyword));
+      switch (inKeyword.Kind)
+      {
+        case SyntaxKind.InKeyword:
+          break;
+        default:
+          throw new ArgumentException("inKeyword");
+      }
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+#endif
+
+      return new WithClauseSyntax(SyntaxKind.WithClause, withKeyword, type, identifier, inKeyword, expression);
+    }
+
     public static LetClauseSyntax LetClause(SyntaxToken letKeyword, SyntaxToken identifier, SyntaxToken equalsToken, ExpressionSyntax expression)
     {
 #if DEBUG
@@ -51276,6 +51552,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
            typeof(QueryExpressionSyntax),
            typeof(QueryBodySyntax),
            typeof(FromClauseSyntax),
+           typeof(WithClauseSyntax),
            typeof(LetClauseSyntax),
            typeof(JoinClauseSyntax),
            typeof(JoinIntoClauseSyntax),

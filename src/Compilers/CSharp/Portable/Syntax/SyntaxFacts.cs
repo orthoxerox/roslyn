@@ -110,6 +110,9 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                     case FromClause:
                         return ((FromClauseSyntax)parent).Type == node;
+                        
+                    case WithClause:
+                        return ((WithClauseSyntax)parent).Type == node;
 
                     case JoinClause:
                         return ((JoinClauseSyntax)parent).Type == node;

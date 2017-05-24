@@ -370,6 +370,12 @@ namespace Microsoft.CodeAnalysis.CSharp
       return this.DefaultVisit(node);
     }
 
+    /// <summary>Called when the visitor visits a WithClauseSyntax node.</summary>
+    public virtual TResult VisitWithClause(WithClauseSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     /// <summary>Called when the visitor visits a LetClauseSyntax node.</summary>
     public virtual TResult VisitLetClause(LetClauseSyntax node)
     {
@@ -1593,6 +1599,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
     /// <summary>Called when the visitor visits a FromClauseSyntax node.</summary>
     public virtual void VisitFromClause(FromClauseSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
+    /// <summary>Called when the visitor visits a WithClauseSyntax node.</summary>
+    public virtual void VisitWithClause(WithClauseSyntax node)
     {
       this.DefaultVisit(node);
     }
@@ -2927,6 +2939,16 @@ namespace Microsoft.CodeAnalysis.CSharp
       var inKeyword = this.VisitToken(node.InKeyword);
       var expression = (ExpressionSyntax)this.Visit(node.Expression);
       return node.Update(fromKeyword, type, identifier, inKeyword, expression);
+    }
+
+    public override SyntaxNode VisitWithClause(WithClauseSyntax node)
+    {
+      var withKeyword = this.VisitToken(node.WithKeyword);
+      var type = (TypeSyntax)this.Visit(node.Type);
+      var identifier = this.VisitToken(node.Identifier);
+      var inKeyword = this.VisitToken(node.InKeyword);
+      var expression = (ExpressionSyntax)this.Visit(node.Expression);
+      return node.Update(withKeyword, type, identifier, inKeyword, expression);
     }
 
     public override SyntaxNode VisitLetClause(LetClauseSyntax node)
@@ -6077,6 +6099,54 @@ namespace Microsoft.CodeAnalysis.CSharp
     public static FromClauseSyntax FromClause(string identifier, ExpressionSyntax expression)
     {
       return SyntaxFactory.FromClause(SyntaxFactory.Token(SyntaxKind.FromKeyword), default(TypeSyntax), SyntaxFactory.Identifier(identifier), SyntaxFactory.Token(SyntaxKind.InKeyword), expression);
+    }
+
+    /// <summary>Creates a new WithClauseSyntax instance.</summary>
+    public static WithClauseSyntax WithClause(SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression)
+    {
+      switch (withKeyword.Kind())
+      {
+        case SyntaxKind.WithKeyword:
+          break;
+        default:
+          throw new ArgumentException("withKeyword");
+      }
+      switch (identifier.Kind())
+      {
+        case SyntaxKind.IdentifierToken:
+          break;
+        default:
+          throw new ArgumentException("identifier");
+      }
+      switch (inKeyword.Kind())
+      {
+        case SyntaxKind.InKeyword:
+          break;
+        default:
+          throw new ArgumentException("inKeyword");
+      }
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+      return (WithClauseSyntax)Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WithClause((Syntax.InternalSyntax.SyntaxToken)withKeyword.Node, type == null ? null : (Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeSyntax)type.Green, (Syntax.InternalSyntax.SyntaxToken)identifier.Node, (Syntax.InternalSyntax.SyntaxToken)inKeyword.Node, expression == null ? null : (Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax)expression.Green).CreateRed();
+    }
+
+
+    /// <summary>Creates a new WithClauseSyntax instance.</summary>
+    public static WithClauseSyntax WithClause(TypeSyntax type, SyntaxToken identifier, ExpressionSyntax expression)
+    {
+      return SyntaxFactory.WithClause(SyntaxFactory.Token(SyntaxKind.WithKeyword), type, identifier, SyntaxFactory.Token(SyntaxKind.InKeyword), expression);
+    }
+
+    /// <summary>Creates a new WithClauseSyntax instance.</summary>
+    public static WithClauseSyntax WithClause(SyntaxToken identifier, ExpressionSyntax expression)
+    {
+      return SyntaxFactory.WithClause(SyntaxFactory.Token(SyntaxKind.WithKeyword), default(TypeSyntax), identifier, SyntaxFactory.Token(SyntaxKind.InKeyword), expression);
+    }
+
+    /// <summary>Creates a new WithClauseSyntax instance.</summary>
+    public static WithClauseSyntax WithClause(string identifier, ExpressionSyntax expression)
+    {
+      return SyntaxFactory.WithClause(SyntaxFactory.Token(SyntaxKind.WithKeyword), default(TypeSyntax), SyntaxFactory.Identifier(identifier), SyntaxFactory.Token(SyntaxKind.InKeyword), expression);
     }
 
     /// <summary>Creates a new LetClauseSyntax instance.</summary>

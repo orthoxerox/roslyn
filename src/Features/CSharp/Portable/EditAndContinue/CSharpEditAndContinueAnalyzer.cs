@@ -1017,6 +1017,7 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
             switch (oldNode.Kind())
             {
                 case SyntaxKind.FromClause:
+                case SyntaxKind.WithClause:
                 case SyntaxKind.LetClause:
                 case SyntaxKind.WhereClause:
                 case SyntaxKind.OrderByClause:
@@ -1363,6 +1364,9 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
                 case SyntaxKind.FromClause:
                     return ((FromClauseSyntax)node).FromKeyword.Span;
 
+                case SyntaxKind.WithClause:
+                    return ((WithClauseSyntax)node).WithKeyword.Span;
+
                 case SyntaxKind.JoinClause:
                     return ((JoinClauseSyntax)node).JoinKeyword.Span;
 
@@ -1617,6 +1621,9 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
 
                 case SyntaxKind.FromClause:
                     return CSharpFeaturesResources.from_clause;
+
+                case SyntaxKind.WithClause:
+                    return CSharpFeaturesResources.with_clause;
 
                 case SyntaxKind.JoinClause:
                 case SyntaxKind.JoinIntoClause:

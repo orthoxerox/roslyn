@@ -1618,6 +1618,50 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
 
         [Fact]
+        public void TestFromWithSelect()
+        {
+            var text = "from a in A with b in B select c";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var qs = (QueryExpressionSyntax)expr;
+            Assert.Equal(1, qs.Body.Clauses.Count);
+
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
+            var fs = (FromClauseSyntax)qs.FromClause;
+            Assert.NotNull(fs.FromKeyword);
+            Assert.False(fs.FromKeyword.IsMissing);
+            Assert.Null(fs.Type);
+            Assert.Equal("a", fs.Identifier.ToString());
+            Assert.NotNull(fs.InKeyword);
+            Assert.False(fs.InKeyword.IsMissing);
+            Assert.Equal("A", fs.Expression.ToString());
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
+
+            Assert.Equal(SyntaxKind.WithClause, qs.Body.Clauses[0].Kind());
+            var ws = (WithClauseSyntax)qs.Body.Clauses[0];
+            Assert.NotNull(ws.WithKeyword);
+            Assert.False(ws.WithKeyword.IsMissing);
+            Assert.Null(ws.Type);
+            Assert.Equal("b", ws.Identifier.ToString());
+            Assert.NotNull(ws.InKeyword);
+            Assert.False(ws.InKeyword.IsMissing);
+            Assert.Equal("B", ws.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
+            var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
+            Assert.NotNull(ss.SelectKeyword);
+            Assert.False(ss.SelectKeyword.IsMissing);
+            Assert.Equal("c", ss.Expression.ToString());
+            Assert.Null(qs.Body.Continuation);
+        }
+
+
+        [Fact]
         public void TestFromLetSelect()
         {
             var text = "from a in A let b = B select c";

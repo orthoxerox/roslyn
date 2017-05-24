@@ -231,6 +231,41 @@ class Query
             CompileAndVerify(csSource, expectedOutput: "[11, 21, 31, 12, 22, 32, 13, 23, 33]");
         }
 
+        [Fact]
+        public void Zip01()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3); 
+        List1<int> c2 = new List1<int>(10, 20, 30); 
+        List1<int> r = from x in c1 with y in c2 select x + y; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[11, 22, 33]");
+        }
+
+        [Fact]
+        public void Zip02()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3); 
+        List1<int> c2 = new List1<int>(10, 20, 30); 
+        List1<int> r = from x in c1 with int y in c2 select x + y; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[11, 22, 33]");
+        }
+
+
         [WorkItem(9229, "DevDiv_Projects/Roslyn")]
         [Fact]
         public void Let01()
@@ -1007,6 +1042,46 @@ class Test
             Assert.Empty(symbolInfoForSelect.CandidateSymbols);
             Assert.Equal(CandidateReason.None, symbolInfoForSelect.CandidateReason);
         }
+
+        [Fact]
+        public void FromClauseFollowedByWithClauseFollowedBySelectClause()
+        {
+            string sourceCode = @" 
+using System.Linq; 
+
+class Test 
+{ 
+    public static void Main() 
+    { 
+
+        var q2 = from num1 in new int[] { 4, 5 } 
+                 with num2 in new int[] { 6, 7 } 
+                 select num1; 
+    } 
+}";
+            var compilation = CreateCompilationWithMscorlibAndSystemCore(sourceCode);
+            var tree = compilation.SyntaxTrees[0];
+            var semanticModel = compilation.GetSemanticModel(tree);
+
+            var selectClause = tree.GetCompilationUnitRoot().DescendantNodes().Where(n => n.IsKind(SyntaxKind.SelectClause)).Single() as SelectClauseSyntax;
+            var fromClause = tree.GetCompilationUnitRoot().DescendantNodes().Where(n => (n.IsKind(SyntaxKind.FromClause))).Single() as FromClauseSyntax;
+            var withClause = tree.GetCompilationUnitRoot().DescendantNodes().Where(n => (n.IsKind(SyntaxKind.WithClause))).Single() as WithClauseSyntax;
+
+            var symbolInfoForSelect = semanticModel.GetSemanticInfoSummary(selectClause);
+            var queryInfoForFrom = semanticModel.GetQueryClauseInfo(fromClause);
+            var queryInfoForWith = semanticModel.GetQueryClauseInfo(withClause);
+
+            Assert.Null(queryInfoForFrom.CastInfo.Symbol);
+            Assert.Null(queryInfoForFrom.OperationInfo.Symbol);
+
+            Assert.Null(queryInfoForWith.CastInfo.Symbol);
+            Assert.Equal("Zip", queryInfoForWith.OperationInfo.Symbol.Name);
+
+            Assert.Null(symbolInfoForSelect.Symbol);
+            Assert.Empty(symbolInfoForSelect.CandidateSymbols);
+            Assert.Equal(CandidateReason.None, symbolInfoForSelect.CandidateReason);
+        }
+
 
         [WorkItem(528747, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/528747")]
         [Fact]

@@ -127,6 +127,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
             switch (currentToken.Kind())
             {
                 case SyntaxKind.FromKeyword:
+                case SyntaxKind.WithKeyword:
                 case SyntaxKind.WhereKeyword:
                 case SyntaxKind.LetKeyword:
                 case SyntaxKind.JoinKeyword:

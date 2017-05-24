@@ -18,6 +18,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.ParenthesizedLambdaExpression:
                 case SyntaxKind.SimpleLambdaExpression:
                 case SyntaxKind.AnonymousMethodExpression:
+                case SyntaxKind.WithClause:
                 case SyntaxKind.LetClause:
                 case SyntaxKind.WhereClause:
                 case SyntaxKind.AscendingOrdering:
@@ -66,6 +67,9 @@ namespace Microsoft.CodeAnalysis.CSharp
 
                 case SyntaxKind.FromClause:
                     return ((FromClauseSyntax)newLambda).Expression;
+
+                case SyntaxKind.WithClause:
+                    return ((WithClauseSyntax)newLambda).Expression;
 
                 case SyntaxKind.LetClause:
                     return ((LetClauseSyntax)newLambda).Expression;
@@ -137,6 +141,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.FromClause:
                     var fromClause = (FromClauseSyntax)parent;
                     return fromClause.Expression == node && fromClause.Parent is QueryBodySyntax;
+
+                case SyntaxKind.WithClause:
+                    var withClause = (WithClauseSyntax)parent;
+                    return withClause.Expression == node;
 
                 case SyntaxKind.JoinClause:
                     var joinClause = (JoinClauseSyntax)parent;
@@ -276,6 +284,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                     lambdaBody1 = ((FromClauseSyntax)node).Expression;
                     return true;
 
+                case SyntaxKind.WithClause:
+                    lambdaBody1 = ((FromClauseSyntax)node).Expression;
+                    return true;
+
                 case SyntaxKind.JoinClause:
                     var joinClause = (JoinClauseSyntax)node;
                     lambdaBody1 = joinClause.LeftExpression;
@@ -349,6 +361,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // Avoid generating these lambdas. Instead generate a static factory method on the anonymous type.
             return syntax.IsKind(SyntaxKind.GroupClause) ||
                    syntax.IsKind(SyntaxKind.JoinClause) ||
+                   syntax.IsKind(SyntaxKind.WithClause) ||
                    syntax.IsKind(SyntaxKind.FromClause);
         }
 

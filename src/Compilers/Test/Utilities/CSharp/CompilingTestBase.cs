@@ -187,6 +187,18 @@ public class List1<T>
         return result;
     }
 
+    public List1<V> Zip<U, V>(List1<U> other, Func<T, U, V> resultSelector)
+    {
+        List1<V> result = new List1<V>();
+        int length = System.Math.Min(this.Length, other.Length);
+        for (int i = 0; i < length; i++)
+        {
+            V v = resultSelector(this.data[i], other.data[i]);
+            result.Add(v);
+        }
+        return result;
+    }
+
     public List1<V> Join<U, K, V>(List1<U> inner, Func1<T, K> outerKeyselector,
         Func1<U, K> innerKeyselector, Func1<T, U, V> resultSelector)
     {

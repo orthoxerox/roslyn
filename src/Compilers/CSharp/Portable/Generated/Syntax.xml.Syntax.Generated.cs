@@ -5449,6 +5449,117 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     }
   }
 
+  public sealed partial class WithClauseSyntax : QueryClauseSyntax
+  {
+    private TypeSyntax type;
+    private ExpressionSyntax expression;
+
+    internal WithClauseSyntax(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CSharpSyntaxNode green, SyntaxNode parent, int position)
+        : base(green, parent, position)
+    {
+    }
+
+    public SyntaxToken WithKeyword 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithClauseSyntax)this.Green).withKeyword, this.Position, 0); }
+    }
+
+    public TypeSyntax Type 
+    {
+        get
+        {
+            return this.GetRed(ref this.type, 1);
+        }
+    }
+
+    /// <summary>Gets the identifier.</summary>
+    public SyntaxToken Identifier 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithClauseSyntax)this.Green).identifier, this.GetChildPosition(2), this.GetChildIndex(2)); }
+    }
+
+    public SyntaxToken InKeyword 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithClauseSyntax)this.Green).inKeyword, this.GetChildPosition(3), this.GetChildIndex(3)); }
+    }
+
+    public ExpressionSyntax Expression 
+    {
+        get
+        {
+            return this.GetRed(ref this.expression, 4);
+        }
+    }
+
+    internal override SyntaxNode GetNodeSlot(int index)
+    {
+        switch (index)
+        {
+            case 1: return this.GetRed(ref this.type, 1);
+            case 4: return this.GetRed(ref this.expression, 4);
+            default: return null;
+        }
+    }
+    internal override SyntaxNode GetCachedSlot(int index)
+    {
+        switch (index)
+        {
+            case 1: return this.type;
+            case 4: return this.expression;
+            default: return null;
+        }
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitWithClause(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitWithClause(this);
+    }
+
+    public WithClauseSyntax Update(SyntaxToken withKeyword, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression)
+    {
+        if (withKeyword != this.WithKeyword || type != this.Type || identifier != this.Identifier || inKeyword != this.InKeyword || expression != this.Expression)
+        {
+            var newNode = SyntaxFactory.WithClause(withKeyword, type, identifier, inKeyword, expression);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               return newNode.WithAnnotations(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    public WithClauseSyntax WithWithKeyword(SyntaxToken withKeyword)
+    {
+        return this.Update(withKeyword, this.Type, this.Identifier, this.InKeyword, this.Expression);
+    }
+
+    public WithClauseSyntax WithType(TypeSyntax type)
+    {
+        return this.Update(this.WithKeyword, type, this.Identifier, this.InKeyword, this.Expression);
+    }
+
+    public WithClauseSyntax WithIdentifier(SyntaxToken identifier)
+    {
+        return this.Update(this.WithKeyword, this.Type, identifier, this.InKeyword, this.Expression);
+    }
+
+    public WithClauseSyntax WithInKeyword(SyntaxToken inKeyword)
+    {
+        return this.Update(this.WithKeyword, this.Type, this.Identifier, inKeyword, this.Expression);
+    }
+
+    public WithClauseSyntax WithExpression(ExpressionSyntax expression)
+    {
+        return this.Update(this.WithKeyword, this.Type, this.Identifier, this.InKeyword, expression);
+    }
+  }
+
   public sealed partial class LetClauseSyntax : QueryClauseSyntax
   {
     private ExpressionSyntax expression;

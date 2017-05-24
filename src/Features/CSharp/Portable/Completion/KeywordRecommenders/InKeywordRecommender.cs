@@ -20,6 +20,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.KeywordRecommenders
             return
                 IsValidContextInForEachClause(context) ||
                 IsValidContextInFromClause(context, cancellationToken) ||
+                IsValidContextInWithClause(context, cancellationToken) ||
                 IsValidContextInJoinClause(context, cancellationToken) ||
                 context.TargetToken.IsTypeParameterVarianceContext();
         }
@@ -76,6 +77,37 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.KeywordRecommenders
                     // case:
                     //   from int x |
                     if (token == fromClause.Identifier && fromClause.Type != null)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsValidContextInWithClause(CSharpSyntaxContext context, CancellationToken cancellationToken)
+        {
+            var token = context.TargetToken;
+
+            if (token.Kind() == SyntaxKind.IdentifierToken)
+            {
+                var withClause = token.Parent.FirstAncestorOrSelf<WithClauseSyntax>();
+                if (withClause != null)
+                {
+                    // case:
+                    //   with int x |
+                    if (token == withClause.Identifier && withClause.Type != null)
+                    {
+                        return true;
+                    }
+
+                    // case:
+                    //   with x |
+                    if (withClause.Type != null &&
+                        withClause.Type.IsKind(SyntaxKind.IdentifierName) &&
+                        token == ((IdentifierNameSyntax)withClause.Type).Identifier &&
+                        !withClause.Type.IsPotentialTypeName(context.SemanticModel, cancellationToken))
                     {
                         return true;
                     }

@@ -11045,6 +11045,7 @@ tryAgain:
                 case SyntaxKind.GroupKeyword:
                 case SyntaxKind.SelectKeyword:
                 case SyntaxKind.LetKeyword:
+                case SyntaxKind.WithKeyword:
                     return true;
                 default:
                     return false;
@@ -11160,6 +11161,9 @@ tryAgain:
                             var fc = this.ParseFromClause();
                             clauses.Add(fc);
                             continue;
+                        case SyntaxKind.WithKeyword:
+                            clauses.Add(this.ParseWithClause());
+                            continue;
                         case SyntaxKind.JoinKeyword:
                             clauses.Add(this.ParseJoinClause());
                             continue;
@@ -11237,6 +11241,34 @@ tryAgain:
             var @in = this.EatToken(SyntaxKind.InKeyword);
             var expression = this.ParseExpressionCore();
             return _syntaxFactory.FromClause(@from, type, name, @in, expression);
+        }
+
+        private WithClauseSyntax ParseWithClause()
+        {
+            Debug.Assert(this.CurrentToken.ContextualKind == SyntaxKind.WithKeyword);
+            var @with = this.EatContextualToken(SyntaxKind.WithKeyword);
+            @with = CheckFeatureAvailability(@with, MessageID.IDS_FeatureQueryExpression);
+
+            TypeSyntax type = null;
+            if (this.PeekToken(1).Kind != SyntaxKind.InKeyword) {
+                type = this.ParseType();
+            }
+
+            SyntaxToken name;
+            if (this.PeekToken(1).ContextualKind == SyntaxKind.InKeyword &&
+                (this.CurrentToken.Kind != SyntaxKind.IdentifierToken || SyntaxFacts.IsQueryContextualKeyword(this.CurrentToken.ContextualKind))) {
+                //if this token is a something other than an identifier (someone accidentally used a contextual
+                //keyword or a literal, for example), but we can see that the "in" is in the right place, then
+                //just replace whatever is here with a missing identifier
+                name = this.EatToken();
+                name = WithAdditionalDiagnostics(name, this.GetExpectedTokenError(SyntaxKind.IdentifierToken, name.ContextualKind, name.GetLeadingTriviaWidth(), name.Width));
+                name = this.ConvertToMissingWithTrailingTrivia(name, SyntaxKind.IdentifierToken);
+            } else {
+                name = this.ParseIdentifierToken();
+            }
+            var @in = this.EatToken(SyntaxKind.InKeyword);
+            var expression = this.ParseExpressionCore();
+            return _syntaxFactory.WithClause(@with, type, name, @in, expression);
         }
 
         private JoinClauseSyntax ParseJoinClause()

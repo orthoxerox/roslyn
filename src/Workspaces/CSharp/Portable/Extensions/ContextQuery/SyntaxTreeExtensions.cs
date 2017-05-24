@@ -1465,6 +1465,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
             return false;
         }
 
+        public static bool IsValidContextForWithClause(
+            this SyntaxTree syntaxTree, int position, SyntaxToken tokenOnLeftOfPosition, CancellationToken cancellationToken)
+        {
+            var token = tokenOnLeftOfPosition;
+            token = token.GetPreviousTokenIfTouchingWord(position);
+
+            // var q = from x in y
+            //         |
+            if (!token.IntersectsWith(position) &&
+                token.IsLastTokenOfQueryClause())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static bool IsValidContextForJoinClause(
             this SyntaxTree syntaxTree, int position, SyntaxToken tokenOnLeftOfPosition, CancellationToken cancellationToken)
         {
@@ -1554,6 +1571,12 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
                 return true;
             }
 
+            if (CodeAnalysis.CSharpExtensions.IsKind(token, SyntaxKind.WithKeyword) &&
+                syntaxTree.IsValidContextForWithClause(token.SpanStart, tokenOnLeftOfStart, cancellationToken))
+            {
+                return true;
+            }
+            
             if (CodeAnalysis.CSharpExtensions.IsKind(token, SyntaxKind.JoinKeyword) &&
                 syntaxTree.IsValidContextForJoinClause(token.SpanStart, tokenOnLeftOfStart, cancellationToken))
             {
@@ -2283,6 +2306,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
                 if (token.Parent.IsKind(SyntaxKind.ForEachStatement,
                                         SyntaxKind.ForEachVariableStatement,
                                         SyntaxKind.FromClause,
+                                        SyntaxKind.WithClause,
                                         SyntaxKind.JoinClause))
                 {
                     return true;
