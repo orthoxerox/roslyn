@@ -250,9 +250,47 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.LetClause:
                     ReduceLet((LetClauseSyntax)topClause, state, diagnostics);
                     break;
+                case SyntaxKind.TakeOrSkipClause:
+                    ReduceTakeOrSkip((TakeOrSkipClauseSyntax)topClause, state, diagnostics);
+                    break;
                 default:
                     throw ExceptionUtilities.UnexpectedValue(topClause.Kind());
             }
+        }
+
+        private void ReduceTakeOrSkip(TakeOrSkipClauseSyntax takeOrSkip, QueryTranslationState state, DiagnosticBag diagnostics)
+        {
+            // A query expression with a where clause
+            //     from x in e
+            //     take v
+            //     ...
+            // is translated into
+            //     from x in ( e ) . Take ( v )
+            // A query expression with a where clause
+            //     from x in e
+            //     take while f
+            //     ...
+            // is translated into
+            //     from x in ( e ) . TakeWhile ( x => f )
+            string method;
+            BoundExpression argument;
+            if (takeOrSkip.WhileOrUntilKeyword.Kind() == SyntaxKind.None)
+            {
+                method = takeOrSkip.TakeOrSkipKeyword.Kind() == SyntaxKind.TakeKeyword ? "Take" : "Skip";
+                argument = BindValue(takeOrSkip.Expression, diagnostics, BindValueKind.RValue);
+            }
+            else
+            {
+                method = takeOrSkip.TakeOrSkipKeyword.Kind() == SyntaxKind.TakeKeyword ? "TakeWhile" : "SkipWhile";
+                var expr = takeOrSkip.Expression;
+                if (takeOrSkip.WhileOrUntilKeyword.Kind() == SyntaxKind.UntilKeyword)
+                {
+                    expr = SyntaxFactory.PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, expr);
+                }
+                argument = MakeQueryUnboundLambda(state.RangeVariableMap(), state.rangeVariable, expr);
+            }
+            var invocation = MakeQueryInvocation(takeOrSkip, state.fromExpression, method, argument, diagnostics);
+            state.fromExpression = MakeQueryClause(takeOrSkip, invocation, queryInvocation: invocation);
         }
 
         private void ReduceWhere(WhereClauseSyntax where, QueryTranslationState state, DiagnosticBag diagnostics)

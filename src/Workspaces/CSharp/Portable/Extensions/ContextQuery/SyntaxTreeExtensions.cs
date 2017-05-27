@@ -2330,6 +2330,36 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery
             {
                 return true;
             }
+			
+			// take |
+            if (token.IsKind(SyntaxKind.TakeKeyword) &&
+                token.Parent.IsKind(SyntaxKind.TakeOrSkipClause))
+            {
+                return true;
+            }
+			
+			// skip |
+            if (token.IsKind(SyntaxKind.SkipKeyword) &&
+                token.Parent.IsKind(SyntaxKind.TakeOrSkipClause))
+            {
+                return true;
+            }
+			
+			// take while |
+			// skip while |
+            if (token.IsKind(SyntaxKind.WhileKeyword) &&
+                token.Parent.IsKind(SyntaxKind.TakeOrSkipClause))
+            {
+                return true;
+            }
+			
+			// take until |
+			// skip until |
+            if (token.IsKind(SyntaxKind.UntilKeyword) &&
+                token.Parent.IsKind(SyntaxKind.TakeOrSkipClause))
+            {
+                return true;
+            }
 
             // orderby |
             // orderby a, |

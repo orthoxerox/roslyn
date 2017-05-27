@@ -363,6 +363,10 @@
     <value>where clause</value>
     <comment>{Locked="where"} "where" is a C# keyword and should not be localized.</comment>
   </data>
+  <data name="take_or_skip_clause" xml:space="preserve">
+    <value>take or skip clause</value>
+    <comment>{Locked="take"} {Locked="skip"} "take" or "skip" is a C# keyword and should not be localized.</comment>
+  </data>
   <data name="orderby_clause" xml:space="preserve">
     <value>orderby clause</value>
     <comment>{Locked="orderby"} "orderby" is a C# keyword and should not be localized.</comment>

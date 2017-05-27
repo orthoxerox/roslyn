@@ -266,6 +266,9 @@ namespace My
             var remove = 0;
             var select = 0;
             var set = 0;
+			var skip = 0;
+			var take = 0;
+			var until = 0;
             var value = 0;
             var var = 0;
             var where = 0;
@@ -415,6 +418,10 @@ namespace My
             };
             var query = from c in customers
 			            with p in products
+						skip 2
+						take 1
+						take while true
+						skip until false
                         let d = c
                         where d != null
                         join c1 in customers on c1.GetHashCode() equals c.GetHashCode()

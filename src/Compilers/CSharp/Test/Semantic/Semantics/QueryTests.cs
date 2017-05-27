@@ -265,7 +265,103 @@ class Query
             CompileAndVerify(csSource, expectedOutput: "[11, 22, 33]");
         }
 
+        [Fact]
+        public void Take01()
+        {
+            var csSource = LINQ + @"
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3, 4); 
+        List1<int> r = from x in c1 take 2 select x; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[1, 2]");
+        }
 
+        [Fact]
+        public void Skip01()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3, 4); 
+        List1<int> r = from x in c1 skip 2 select x; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[3, 4]");
+        }
+		
+        [Fact]
+        public void TakeWhile01()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3, 4); 
+        List1<int> r = from x in c1 take while x <= 3 select x; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[1, 2, 3]");
+        }
+		
+        [Fact]
+        public void TakeUntil01()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3, 4); 
+        List1<int> r = from x in c1 take until x == 3 select x; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[1, 2]");
+        }
+		
+		
+        [Fact]
+        public void SkipWhile01()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3, 4); 
+        List1<int> r = from x in c1 skip while x <= 2 select x; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[3, 4]");
+        }
+		
+        [Fact]
+        public void SkipUntil01()
+        {
+            var csSource = LINQ + @" 
+class Query 
+{ 
+    public static void Main(string[] args) 
+    { 
+        List1<int> c1 = new List1<int>(1, 2, 3, 4); 
+        List1<int> r = from x in c1 skip until x == 3 select x; 
+        Console.WriteLine(r); 
+    } 
+}";
+            CompileAndVerify(csSource, expectedOutput: "[3, 4]");
+        }
+		
         [WorkItem(9229, "DevDiv_Projects/Roslyn")]
         [Fact]
         public void Let01()

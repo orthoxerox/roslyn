@@ -193,6 +193,9 @@ namespace Microsoft.CodeAnalysis.CSharp
         AwaitKeyword = 8436,
         WhenKeyword = 8437,
         WithKeyword = 8438,
+        TakeKeyword = 8439,
+        SkipKeyword = 8440,
+        UntilKeyword = 8441,
 
         // additional preprocessor keywords
         ElifKeyword = 8467,
@@ -427,6 +430,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         GroupClause = 8785,
         QueryContinuation = 8786,
         WithClause = 8787,
+        TakeOrSkipClause = 8788,
 
         // statements
         Block = 8792,

@@ -988,7 +988,18 @@ namespace Microsoft.CodeAnalysis.CSharp {
                 return ResourceManager.GetString("Suggested_name", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to take or skip clause.
+        /// </summary>
+        internal static string take_or_skip_clause
+        {
+            get
+            {
+                return ResourceManager.GetString("take_or_skip_clause", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The name &apos;{0}&apos; does not exist in the current context..
         /// </summary>

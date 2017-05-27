@@ -1095,6 +1095,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.OrderByClause:
                 case SyntaxKind.SelectClause:
                 case SyntaxKind.WhereClause:
+				case SyntaxKind.TakeOrSkipClause:
                     return new SourceLocation(syntax.GetFirstToken());
                 default:
                     return null;

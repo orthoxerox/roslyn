@@ -173,6 +173,11 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.WithClause:
                     clauseKind = SyntaxFacts.GetText(SyntaxKind.WithKeyword);
                     break;
+                case SyntaxKind.TakeOrSkipClause:
+                    var tos = (TakeOrSkipClauseSyntax)queryClause;
+                    clauseKind = SyntaxFacts.GetText(tos.TakeOrSkipKeyword.Kind()) + " " + SyntaxFacts.GetText(tos.WhileOrUntilKeyword.Kind());
+                    multiple = true;
+                    break;
                 case SyntaxKind.SelectClause:
                     clauseKind = SyntaxFacts.GetText(SyntaxKind.SelectKeyword);
                     break;

@@ -1608,6 +1608,18 @@
     </Field>
     <Field Name="Condition" Type="ExpressionSyntax"/>
   </Node>
+  <Node Name="TakeOrSkipClauseSyntax" Base="QueryClauseSyntax">
+    <Kind Name="TakeOrSkipClause"/>
+    <Field Name="TakeOrSkipKeyword" Type="SyntaxToken">
+      <Kind Name="TakeKeyword"/>
+      <Kind Name="SkipKeyword"/>
+    </Field>
+    <Field Name="WhileOrUntilKeyword" Type="SyntaxToken" Optional="true">
+      <Kind Name="WhileKeyword"/>
+      <Kind Name="UntilKeyword"/>
+    </Field>
+    <Field Name="Expression" Type="ExpressionSyntax"/>
+  </Node>
   <Node Name="OrderByClauseSyntax" Base="QueryClauseSyntax">
     <Kind Name="OrderByClause"/>
     <Field Name="OrderByKeyword" Type="SyntaxToken">

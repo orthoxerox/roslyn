@@ -199,6 +199,57 @@ public class List1<T>
         return result;
     }
 
+    public List1<T> Take(int count)
+    {
+        List1<T> result = new List1<T>();
+		int length = System.Math.Min(this.Length, count);
+        for (int i = 0; i < length; i++)
+		{
+			result.Add(this.data[i]);
+		}
+		return result;
+	}
+
+    public List1<T> Skip(int count)
+    {
+        List1<T> result = new List1<T>();
+        for (int i = count; i < this.Length; i++)
+		{
+			result.Add(this.data[i]);
+		}
+		return result;
+	}
+	
+    public List1<T> TakeWhile(Func1<T, bool> predicate)
+    {
+        List1<T> result = new List1<T>();
+        for (int i = 0; i < Length; i++)
+        {
+            T datum = this.data[i];
+            if (predicate(datum)) result.Add(datum); else return result;
+        }
+        return result;
+    }
+	
+	public List1<T> SkipWhile(Func1<T, bool> predicate)
+    {
+        List1<T> result = new List1<T>();
+		bool skipped = false;
+        for (int i = 0; i < Length; i++)
+        {
+            T datum = this.data[i];
+			if (skipped)
+			{
+				result.Add(datum);
+			}
+			else
+			{
+				if (predicate(datum)) skipped = true;
+			}
+        }
+        return result;
+    }
+	
     public List1<V> Join<U, K, V>(List1<U> inner, Func1<T, K> outerKeyselector,
         Func1<U, K> innerKeyselector, Func1<T, U, V> resultSelector)
     {

@@ -11046,6 +11046,8 @@ tryAgain:
                 case SyntaxKind.SelectKeyword:
                 case SyntaxKind.LetKeyword:
                 case SyntaxKind.WithKeyword:
+				case SyntaxKind.TakeKeyword:
+				case SyntaxKind.SkipKeyword:
                     return true;
                 default:
                     return false;
@@ -11175,6 +11177,10 @@ tryAgain:
                             continue;
                         case SyntaxKind.OrderByKeyword:
                             clauses.Add(this.ParseOrderByClause());
+                            continue;
+                        case SyntaxKind.TakeKeyword:
+                        case SyntaxKind.SkipKeyword:
+                            clauses.Add(this.ParseTakeOrSkipClause());
                             continue;
                     }
 
@@ -11315,6 +11321,22 @@ tryAgain:
             var @where = this.EatContextualToken(SyntaxKind.WhereKeyword);
             var condition = this.ParseExpressionCore();
             return _syntaxFactory.WhereClause(@where, condition);
+        }
+
+        private TakeOrSkipClauseSyntax ParseTakeOrSkipClause()
+        {
+            Debug.Assert(
+                this.CurrentToken.ContextualKind == SyntaxKind.TakeKeyword
+                || this.CurrentToken.ContextualKind == SyntaxKind.SkipKeyword);
+            var @takeOrSkip = ConvertToKeyword(this.EatToken());
+            SyntaxToken whileOrUntil = null;
+            if (this.CurrentToken.ContextualKind == SyntaxKind.WhileKeyword
+                || this.CurrentToken.ContextualKind == SyntaxKind.UntilKeyword)
+            {
+                whileOrUntil = ConvertToKeyword(this.EatToken());
+            }
+            var expression = this.ParseExpressionCore();
+            return _syntaxFactory.TakeOrSkipClause(takeOrSkip, whileOrUntil, expression);
         }
 
         private OrderByClauseSyntax ParseOrderByClause()

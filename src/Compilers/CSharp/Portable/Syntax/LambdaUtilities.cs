@@ -27,6 +27,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.GroupClause:
                 case SyntaxKind.LocalFunctionStatement:
                     return true;
+					
+				case SyntaxKind.TakeOrSkipClause:
+					var takeOrSkipClause = (TakeOrSkipClauseSyntax)node;
+					return takeOrSkipClause.WhileOrUntilKeyword.Kind() != SyntaxKind.None;
 
                 case SyntaxKind.SelectClause:
                     var selectClause = (SelectClauseSyntax)node;
@@ -157,6 +161,10 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.WhereClause:
                     var whereClause = (WhereClauseSyntax)parent;
                     return whereClause.Condition == node;
+
+                case SyntaxKind.TakeOrSkipClause:
+                    var takeOrSkipClause = (TakeOrSkipClauseSyntax)parent;
+                    return takeOrSkipClause.Expression == node;
 
                 case SyntaxKind.AscendingOrdering:
                 case SyntaxKind.DescendingOrdering:
@@ -362,6 +370,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             return syntax.IsKind(SyntaxKind.GroupClause) ||
                    syntax.IsKind(SyntaxKind.JoinClause) ||
                    syntax.IsKind(SyntaxKind.WithClause) ||
+                   syntax.IsKind(SyntaxKind.TakeOrSkipClause) ||
                    syntax.IsKind(SyntaxKind.FromClause);
         }
 

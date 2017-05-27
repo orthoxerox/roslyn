@@ -281,6 +281,10 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
                     var whereClause = (WhereClauseSyntax)node;
                     return TryCreateSpanForNode(whereClause.Condition, position);
 
+                case SyntaxKind.TakeOrSkipClause:
+                    var takeOrSkipClause = (TakeOrSkipClauseSyntax)node;
+                    return TryCreateSpanForNode(takeOrSkipClause.Expression, position);
+
                 case SyntaxKind.OrderByClause:
                     var orderByClause = (OrderByClauseSyntax)node;
                     return orderByClause.Orderings.Count > 0

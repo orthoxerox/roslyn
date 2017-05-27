@@ -129,6 +129,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
                 case SyntaxKind.FromKeyword:
                 case SyntaxKind.WithKeyword:
                 case SyntaxKind.WhereKeyword:
+                case SyntaxKind.TakeKeyword:
+                case SyntaxKind.SkipKeyword:
                 case SyntaxKind.LetKeyword:
                 case SyntaxKind.JoinKeyword:
                 case SyntaxKind.OrderByKeyword:

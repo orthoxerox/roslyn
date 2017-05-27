@@ -43,6 +43,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.QueryExpression:
                 case SyntaxKind.SelectClause:
                 case SyntaxKind.WhereClause:
+				case SyntaxKind.TakeOrSkipClause:
                     return true;
                 default:
                     return false;

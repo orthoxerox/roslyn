@@ -5976,6 +5976,97 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     }
   }
 
+  public sealed partial class TakeOrSkipClauseSyntax : QueryClauseSyntax
+  {
+    private ExpressionSyntax expression;
+
+    internal TakeOrSkipClauseSyntax(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CSharpSyntaxNode green, SyntaxNode parent, int position)
+        : base(green, parent, position)
+    {
+    }
+
+    public SyntaxToken TakeOrSkipKeyword 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TakeOrSkipClauseSyntax)this.Green).takeOrSkipKeyword, this.Position, 0); }
+    }
+
+    public SyntaxToken WhileOrUntilKeyword 
+    {
+        get
+        {
+            var slot = ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TakeOrSkipClauseSyntax)this.Green).whileOrUntilKeyword;
+            if (slot != null)
+                return new SyntaxToken(this, slot, this.GetChildPosition(1), this.GetChildIndex(1));
+
+            return default(SyntaxToken);
+        }
+    }
+
+    public ExpressionSyntax Expression 
+    {
+        get
+        {
+            return this.GetRed(ref this.expression, 2);
+        }
+    }
+
+    internal override SyntaxNode GetNodeSlot(int index)
+    {
+        switch (index)
+        {
+            case 2: return this.GetRed(ref this.expression, 2);
+            default: return null;
+        }
+    }
+    internal override SyntaxNode GetCachedSlot(int index)
+    {
+        switch (index)
+        {
+            case 2: return this.expression;
+            default: return null;
+        }
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitTakeOrSkipClause(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitTakeOrSkipClause(this);
+    }
+
+    public TakeOrSkipClauseSyntax Update(SyntaxToken takeOrSkipKeyword, SyntaxToken whileOrUntilKeyword, ExpressionSyntax expression)
+    {
+        if (takeOrSkipKeyword != this.TakeOrSkipKeyword || whileOrUntilKeyword != this.WhileOrUntilKeyword || expression != this.Expression)
+        {
+            var newNode = SyntaxFactory.TakeOrSkipClause(takeOrSkipKeyword, whileOrUntilKeyword, expression);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               return newNode.WithAnnotations(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    public TakeOrSkipClauseSyntax WithTakeOrSkipKeyword(SyntaxToken takeOrSkipKeyword)
+    {
+        return this.Update(takeOrSkipKeyword, this.WhileOrUntilKeyword, this.Expression);
+    }
+
+    public TakeOrSkipClauseSyntax WithWhileOrUntilKeyword(SyntaxToken whileOrUntilKeyword)
+    {
+        return this.Update(this.TakeOrSkipKeyword, whileOrUntilKeyword, this.Expression);
+    }
+
+    public TakeOrSkipClauseSyntax WithExpression(ExpressionSyntax expression)
+    {
+        return this.Update(this.TakeOrSkipKeyword, this.WhileOrUntilKeyword, expression);
+    }
+  }
+
   public sealed partial class OrderByClauseSyntax : QueryClauseSyntax
   {
     private SyntaxNode orderings;

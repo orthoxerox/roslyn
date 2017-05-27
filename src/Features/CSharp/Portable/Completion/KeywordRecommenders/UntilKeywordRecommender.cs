@@ -7,49 +7,24 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Microsoft.CodeAnalysis.CSharp.Completion.KeywordRecommenders
 {
-    internal class WhileKeywordRecommender : AbstractSyntacticSingleKeywordRecommender
+    internal class UntilKeywordRecommender : AbstractSyntacticSingleKeywordRecommender
     {
-        public WhileKeywordRecommender()
-            : base(SyntaxKind.WhileKeyword)
+        public UntilKeywordRecommender()
+            : base(SyntaxKind.UntilKeyword)
         {
         }
 
         protected override bool IsValidContext(int position, CSharpSyntaxContext context, CancellationToken cancellationToken)
         {
-            if (context.IsStatementContext ||
-                context.IsGlobalStatementContext)
-            {
-                return true;
-            }
-
-            // do {
-            // } |
-
-            // do {
-            // } w|
-
-            // Note: the case of
-            //   do 
-            //     Foo();
-            //   |
-            // is taken care of in the IsStatementContext case.
-
             var token = context.TargetToken;
-
-            if (token.Kind() == SyntaxKind.CloseBraceToken &&
-                token.Parent.IsKind(SyntaxKind.Block) &&
-                token.Parent.IsParentKind(SyntaxKind.DoStatement))
-            {
-                return true;
-            }
 			
 			// from ...
 			// ...
-			// take w|
+			// take u|
 
 			// from ...
 			// ...
-			// skip w|
+			// skip u|
 			
 			if (token.Kind() == SyntaxKind.TakeKeyword || token.Kind() == SyntaxKind.SkipKeyword)
 			{

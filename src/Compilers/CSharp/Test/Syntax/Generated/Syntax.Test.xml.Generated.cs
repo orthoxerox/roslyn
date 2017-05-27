@@ -329,6 +329,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WhereClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName());
         }
         
+        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TakeOrSkipClauseSyntax GenerateTakeOrSkipClause()
+        {
+            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TakeOrSkipClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.TakeKeyword), null, GenerateIdentifierName());
+        }
+        
         private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OrderByClauseSyntax GenerateOrderByClause()
         {
             return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.OrderByClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OrderByKeyword), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OrderingSyntax>());
@@ -1795,6 +1800,18 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.WhereKeyword, node.WhereKeyword.Kind);
             Assert.NotNull(node.Condition);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestTakeOrSkipClauseFactoryAndProperties()
+        {
+            var node = GenerateTakeOrSkipClause();
+            
+            Assert.Equal(SyntaxKind.TakeKeyword, node.TakeOrSkipKeyword.Kind);
+            Assert.Null(node.WhileOrUntilKeyword);
+            Assert.NotNull(node.Expression);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -5295,6 +5312,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestWhereClauseIdentityRewriter()
         {
             var oldNode = GenerateWhereClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestTakeOrSkipClauseTokenDeleteRewriter()
+        {
+            var oldNode = GenerateTakeOrSkipClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestTakeOrSkipClauseIdentityRewriter()
+        {
+            var oldNode = GenerateTakeOrSkipClause();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             
@@ -9292,6 +9335,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             return SyntaxFactory.WhereClause(SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName());
         }
         
+        private static TakeOrSkipClauseSyntax GenerateTakeOrSkipClause()
+        {
+            return SyntaxFactory.TakeOrSkipClause(SyntaxFactory.Token(SyntaxKind.TakeKeyword), default(SyntaxToken), GenerateIdentifierName());
+        }
+        
         private static OrderByClauseSyntax GenerateOrderByClause()
         {
             return SyntaxFactory.OrderByClause(SyntaxFactory.Token(SyntaxKind.OrderByKeyword), new SeparatedSyntaxList<OrderingSyntax>());
@@ -10759,6 +10807,18 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.WhereKeyword, node.WhereKeyword.Kind());
             Assert.NotNull(node.Condition);
             var newNode = node.WithWhereKeyword(node.WhereKeyword).WithCondition(node.Condition);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestTakeOrSkipClauseFactoryAndProperties()
+        {
+            var node = GenerateTakeOrSkipClause();
+            
+            Assert.Equal(SyntaxKind.TakeKeyword, node.TakeOrSkipKeyword.Kind());
+            Assert.Equal(SyntaxKind.None, node.WhileOrUntilKeyword.Kind());
+            Assert.NotNull(node.Expression);
+            var newNode = node.WithTakeOrSkipKeyword(node.TakeOrSkipKeyword).WithWhileOrUntilKeyword(node.WhileOrUntilKeyword).WithExpression(node.Expression);
             Assert.Equal(node, newNode);
         }
         
@@ -14258,6 +14318,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestWhereClauseIdentityRewriter()
         {
             var oldNode = GenerateWhereClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestTakeOrSkipClauseTokenDeleteRewriter()
+        {
+            var oldNode = GenerateTakeOrSkipClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestTakeOrSkipClauseIdentityRewriter()
+        {
+            var oldNode = GenerateTakeOrSkipClause();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             

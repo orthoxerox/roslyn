@@ -1022,6 +1022,7 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
                 case SyntaxKind.WhereClause:
                 case SyntaxKind.OrderByClause:
                 case SyntaxKind.JoinClause:
+				case SyntaxKind.TakeOrSkipClause:
                     var oldQueryClauseInfo = oldModel.GetQueryClauseInfo((QueryClauseSyntax)oldNode, cancellationToken);
                     var newQueryClauseInfo = newModel.GetQueryClauseInfo((QueryClauseSyntax)newNode, cancellationToken);
 
@@ -1378,6 +1379,9 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
 
                 case SyntaxKind.WhereClause:
                     return ((WhereClauseSyntax)node).WhereKeyword.Span;
+				
+				case SyntaxKind.TakeOrSkipClause:
+                    return ((TakeOrSkipClauseSyntax)node).TakeOrSkipKeyword.Span;
 
                 case SyntaxKind.OrderByClause:
                     return ((OrderByClauseSyntax)node).OrderByKeyword.Span;
@@ -1634,6 +1638,9 @@ namespace Microsoft.CodeAnalysis.CSharp.EditAndContinue
 
                 case SyntaxKind.WhereClause:
                     return CSharpFeaturesResources.where_clause;
+					
+                case SyntaxKind.TakeOrSkipClause:
+                    return CSharpFeaturesResources.take_or_skip_clause;
 
                 case SyntaxKind.OrderByClause:
                 case SyntaxKind.AscendingOrdering:

@@ -400,6 +400,12 @@ namespace Microsoft.CodeAnalysis.CSharp
       return this.DefaultVisit(node);
     }
 
+    /// <summary>Called when the visitor visits a TakeOrSkipClauseSyntax node.</summary>
+    public virtual TResult VisitTakeOrSkipClause(TakeOrSkipClauseSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     /// <summary>Called when the visitor visits a OrderByClauseSyntax node.</summary>
     public virtual TResult VisitOrderByClause(OrderByClauseSyntax node)
     {
@@ -1629,6 +1635,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
     /// <summary>Called when the visitor visits a WhereClauseSyntax node.</summary>
     public virtual void VisitWhereClause(WhereClauseSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
+    /// <summary>Called when the visitor visits a TakeOrSkipClauseSyntax node.</summary>
+    public virtual void VisitTakeOrSkipClause(TakeOrSkipClauseSyntax node)
     {
       this.DefaultVisit(node);
     }
@@ -2987,6 +2999,14 @@ namespace Microsoft.CodeAnalysis.CSharp
       var whereKeyword = this.VisitToken(node.WhereKeyword);
       var condition = (ExpressionSyntax)this.Visit(node.Condition);
       return node.Update(whereKeyword, condition);
+    }
+
+    public override SyntaxNode VisitTakeOrSkipClause(TakeOrSkipClauseSyntax node)
+    {
+      var takeOrSkipKeyword = this.VisitToken(node.TakeOrSkipKeyword);
+      var whileOrUntilKeyword = this.VisitToken(node.WhileOrUntilKeyword);
+      var expression = (ExpressionSyntax)this.Visit(node.Expression);
+      return node.Update(takeOrSkipKeyword, whileOrUntilKeyword, expression);
     }
 
     public override SyntaxNode VisitOrderByClause(OrderByClauseSyntax node)
@@ -6310,6 +6330,38 @@ namespace Microsoft.CodeAnalysis.CSharp
     public static WhereClauseSyntax WhereClause(ExpressionSyntax condition)
     {
       return SyntaxFactory.WhereClause(SyntaxFactory.Token(SyntaxKind.WhereKeyword), condition);
+    }
+
+    /// <summary>Creates a new TakeOrSkipClauseSyntax instance.</summary>
+    public static TakeOrSkipClauseSyntax TakeOrSkipClause(SyntaxToken takeOrSkipKeyword, SyntaxToken whileOrUntilKeyword, ExpressionSyntax expression)
+    {
+      switch (takeOrSkipKeyword.Kind())
+      {
+        case SyntaxKind.TakeKeyword:
+        case SyntaxKind.SkipKeyword:
+          break;
+        default:
+          throw new ArgumentException("takeOrSkipKeyword");
+      }
+      switch (whileOrUntilKeyword.Kind())
+      {
+        case SyntaxKind.WhileKeyword:
+        case SyntaxKind.UntilKeyword:
+        case SyntaxKind.None:
+          break;
+        default:
+          throw new ArgumentException("whileOrUntilKeyword");
+      }
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+      return (TakeOrSkipClauseSyntax)Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TakeOrSkipClause((Syntax.InternalSyntax.SyntaxToken)takeOrSkipKeyword.Node, (Syntax.InternalSyntax.SyntaxToken)whileOrUntilKeyword.Node, expression == null ? null : (Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax)expression.Green).CreateRed();
+    }
+
+
+    /// <summary>Creates a new TakeOrSkipClauseSyntax instance.</summary>
+    public static TakeOrSkipClauseSyntax TakeOrSkipClause(SyntaxToken takeOrSkipKeyword, ExpressionSyntax expression)
+    {
+      return SyntaxFactory.TakeOrSkipClause(takeOrSkipKeyword, default(SyntaxToken), expression);
     }
 
     /// <summary>Creates a new OrderByClauseSyntax instance.</summary>

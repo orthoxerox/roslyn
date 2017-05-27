@@ -1048,7 +1048,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         public static IEnumerable<SyntaxKind> GetContextualKeywordKinds()
         {
-            for (int i = (int)SyntaxKind.YieldKeyword; i <= (int)SyntaxKind.WithKeyword; i++)
+            for (int i = (int)SyntaxKind.YieldKeyword; i <= (int)SyntaxKind.UntilKeyword; i++)
             {
                 yield return (SyntaxKind)i;
             }
@@ -1062,6 +1062,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.PartialKeyword:
                 case SyntaxKind.FromKeyword:
                 case SyntaxKind.WithKeyword:
+				case SyntaxKind.TakeKeyword:
+				case SyntaxKind.SkipKeyword:
+				case SyntaxKind.UntilKeyword:
                 case SyntaxKind.GroupKeyword:
                 case SyntaxKind.JoinKeyword:
                 case SyntaxKind.IntoKeyword:
@@ -1135,6 +1138,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return SyntaxKind.FromKeyword;
                 case "with":
                     return SyntaxKind.WithKeyword;
+				case "take":
+                    return SyntaxKind.TakeKeyword;
+				case "skip":
+                    return SyntaxKind.SkipKeyword;
+				case "until":
+                    return SyntaxKind.UntilKeyword;
                 case "group":
                     return SyntaxKind.GroupKeyword;
                 case "join":
@@ -1536,6 +1545,12 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return "from";
                 case SyntaxKind.WithKeyword:
                     return "with";
+                case SyntaxKind.TakeKeyword:
+                    return "take";
+                case SyntaxKind.SkipKeyword:
+                    return "skip";
+                case SyntaxKind.UntilKeyword:
+                    return "until";
                 case SyntaxKind.GroupKeyword:
                     return "group";
                 case SyntaxKind.JoinKeyword:

@@ -1575,6 +1575,177 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
 
         [Fact]
+        public void TestFromTakeSelect()
+        {
+            var text = "from a in A take b select c";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var qs = (QueryExpressionSyntax)expr;
+            Assert.Equal(1, qs.Body.Clauses.Count);
+
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
+            var fs = (FromClauseSyntax)qs.FromClause;
+            Assert.NotNull(fs.FromKeyword);
+            Assert.False(fs.FromKeyword.IsMissing);
+            Assert.Null(fs.Type);
+            Assert.Equal("a", fs.Identifier.ToString());
+            Assert.NotNull(fs.InKeyword);
+            Assert.False(fs.InKeyword.IsMissing);
+            Assert.Equal("A", fs.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.TakeOrSkipClause, qs.Body.Clauses[0].Kind());
+            var tos = (TakeOrSkipClauseSyntax)qs.Body.Clauses[0];
+            Assert.NotNull(tos.TakeOrSkipKeyword);
+            Assert.Equal(SyntaxKind.TakeKeyword, tos.TakeOrSkipKeyword.Kind());
+            Assert.False(tos.TakeOrSkipKeyword.IsMissing);
+			Assert.NotNull(tos.WhileOrUntilKeyword);
+            Assert.Equal(SyntaxKind.None, tos.WhileOrUntilKeyword.Kind());
+            Assert.False(tos.WhileOrUntilKeyword.IsMissing);
+            Assert.NotNull(tos.Expression);
+            Assert.Equal("b", tos.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
+            var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
+            Assert.NotNull(ss.SelectKeyword);
+            Assert.False(ss.SelectKeyword.IsMissing);
+            Assert.Equal("c", ss.Expression.ToString());
+            Assert.Null(qs.Body.Continuation);
+        }
+
+        [Fact]
+        public void TestFromSkipSelect()
+        {
+            var text = "from a in A skip b select c";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var qs = (QueryExpressionSyntax)expr;
+            Assert.Equal(1, qs.Body.Clauses.Count);
+
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
+            var fs = (FromClauseSyntax)qs.FromClause;
+            Assert.NotNull(fs.FromKeyword);
+            Assert.False(fs.FromKeyword.IsMissing);
+            Assert.Null(fs.Type);
+            Assert.Equal("a", fs.Identifier.ToString());
+            Assert.NotNull(fs.InKeyword);
+            Assert.False(fs.InKeyword.IsMissing);
+            Assert.Equal("A", fs.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.TakeOrSkipClause, qs.Body.Clauses[0].Kind());
+            var tos = (TakeOrSkipClauseSyntax)qs.Body.Clauses[0];
+            Assert.NotNull(tos.TakeOrSkipKeyword);
+            Assert.Equal(SyntaxKind.SkipKeyword, tos.TakeOrSkipKeyword.Kind());
+            Assert.False(tos.TakeOrSkipKeyword.IsMissing);
+            Assert.NotNull(tos.WhileOrUntilKeyword);
+            Assert.Equal(SyntaxKind.None, tos.WhileOrUntilKeyword.Kind());
+            Assert.False(tos.WhileOrUntilKeyword.IsMissing); Assert.NotNull(tos.Expression);
+            Assert.Equal("b", tos.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
+            var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
+            Assert.NotNull(ss.SelectKeyword);
+            Assert.False(ss.SelectKeyword.IsMissing);
+            Assert.Equal("c", ss.Expression.ToString());
+            Assert.Null(qs.Body.Continuation);
+        }
+		
+		[Fact]
+        public void TestFromTakeWhileSelect()
+        {
+            var text = "from a in A take while b select c";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var qs = (QueryExpressionSyntax)expr;
+            Assert.Equal(1, qs.Body.Clauses.Count);
+
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
+            var fs = (FromClauseSyntax)qs.FromClause;
+            Assert.NotNull(fs.FromKeyword);
+            Assert.False(fs.FromKeyword.IsMissing);
+            Assert.Null(fs.Type);
+            Assert.Equal("a", fs.Identifier.ToString());
+            Assert.NotNull(fs.InKeyword);
+            Assert.False(fs.InKeyword.IsMissing);
+            Assert.Equal("A", fs.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.TakeOrSkipClause, qs.Body.Clauses[0].Kind());
+            var tos = (TakeOrSkipClauseSyntax)qs.Body.Clauses[0];
+            Assert.NotNull(tos.TakeOrSkipKeyword);
+            Assert.Equal(SyntaxKind.TakeKeyword, tos.TakeOrSkipKeyword.Kind());
+            Assert.False(tos.TakeOrSkipKeyword.IsMissing);
+            Assert.NotNull(tos.WhileOrUntilKeyword);
+            Assert.Equal(SyntaxKind.WhileKeyword, tos.WhileOrUntilKeyword.Kind());
+            Assert.False(tos.WhileOrUntilKeyword.IsMissing);
+            Assert.NotNull(tos.Expression);
+            Assert.Equal("b", tos.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
+            var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
+            Assert.NotNull(ss.SelectKeyword);
+            Assert.False(ss.SelectKeyword.IsMissing);
+            Assert.Equal("c", ss.Expression.ToString());
+            Assert.Null(qs.Body.Continuation);
+        }
+		
+		[Fact]
+        public void TestFromSkipUntilSelect()
+        {
+            var text = "from a in A skip until b select c";
+            var expr = this.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.QueryExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var qs = (QueryExpressionSyntax)expr;
+            Assert.Equal(1, qs.Body.Clauses.Count);
+
+            Assert.Equal(SyntaxKind.FromClause, qs.FromClause.Kind());
+            var fs = (FromClauseSyntax)qs.FromClause;
+            Assert.NotNull(fs.FromKeyword);
+            Assert.False(fs.FromKeyword.IsMissing);
+            Assert.Null(fs.Type);
+            Assert.Equal("a", fs.Identifier.ToString());
+            Assert.NotNull(fs.InKeyword);
+            Assert.False(fs.InKeyword.IsMissing);
+            Assert.Equal("A", fs.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.TakeOrSkipClause, qs.Body.Clauses[0].Kind());
+            var tos = (TakeOrSkipClauseSyntax)qs.Body.Clauses[0];
+            Assert.NotNull(tos.TakeOrSkipKeyword);
+            Assert.Equal(SyntaxKind.SkipKeyword, tos.TakeOrSkipKeyword.Kind());
+            Assert.False(tos.TakeOrSkipKeyword.IsMissing);
+            Assert.NotNull(tos.WhileOrUntilKeyword);
+            Assert.Equal(SyntaxKind.UntilKeyword, tos.WhileOrUntilKeyword.Kind());
+            Assert.False(tos.WhileOrUntilKeyword.IsMissing);
+            Assert.NotNull(tos.Expression);
+            Assert.Equal("b", tos.Expression.ToString());
+
+            Assert.Equal(SyntaxKind.SelectClause, qs.Body.SelectOrGroup.Kind());
+            var ss = (SelectClauseSyntax)qs.Body.SelectOrGroup;
+            Assert.NotNull(ss.SelectKeyword);
+            Assert.False(ss.SelectKeyword.IsMissing);
+            Assert.Equal("c", ss.Expression.ToString());
+            Assert.Null(qs.Body.Continuation);
+        }
+		
+        [Fact]
         public void TestFromFromSelect()
         {
             var text = "from a in A from b in B select c";
