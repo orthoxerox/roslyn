@@ -1936,6 +1936,132 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     }
   }
 
+  public sealed partial class WithExpressionSyntax : ExpressionSyntax
+  {
+    private ExpressionSyntax expression;
+    private SyntaxNode accessorPath;
+    private ExpressionSyntax valueExpression;
+
+    internal WithExpressionSyntax(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CSharpSyntaxNode green, SyntaxNode parent, int position)
+        : base(green, parent, position)
+    {
+    }
+
+    /// <summary>ExpressionSyntax node representing the immutable object being modified.</summary>
+    public ExpressionSyntax Expression 
+    {
+        get
+        {
+            return this.GetRedAtZero(ref this.expression);
+        }
+    }
+
+    /// <summary>SyntaxToken node representing 'with' keyword.</summary>
+    public SyntaxToken WithKeyword 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax)this.Green).withKeyword, this.GetChildPosition(1), this.GetChildIndex(1)); }
+    }
+
+    /// <summary>A list of ExpressionSyntax nodes representing the (nested) member being modified.</summary>
+    public SyntaxList<ExpressionSyntax> AccessorPath 
+    {
+        get
+        {
+            return new SyntaxList<ExpressionSyntax>(this.GetRed(ref this.accessorPath, 2));
+        }
+    }
+
+    /// <summary>SyntaxToken representing the operator of the assignment expression.</summary>
+    public SyntaxToken OperatorToken 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax)this.Green).operatorToken, this.GetChildPosition(3), this.GetChildIndex(3)); }
+    }
+
+    /// <summary>ExpressionSyntax node representing the new value being assigned.</summary>
+    public ExpressionSyntax ValueExpression 
+    {
+        get
+        {
+            return this.GetRed(ref this.valueExpression, 4);
+        }
+    }
+
+    internal override SyntaxNode GetNodeSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.GetRedAtZero(ref this.expression);
+            case 2: return this.GetRed(ref this.accessorPath, 2);
+            case 4: return this.GetRed(ref this.valueExpression, 4);
+            default: return null;
+        }
+    }
+    internal override SyntaxNode GetCachedSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.expression;
+            case 2: return this.accessorPath;
+            case 4: return this.valueExpression;
+            default: return null;
+        }
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitWithExpression(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitWithExpression(this);
+    }
+
+    public WithExpressionSyntax Update(ExpressionSyntax expression, SyntaxToken withKeyword, SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+        if (expression != this.Expression || withKeyword != this.WithKeyword || accessorPath != this.AccessorPath || operatorToken != this.OperatorToken || valueExpression != this.ValueExpression)
+        {
+            var newNode = SyntaxFactory.WithExpression(expression, withKeyword, accessorPath, operatorToken, valueExpression);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               return newNode.WithAnnotations(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    public WithExpressionSyntax WithExpression(ExpressionSyntax expression)
+    {
+        return this.Update(expression, this.WithKeyword, this.AccessorPath, this.OperatorToken, this.ValueExpression);
+    }
+
+    public WithExpressionSyntax WithWithKeyword(SyntaxToken withKeyword)
+    {
+        return this.Update(this.Expression, withKeyword, this.AccessorPath, this.OperatorToken, this.ValueExpression);
+    }
+
+    public WithExpressionSyntax WithAccessorPath(SyntaxList<ExpressionSyntax> accessorPath)
+    {
+        return this.Update(this.Expression, this.WithKeyword, accessorPath, this.OperatorToken, this.ValueExpression);
+    }
+
+    public WithExpressionSyntax WithOperatorToken(SyntaxToken operatorToken)
+    {
+        return this.Update(this.Expression, this.WithKeyword, this.AccessorPath, operatorToken, this.ValueExpression);
+    }
+
+    public WithExpressionSyntax WithValueExpression(ExpressionSyntax valueExpression)
+    {
+        return this.Update(this.Expression, this.WithKeyword, this.AccessorPath, this.OperatorToken, valueExpression);
+    }
+
+    public WithExpressionSyntax AddAccessorPath(params ExpressionSyntax[] items)
+    {
+        return this.WithAccessorPath(this.AccessorPath.AddRange(items));
+    }
+  }
+
   /// <summary>Class which represents the syntax node for implicit element access expression.</summary>
   public sealed partial class ImplicitElementAccessSyntax : ExpressionSyntax
   {

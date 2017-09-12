@@ -523,6 +523,46 @@
       <summary>Creates an ElementBindingExpressionSyntax node.</summary>
     </FactoryComment>
   </Node>
+  <Node Name="WithExpressionSyntax" Base="ExpressionSyntax">
+	<Kind Name="WithExpression"/>
+	<Field Name="Expression" Type="ExpressionSyntax">
+	  <PropertyComment>
+        <summary>ExpressionSyntax node representing the immutable object being modified.</summary>
+      </PropertyComment>
+    </Field>
+	<Field Name="WithKeyword" Type="SyntaxToken">
+	  <Kind Name="WithKeyword"/>
+	  <PropertyComment>
+        <summary>SyntaxToken node representing 'with' keyword.</summary>
+      </PropertyComment>
+    </Field>
+	<Field Name="AccessorPath" Type="SyntaxList&lt;ExpressionSyntax&gt;">
+	  <PropertyComment>
+        <summary>A list of ExpressionSyntax nodes representing the (nested) member being modified.</summary>
+      </PropertyComment>
+    </Field>
+	<Field Name="OperatorToken" Type="SyntaxToken">
+      <Kind Name="EqualsToken"/>
+      <Kind Name="PlusEqualsToken"/>
+      <Kind Name="MinusEqualsToken"/>
+      <Kind Name="AsteriskEqualsToken"/>
+      <Kind Name="SlashEqualsToken"/>
+      <Kind Name="PercentEqualsToken"/>
+      <Kind Name="AmpersandEqualsToken"/>
+      <Kind Name="CaretEqualsToken"/>
+      <Kind Name="BarEqualsToken"/>
+      <Kind Name="LessThanLessThanEqualsToken"/>
+      <Kind Name="GreaterThanGreaterThanEqualsToken"/>
+      <PropertyComment>
+        <summary>SyntaxToken representing the operator of the assignment expression.</summary>
+      </PropertyComment>
+    </Field>
+    <Field Name="ValueExpression" Type="ExpressionSyntax">
+	  <PropertyComment>
+        <summary>ExpressionSyntax node representing the new value being assigned.</summary>
+      </PropertyComment>
+    </Field>
+  </Node>
   <Node Name="ImplicitElementAccessSyntax" Base="ExpressionSyntax">
     <Kind Name="ImplicitElementAccess"/>
     <Field Name="ArgumentList" Type="BracketedArgumentListSyntax">

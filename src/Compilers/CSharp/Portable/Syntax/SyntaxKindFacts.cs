@@ -616,6 +616,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return SyntaxKind.LogicalAndExpression;
                 case SyntaxKind.BarBarToken:
                     return SyntaxKind.LogicalOrExpression;
+				case SyntaxKind.WithKeyword:
+					return SyntaxKind.WithExpression;
                 default:
                     return SyntaxKind.None;
             }
@@ -1092,6 +1094,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.AwaitKeyword:
                 case SyntaxKind.WhenKeyword:
                 case SyntaxKind.UnderscoreToken:
+				case SyntaxKind.WithKeyword:
                     return true;
                 default:
                     return false;
@@ -1193,6 +1196,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return SyntaxKind.NameOfKeyword;
                 case "_":
                     return SyntaxKind.UnderscoreToken;
+				case "with":
+					return SyntaxKind.WithKeyword;
                 default:
                     return SyntaxKind.None;
             }
@@ -1598,6 +1603,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return "\"";
                 case SyntaxKind.UnderscoreToken:
                     return "_";
+				case SyntaxKind.WithKeyword:
+					return "with";
                 default:
                     return string.Empty;
             }

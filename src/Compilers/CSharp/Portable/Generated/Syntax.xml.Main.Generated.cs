@@ -154,6 +154,12 @@ namespace Microsoft.CodeAnalysis.CSharp
       return this.DefaultVisit(node);
     }
 
+    /// <summary>Called when the visitor visits a WithExpressionSyntax node.</summary>
+    public virtual TResult VisitWithExpression(WithExpressionSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     /// <summary>Called when the visitor visits a ImplicitElementAccessSyntax node.</summary>
     public virtual TResult VisitImplicitElementAccess(ImplicitElementAccessSyntax node)
     {
@@ -1377,6 +1383,12 @@ namespace Microsoft.CodeAnalysis.CSharp
 
     /// <summary>Called when the visitor visits a ElementBindingExpressionSyntax node.</summary>
     public virtual void VisitElementBindingExpression(ElementBindingExpressionSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
+    /// <summary>Called when the visitor visits a WithExpressionSyntax node.</summary>
+    public virtual void VisitWithExpression(WithExpressionSyntax node)
     {
       this.DefaultVisit(node);
     }
@@ -2634,6 +2646,16 @@ namespace Microsoft.CodeAnalysis.CSharp
     {
       var argumentList = (BracketedArgumentListSyntax)this.Visit(node.ArgumentList);
       return node.Update(argumentList);
+    }
+
+    public override SyntaxNode VisitWithExpression(WithExpressionSyntax node)
+    {
+      var expression = (ExpressionSyntax)this.Visit(node.Expression);
+      var withKeyword = this.VisitToken(node.WithKeyword);
+      var accessorPath = this.VisitList(node.AccessorPath);
+      var operatorToken = this.VisitToken(node.OperatorToken);
+      var valueExpression = (ExpressionSyntax)this.Visit(node.ValueExpression);
+      return node.Update(expression, withKeyword, accessorPath, operatorToken, valueExpression);
     }
 
     public override SyntaxNode VisitImplicitElementAccess(ImplicitElementAccessSyntax node)
@@ -4846,6 +4868,53 @@ namespace Microsoft.CodeAnalysis.CSharp
     public static ElementBindingExpressionSyntax ElementBindingExpression()
     {
       return SyntaxFactory.ElementBindingExpression(SyntaxFactory.BracketedArgumentList());
+    }
+
+    /// <summary>Creates a new WithExpressionSyntax instance.</summary>
+    public static WithExpressionSyntax WithExpression(ExpressionSyntax expression, SyntaxToken withKeyword, SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+      switch (withKeyword.Kind())
+      {
+        case SyntaxKind.WithKeyword:
+          break;
+        default:
+          throw new ArgumentException("withKeyword");
+      }
+      switch (operatorToken.Kind())
+      {
+        case SyntaxKind.EqualsToken:
+        case SyntaxKind.PlusEqualsToken:
+        case SyntaxKind.MinusEqualsToken:
+        case SyntaxKind.AsteriskEqualsToken:
+        case SyntaxKind.SlashEqualsToken:
+        case SyntaxKind.PercentEqualsToken:
+        case SyntaxKind.AmpersandEqualsToken:
+        case SyntaxKind.CaretEqualsToken:
+        case SyntaxKind.BarEqualsToken:
+        case SyntaxKind.LessThanLessThanEqualsToken:
+        case SyntaxKind.GreaterThanGreaterThanEqualsToken:
+          break;
+        default:
+          throw new ArgumentException("operatorToken");
+      }
+      if (valueExpression == null)
+        throw new ArgumentNullException(nameof(valueExpression));
+      return (WithExpressionSyntax)Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WithExpression(expression == null ? null : (Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax)expression.Green, (Syntax.InternalSyntax.SyntaxToken)withKeyword.Node, accessorPath.Node.ToGreenList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), (Syntax.InternalSyntax.SyntaxToken)operatorToken.Node, valueExpression == null ? null : (Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax)valueExpression.Green).CreateRed();
+    }
+
+
+    /// <summary>Creates a new WithExpressionSyntax instance.</summary>
+    public static WithExpressionSyntax WithExpression(ExpressionSyntax expression, SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+      return SyntaxFactory.WithExpression(expression, SyntaxFactory.Token(SyntaxKind.WithKeyword), accessorPath, operatorToken, valueExpression);
+    }
+
+    /// <summary>Creates a new WithExpressionSyntax instance.</summary>
+    public static WithExpressionSyntax WithExpression(ExpressionSyntax expression, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+      return SyntaxFactory.WithExpression(expression, SyntaxFactory.Token(SyntaxKind.WithKeyword), default(SyntaxList<ExpressionSyntax>), operatorToken, valueExpression);
     }
 
     /// <summary>Creates a new ImplicitElementAccessSyntax instance.</summary>

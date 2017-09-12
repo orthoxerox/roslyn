@@ -3138,6 +3138,192 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     }
   }
 
+  internal sealed partial class WithExpressionSyntax : ExpressionSyntax
+  {
+    internal readonly ExpressionSyntax expression;
+    internal readonly SyntaxToken withKeyword;
+    internal readonly GreenNode accessorPath;
+    internal readonly SyntaxToken operatorToken;
+    internal readonly ExpressionSyntax valueExpression;
+
+    internal WithExpressionSyntax(SyntaxKind kind, ExpressionSyntax expression, SyntaxToken withKeyword, GreenNode accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression, DiagnosticInfo[] diagnostics, SyntaxAnnotation[] annotations)
+        : base(kind, diagnostics, annotations)
+    {
+        this.SlotCount = 5;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+        this.AdjustFlagsAndWidth(withKeyword);
+        this.withKeyword = withKeyword;
+        if (accessorPath != null)
+        {
+            this.AdjustFlagsAndWidth(accessorPath);
+            this.accessorPath = accessorPath;
+        }
+        this.AdjustFlagsAndWidth(operatorToken);
+        this.operatorToken = operatorToken;
+        this.AdjustFlagsAndWidth(valueExpression);
+        this.valueExpression = valueExpression;
+    }
+
+
+    internal WithExpressionSyntax(SyntaxKind kind, ExpressionSyntax expression, SyntaxToken withKeyword, GreenNode accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression, SyntaxFactoryContext context)
+        : base(kind)
+    {
+        this.SetFactoryContext(context);
+        this.SlotCount = 5;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+        this.AdjustFlagsAndWidth(withKeyword);
+        this.withKeyword = withKeyword;
+        if (accessorPath != null)
+        {
+            this.AdjustFlagsAndWidth(accessorPath);
+            this.accessorPath = accessorPath;
+        }
+        this.AdjustFlagsAndWidth(operatorToken);
+        this.operatorToken = operatorToken;
+        this.AdjustFlagsAndWidth(valueExpression);
+        this.valueExpression = valueExpression;
+    }
+
+
+    internal WithExpressionSyntax(SyntaxKind kind, ExpressionSyntax expression, SyntaxToken withKeyword, GreenNode accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+        : base(kind)
+    {
+        this.SlotCount = 5;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+        this.AdjustFlagsAndWidth(withKeyword);
+        this.withKeyword = withKeyword;
+        if (accessorPath != null)
+        {
+            this.AdjustFlagsAndWidth(accessorPath);
+            this.accessorPath = accessorPath;
+        }
+        this.AdjustFlagsAndWidth(operatorToken);
+        this.operatorToken = operatorToken;
+        this.AdjustFlagsAndWidth(valueExpression);
+        this.valueExpression = valueExpression;
+    }
+
+    /// <summary>ExpressionSyntax node representing the immutable object being modified.</summary>
+    public ExpressionSyntax Expression { get { return this.expression; } }
+    /// <summary>SyntaxToken node representing 'with' keyword.</summary>
+    public SyntaxToken WithKeyword { get { return this.withKeyword; } }
+    /// <summary>A list of ExpressionSyntax nodes representing the (nested) member being modified.</summary>
+    public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExpressionSyntax> AccessorPath { get { return new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExpressionSyntax>(this.accessorPath); } }
+    /// <summary>SyntaxToken representing the operator of the assignment expression.</summary>
+    public SyntaxToken OperatorToken { get { return this.operatorToken; } }
+    /// <summary>ExpressionSyntax node representing the new value being assigned.</summary>
+    public ExpressionSyntax ValueExpression { get { return this.valueExpression; } }
+
+    internal override GreenNode GetSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.expression;
+            case 1: return this.withKeyword;
+            case 2: return this.accessorPath;
+            case 3: return this.operatorToken;
+            case 4: return this.valueExpression;
+            default: return null;
+        }
+    }
+
+    internal override SyntaxNode CreateRed(SyntaxNode parent, int position)
+    {
+      return new CSharp.Syntax.WithExpressionSyntax(this, parent, position);
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitWithExpression(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitWithExpression(this);
+    }
+
+    public WithExpressionSyntax Update(ExpressionSyntax expression, SyntaxToken withKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+        if (expression != this.Expression || withKeyword != this.WithKeyword || accessorPath != this.AccessorPath || operatorToken != this.OperatorToken || valueExpression != this.ValueExpression)
+        {
+            var newNode = SyntaxFactory.WithExpression(expression, withKeyword, accessorPath, operatorToken, valueExpression);
+            var diags = this.GetDiagnostics();
+            if (diags != null && diags.Length > 0)
+               newNode = newNode.WithDiagnosticsGreen(diags);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               newNode = newNode.WithAnnotationsGreen(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    internal override GreenNode SetDiagnostics(DiagnosticInfo[] diagnostics)
+    {
+         return new WithExpressionSyntax(this.Kind, this.expression, this.withKeyword, this.accessorPath, this.operatorToken, this.valueExpression, diagnostics, GetAnnotations());
+    }
+
+    internal override GreenNode SetAnnotations(SyntaxAnnotation[] annotations)
+    {
+         return new WithExpressionSyntax(this.Kind, this.expression, this.withKeyword, this.accessorPath, this.operatorToken, this.valueExpression, GetDiagnostics(), annotations);
+    }
+
+    internal WithExpressionSyntax(ObjectReader reader)
+        : base(reader)
+    {
+      this.SlotCount = 5;
+      var expression = (ExpressionSyntax)reader.ReadValue();
+      if (expression != null)
+      {
+         AdjustFlagsAndWidth(expression);
+         this.expression = expression;
+      }
+      var withKeyword = (SyntaxToken)reader.ReadValue();
+      if (withKeyword != null)
+      {
+         AdjustFlagsAndWidth(withKeyword);
+         this.withKeyword = withKeyword;
+      }
+      var accessorPath = (GreenNode)reader.ReadValue();
+      if (accessorPath != null)
+      {
+         AdjustFlagsAndWidth(accessorPath);
+         this.accessorPath = accessorPath;
+      }
+      var operatorToken = (SyntaxToken)reader.ReadValue();
+      if (operatorToken != null)
+      {
+         AdjustFlagsAndWidth(operatorToken);
+         this.operatorToken = operatorToken;
+      }
+      var valueExpression = (ExpressionSyntax)reader.ReadValue();
+      if (valueExpression != null)
+      {
+         AdjustFlagsAndWidth(valueExpression);
+         this.valueExpression = valueExpression;
+      }
+    }
+
+    internal override void WriteTo(ObjectWriter writer)
+    {
+      base.WriteTo(writer);
+      writer.WriteValue(this.expression);
+      writer.WriteValue(this.withKeyword);
+      writer.WriteValue(this.accessorPath);
+      writer.WriteValue(this.operatorToken);
+      writer.WriteValue(this.valueExpression);
+    }
+
+    static WithExpressionSyntax()
+    {
+       ObjectBinder.RegisterTypeReader(typeof(WithExpressionSyntax), r => new WithExpressionSyntax(r));
+    }
+  }
+
   /// <summary>Class which represents the syntax node for implicit element access expression.</summary>
   internal sealed partial class ImplicitElementAccessSyntax : ExpressionSyntax
   {
@@ -33702,6 +33888,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
       return this.DefaultVisit(node);
     }
 
+    public virtual TResult VisitWithExpression(WithExpressionSyntax node)
+    {
+      return this.DefaultVisit(node);
+    }
+
     public virtual TResult VisitImplicitElementAccess(ImplicitElementAccessSyntax node)
     {
       return this.DefaultVisit(node);
@@ -34722,6 +34913,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     }
 
     public virtual void VisitElementBindingExpression(ElementBindingExpressionSyntax node)
+    {
+      this.DefaultVisit(node);
+    }
+
+    public virtual void VisitWithExpression(WithExpressionSyntax node)
     {
       this.DefaultVisit(node);
     }
@@ -35798,6 +35994,16 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
     {
       var argumentList = (BracketedArgumentListSyntax)this.Visit(node.ArgumentList);
       return node.Update(argumentList);
+    }
+
+    public override CSharpSyntaxNode VisitWithExpression(WithExpressionSyntax node)
+    {
+      var expression = (ExpressionSyntax)this.Visit(node.Expression);
+      var withKeyword = (SyntaxToken)this.Visit(node.WithKeyword);
+      var accessorPath = this.VisitList(node.AccessorPath);
+      var operatorToken = (SyntaxToken)this.Visit(node.OperatorToken);
+      var valueExpression = (ExpressionSyntax)this.Visit(node.ValueExpression);
+      return node.Update(expression, withKeyword, accessorPath, operatorToken, valueExpression);
     }
 
     public override CSharpSyntaxNode VisitImplicitElementAccess(ImplicitElementAccessSyntax node)
@@ -38134,6 +38340,46 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
       }
 
       return result;
+    }
+
+    public WithExpressionSyntax WithExpression(ExpressionSyntax expression, SyntaxToken withKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+#if DEBUG
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+      if (withKeyword == null)
+        throw new ArgumentNullException(nameof(withKeyword));
+      switch (withKeyword.Kind)
+      {
+        case SyntaxKind.WithKeyword:
+          break;
+        default:
+          throw new ArgumentException("withKeyword");
+      }
+      if (operatorToken == null)
+        throw new ArgumentNullException(nameof(operatorToken));
+      switch (operatorToken.Kind)
+      {
+        case SyntaxKind.EqualsToken:
+        case SyntaxKind.PlusEqualsToken:
+        case SyntaxKind.MinusEqualsToken:
+        case SyntaxKind.AsteriskEqualsToken:
+        case SyntaxKind.SlashEqualsToken:
+        case SyntaxKind.PercentEqualsToken:
+        case SyntaxKind.AmpersandEqualsToken:
+        case SyntaxKind.CaretEqualsToken:
+        case SyntaxKind.BarEqualsToken:
+        case SyntaxKind.LessThanLessThanEqualsToken:
+        case SyntaxKind.GreaterThanGreaterThanEqualsToken:
+          break;
+        default:
+          throw new ArgumentException("operatorToken");
+      }
+      if (valueExpression == null)
+        throw new ArgumentNullException(nameof(valueExpression));
+#endif
+
+      return new WithExpressionSyntax(SyntaxKind.WithExpression, expression, withKeyword, accessorPath.Node, operatorToken, valueExpression, this.context);
     }
 
     public ImplicitElementAccessSyntax ImplicitElementAccess(BracketedArgumentListSyntax argumentList)
@@ -45049,6 +45295,46 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
       return result;
     }
 
+    public static WithExpressionSyntax WithExpression(ExpressionSyntax expression, SyntaxToken withKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+#if DEBUG
+      if (expression == null)
+        throw new ArgumentNullException(nameof(expression));
+      if (withKeyword == null)
+        throw new ArgumentNullException(nameof(withKeyword));
+      switch (withKeyword.Kind)
+      {
+        case SyntaxKind.WithKeyword:
+          break;
+        default:
+          throw new ArgumentException("withKeyword");
+      }
+      if (operatorToken == null)
+        throw new ArgumentNullException(nameof(operatorToken));
+      switch (operatorToken.Kind)
+      {
+        case SyntaxKind.EqualsToken:
+        case SyntaxKind.PlusEqualsToken:
+        case SyntaxKind.MinusEqualsToken:
+        case SyntaxKind.AsteriskEqualsToken:
+        case SyntaxKind.SlashEqualsToken:
+        case SyntaxKind.PercentEqualsToken:
+        case SyntaxKind.AmpersandEqualsToken:
+        case SyntaxKind.CaretEqualsToken:
+        case SyntaxKind.BarEqualsToken:
+        case SyntaxKind.LessThanLessThanEqualsToken:
+        case SyntaxKind.GreaterThanGreaterThanEqualsToken:
+          break;
+        default:
+          throw new ArgumentException("operatorToken");
+      }
+      if (valueExpression == null)
+        throw new ArgumentNullException(nameof(valueExpression));
+#endif
+
+      return new WithExpressionSyntax(SyntaxKind.WithExpression, expression, withKeyword, accessorPath.Node, operatorToken, valueExpression);
+    }
+
     public static ImplicitElementAccessSyntax ImplicitElementAccess(BracketedArgumentListSyntax argumentList)
     {
 #if DEBUG
@@ -51240,6 +51526,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
            typeof(ConditionalAccessExpressionSyntax),
            typeof(MemberBindingExpressionSyntax),
            typeof(ElementBindingExpressionSyntax),
+           typeof(WithExpressionSyntax),
            typeof(ImplicitElementAccessSyntax),
            typeof(BinaryExpressionSyntax),
            typeof(AssignmentExpressionSyntax),
