@@ -9020,7 +9020,45 @@ tryAgain:
                 leftOperand = _syntaxFactory.ConditionalExpression(leftOperand, questionToken, colonLeft, colon, colonRight);
             }
 
+            if (tk == SyntaxKind.WithKeyword)
+            {
+                var withKeyword = this.EatToken();
+                var accessorPath = this.ParseAccessorPath();
+                var assignmentOperator = this.EatToken();
+                var newValue = this.ParseExpressionCore();
+                leftOperand = _syntaxFactory.WithExpression(leftOperand, withKeyword, accessorPath, assignmentOperator, newValue);
+            }
+
             return leftOperand;
+        }
+
+        private SyntaxList<ExpressionSyntax> ParseAccessorPath()
+        {
+            var builder = SyntaxListBuilder<ExpressionSyntax>.Create();
+            var done = false;
+
+            while (!done)
+            {
+                SyntaxKind tk = this.CurrentToken.Kind;
+                switch (tk)
+                {
+                    case SyntaxKind.DotToken:
+                        builder.Add(_syntaxFactory.MemberBindingExpression(this.EatToken(), this.ParseSimpleName(NameOptions.InExpression)));
+                        break;
+
+                    case SyntaxKind.OpenBracketToken:
+                        builder.Add(_syntaxFactory.ElementBindingExpression(this.ParseBracketedArgumentList()));
+                        break;
+
+                    default:
+                        done = true;
+                        break;
+                }
+            }
+
+            //TODO: zero length path
+
+            return builder.ToList();
         }
 
         private ExpressionSyntax ParseDeclarationExpression(ParseTypeMode mode, MessageID feature)

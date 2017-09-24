@@ -2133,6 +2133,60 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal("y", gs.ByExpression.ToString());
         }
 
+        [Fact]
+        public void TestWith1()
+        {
+            var text = "x with .y = z";
+            var expr = SyntaxFactory.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.WithExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var ws = (WithExpressionSyntax)expr;
+            Assert.NotNull(ws.Expression);
+
+            Assert.NotNull(ws.AccessorPath);
+            var ap = ws.AccessorPath;
+            Assert.Equal(1, ap.Count);
+            Assert.IsType(typeof(MemberBindingExpressionSyntax), ap[0]);
+
+            Assert.NotNull(ws.OperatorToken);
+            Assert.Equal(SyntaxKind.EqualsToken, ws.OperatorToken.Kind());
+
+            Assert.NotNull(ws.ValueExpression);
+
+        }
+
+        [Fact]
+        public void TestWith2()
+        {
+            var text = "a(b) + c with .x[y].z += u(v) + w";
+            var expr = SyntaxFactory.ParseExpression(text);
+
+            Assert.NotNull(expr);
+            Assert.Equal(SyntaxKind.WithExpression, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var ws = (WithExpressionSyntax)expr;
+            Assert.NotNull(ws.Expression);
+
+            Assert.NotNull(ws.AccessorPath);
+            var ap = ws.AccessorPath;
+            Assert.Equal(3, ap.Count);
+            Assert.IsType(typeof(MemberBindingExpressionSyntax), ap[0]);
+            Assert.IsType(typeof(ElementBindingExpressionSyntax), ap[1]);
+            Assert.IsType(typeof(MemberBindingExpressionSyntax), ap[2]);
+
+            Assert.NotNull(ws.OperatorToken);
+            Assert.Equal(SyntaxKind.PlusEqualsToken, ws.OperatorToken.Kind());
+
+            Assert.NotNull(ws.ValueExpression);
+
+        }
+
         [WorkItem(543075, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543075")]
         [Fact]
         public void UnterminatedRankSpecifier()
