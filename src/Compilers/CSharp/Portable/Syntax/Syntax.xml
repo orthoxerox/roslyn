@@ -3277,7 +3277,13 @@
       <Kind Name="TrueKeyword"/>
       <Kind Name="IsKeyword"/>
     </Field>
+	<Field Name="TypeParameterList" Type="TypeParameterListSyntax" Optional="true"/>
     <Field Name="ParameterList" Type="ParameterListSyntax" Override="true"/>
+    <Field Name="ConstraintClauses" Type="SyntaxList&lt;TypeParameterConstraintClauseSyntax&gt;">
+      <PropertyComment>
+        <summary>Gets the constraint clause list.</summary>
+      </PropertyComment>
+    </Field>
     <Field Name="Body" Type="BlockSyntax" Optional="true" Override="true"/>
     <Field Name="ExpressionBody" Type="ArrowExpressionClauseSyntax" Optional="true" Override="true"/>
     <Field Name="SemicolonToken" Type="SyntaxToken" Optional="true" Override="true">

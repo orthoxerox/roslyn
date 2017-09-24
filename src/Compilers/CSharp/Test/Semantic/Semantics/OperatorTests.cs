@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
@@ -10163,6 +10163,24 @@ class Program
                 //         if (t is ValueTuple<int, int>) { }    // goldilocks
                 Diagnostic(ErrorCode.WRN_IsAlwaysTrue, "t is ValueTuple<int, int>").WithArguments("(int, int)").WithLocation(9, 13)
                 );
+        }
+
+        [Fact]
+        public void TestGenericOperator()
+        {
+            var source =
+@"using System;
+class Foo
+{
+    public static void Main(string[] args)
+    {
+        var f = new Foo();
+        Console.Write(f * ""test"");
+    }
+
+    public static T operator * <T>(Foo left, T right) => right;
+}";
+            CompileAndVerify(source: source, expectedOutput: "test");
         }
     }
 }

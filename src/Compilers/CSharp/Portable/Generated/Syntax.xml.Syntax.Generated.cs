@@ -15049,7 +15049,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
   {
     private SyntaxNode attributeLists;
     private TypeSyntax returnType;
+    private TypeParameterListSyntax typeParameterList;
     private ParameterListSyntax parameterList;
+    private SyntaxNode constraintClauses;
     private BlockSyntax body;
     private ArrowExpressionClauseSyntax expressionBody;
 
@@ -15099,11 +15101,28 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
       get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OperatorDeclarationSyntax)this.Green).operatorToken, this.GetChildPosition(4), this.GetChildIndex(4)); }
     }
 
+    public TypeParameterListSyntax TypeParameterList 
+    {
+        get
+        {
+            return this.GetRed(ref this.typeParameterList, 5);
+        }
+    }
+
     public override ParameterListSyntax ParameterList 
     {
         get
         {
-            return this.GetRed(ref this.parameterList, 5);
+            return this.GetRed(ref this.parameterList, 6);
+        }
+    }
+
+    /// <summary>Gets the constraint clause list.</summary>
+    public SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses 
+    {
+        get
+        {
+            return new SyntaxList<TypeParameterConstraintClauseSyntax>(this.GetRed(ref this.constraintClauses, 7));
         }
     }
 
@@ -15111,7 +15130,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     {
         get
         {
-            return this.GetRed(ref this.body, 6);
+            return this.GetRed(ref this.body, 8);
         }
     }
 
@@ -15119,7 +15138,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
     {
         get
         {
-            return this.GetRed(ref this.expressionBody, 7);
+            return this.GetRed(ref this.expressionBody, 9);
         }
     }
 
@@ -15129,7 +15148,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         {
             var slot = ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OperatorDeclarationSyntax)this.Green).semicolonToken;
             if (slot != null)
-                return new SyntaxToken(this, slot, this.GetChildPosition(8), this.GetChildIndex(8));
+                return new SyntaxToken(this, slot, this.GetChildPosition(10), this.GetChildIndex(10));
 
             return default(SyntaxToken);
         }
@@ -15141,9 +15160,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         {
             case 0: return this.GetRedAtZero(ref this.attributeLists);
             case 2: return this.GetRed(ref this.returnType, 2);
-            case 5: return this.GetRed(ref this.parameterList, 5);
-            case 6: return this.GetRed(ref this.body, 6);
-            case 7: return this.GetRed(ref this.expressionBody, 7);
+            case 5: return this.GetRed(ref this.typeParameterList, 5);
+            case 6: return this.GetRed(ref this.parameterList, 6);
+            case 7: return this.GetRed(ref this.constraintClauses, 7);
+            case 8: return this.GetRed(ref this.body, 8);
+            case 9: return this.GetRed(ref this.expressionBody, 9);
             default: return null;
         }
     }
@@ -15153,9 +15174,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         {
             case 0: return this.attributeLists;
             case 2: return this.returnType;
-            case 5: return this.parameterList;
-            case 6: return this.body;
-            case 7: return this.expressionBody;
+            case 5: return this.typeParameterList;
+            case 6: return this.parameterList;
+            case 7: return this.constraintClauses;
+            case 8: return this.body;
+            case 9: return this.expressionBody;
             default: return null;
         }
     }
@@ -15170,11 +15193,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         visitor.VisitOperatorDeclaration(this);
     }
 
-    public OperatorDeclarationSyntax Update(SyntaxList<AttributeListSyntax> attributeLists, SyntaxTokenList modifiers, TypeSyntax returnType, SyntaxToken operatorKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+    public OperatorDeclarationSyntax Update(SyntaxList<AttributeListSyntax> attributeLists, SyntaxTokenList modifiers, TypeSyntax returnType, SyntaxToken operatorKeyword, SyntaxToken operatorToken, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
     {
-        if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || returnType != this.ReturnType || operatorKeyword != this.OperatorKeyword || operatorToken != this.OperatorToken || parameterList != this.ParameterList || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
+        if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || returnType != this.ReturnType || operatorKeyword != this.OperatorKeyword || operatorToken != this.OperatorToken || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || constraintClauses != this.ConstraintClauses || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
         {
-            var newNode = SyntaxFactory.OperatorDeclaration(attributeLists, modifiers, returnType, operatorKeyword, operatorToken, parameterList, body, expressionBody, semicolonToken);
+            var newNode = SyntaxFactory.OperatorDeclaration(attributeLists, modifiers, returnType, operatorKeyword, operatorToken, typeParameterList, parameterList, constraintClauses, body, expressionBody, semicolonToken);
             var annotations = this.GetAnnotations();
             if (annotations != null && annotations.Length > 0)
                return newNode.WithAnnotations(annotations);
@@ -15186,47 +15209,57 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
 
     public OperatorDeclarationSyntax WithAttributeLists(SyntaxList<AttributeListSyntax> attributeLists)
     {
-        return this.Update(attributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.ParameterList, this.Body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(attributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithModifiers(SyntaxTokenList modifiers)
     {
-        return this.Update(this.AttributeLists, modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.ParameterList, this.Body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithReturnType(TypeSyntax returnType)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, returnType, this.OperatorKeyword, this.OperatorToken, this.ParameterList, this.Body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, returnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithOperatorKeyword(SyntaxToken operatorKeyword)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, operatorKeyword, this.OperatorToken, this.ParameterList, this.Body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, operatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithOperatorToken(SyntaxToken operatorToken)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, operatorToken, this.ParameterList, this.Body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, operatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
+    }
+
+    public OperatorDeclarationSyntax WithTypeParameterList(TypeParameterListSyntax typeParameterList)
+    {
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, typeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithParameterList(ParameterListSyntax parameterList)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, parameterList, this.Body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, parameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
+    }
+
+    public OperatorDeclarationSyntax WithConstraintClauses(SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses)
+    {
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, constraintClauses, this.Body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithBody(BlockSyntax body)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.ParameterList, body, this.ExpressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, body, this.ExpressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithExpressionBody(ArrowExpressionClauseSyntax expressionBody)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.ParameterList, this.Body, expressionBody, this.SemicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, expressionBody, this.SemicolonToken);
     }
 
     public OperatorDeclarationSyntax WithSemicolonToken(SyntaxToken semicolonToken)
     {
-        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.ParameterList, this.Body, this.ExpressionBody, semicolonToken);
+        return this.Update(this.AttributeLists, this.Modifiers, this.ReturnType, this.OperatorKeyword, this.OperatorToken, this.TypeParameterList, this.ParameterList, this.ConstraintClauses, this.Body, this.ExpressionBody, semicolonToken);
     }
 
     public OperatorDeclarationSyntax AddAttributeLists(params AttributeListSyntax[] items)
@@ -15239,9 +15272,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         return this.WithModifiers(this.Modifiers.AddRange(items));
     }
 
+    public OperatorDeclarationSyntax AddTypeParameterListParameters(params TypeParameterSyntax[] items)
+    {
+        var typeParameterList = this.TypeParameterList ?? SyntaxFactory.TypeParameterList();
+        return this.WithTypeParameterList(typeParameterList.WithParameters(typeParameterList.Parameters.AddRange(items)));
+    }
+
     public OperatorDeclarationSyntax AddParameterListParameters(params ParameterSyntax[] items)
     {
         return this.WithParameterList(this.ParameterList.WithParameters(this.ParameterList.Parameters.AddRange(items)));
+    }
+
+    public OperatorDeclarationSyntax AddConstraintClauses(params TypeParameterConstraintClauseSyntax[] items)
+    {
+        return this.WithConstraintClauses(this.ConstraintClauses.AddRange(items));
     }
 
     public OperatorDeclarationSyntax AddBodyStatements(params StatementSyntax[] items)

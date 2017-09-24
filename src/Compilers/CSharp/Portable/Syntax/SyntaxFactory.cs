@@ -2433,10 +2433,60 @@ namespace Microsoft.CodeAnalysis.CSharp
                 returnType: returnType,
                 operatorKeyword: operatorKeyword,
                 operatorToken: operatorToken,
+                typeParameterList: default(TypeParameterListSyntax),
                 parameterList: parameterList,
+                constraintClauses: default(SyntaxList<TypeParameterConstraintClauseSyntax>),
                 body: body,
                 expressionBody: default(ArrowExpressionClauseSyntax),
                 semicolonToken: semicolonToken);
+        }
+
+        public static OperatorDeclarationSyntax OperatorDeclaration(
+            SyntaxList<AttributeListSyntax> attributeLists,
+            SyntaxTokenList modifiers,
+            TypeSyntax returnType,
+            SyntaxToken operatorKeyword,
+            SyntaxToken operatorToken,
+            ParameterListSyntax parameterList,
+            BlockSyntax body,
+            ArrowExpressionClauseSyntax expressionBody,
+            SyntaxToken semicolonToken)
+        {
+            return SyntaxFactory.OperatorDeclaration(
+                attributeLists: attributeLists,
+                modifiers: modifiers,
+                returnType: returnType,
+                operatorKeyword: operatorKeyword,
+                operatorToken: operatorToken,
+                typeParameterList: default(TypeParameterListSyntax),
+                parameterList: parameterList,
+                constraintClauses: default(SyntaxList<TypeParameterConstraintClauseSyntax>),
+                body: body,
+                expressionBody: expressionBody,
+                semicolonToken: semicolonToken);
+        }
+
+        public static OperatorDeclarationSyntax OperatorDeclaration(
+            SyntaxList<AttributeListSyntax> attributeLists,
+            SyntaxTokenList modifiers,
+            TypeSyntax returnType,
+            SyntaxToken operatorToken,
+            ParameterListSyntax parameterList,
+            BlockSyntax body,
+            ArrowExpressionClauseSyntax expressionBody)
+        {
+            return SyntaxFactory.OperatorDeclaration(
+                attributeLists: attributeLists,
+                modifiers: modifiers,
+                returnType: returnType,
+                operatorKeyword: default(SyntaxToken),
+                operatorToken: operatorToken,
+                typeParameterList: default(TypeParameterListSyntax),
+                parameterList: parameterList,
+                constraintClauses: default(SyntaxList<TypeParameterConstraintClauseSyntax>),
+                body: body,
+                expressionBody: expressionBody,
+                semicolonToken: default(SyntaxToken));
         }
 
         /// <summary>Creates a new UsingDirectiveSyntax instance.</summary>

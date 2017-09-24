@@ -604,14 +604,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             }
         }
 
-        public sealed override ImmutableArray<TypeParameterSymbol> TypeParameters
-        {
-            get { return ImmutableArray<TypeParameterSymbol>.Empty; }
-        }
-
-        public sealed override ImmutableArray<TypeParameterConstraintClause> TypeParameterConstraintClauses
-            => ImmutableArray<TypeParameterConstraintClause>.Empty;
-
         internal override RefKind RefKind
         {
             get { return RefKind.None; }

@@ -2871,6 +2871,8 @@ parse_member_name:;
                 }
             }
 
+            var typeParameterListOpt = this.ParseTypeParameterList();
+
             var paramList = this.ParseParenthesizedParameterList();
 
             switch (paramList.Parameters.Count)
@@ -2913,30 +2915,49 @@ parse_member_name:;
                     break;
             }
 
-            BlockSyntax blockBody;
-            ArrowExpressionClauseSyntax expressionBody;
-            SyntaxToken semicolon;
-            this.ParseBlockAndExpressionBodiesWithSemicolon(out blockBody, out expressionBody, out semicolon);
-
-            // if the operator is invalid, then switch it to plus (which will work either way) so that
-            // we can finish building the tree
-            if (!(opKind == SyntaxKind.IsKeyword ||
-                  SyntaxFacts.IsOverloadableUnaryOperator(opKind) ||
-                  SyntaxFacts.IsOverloadableBinaryOperator(opKind)))
+            var constraints = default(SyntaxListBuilder<TypeParameterConstraintClauseSyntax>);
+            try
             {
-                opToken = ConvertToMissingWithTrailingTrivia(opToken, SyntaxKind.PlusToken);
-            }
+                if (this.CurrentToken.ContextualKind == SyntaxKind.WhereKeyword)
+                {
+                    constraints = _pool.Allocate<TypeParameterConstraintClauseSyntax>();
+                    this.ParseTypeParameterConstraintClauses(constraints);
+                }
 
-            return _syntaxFactory.OperatorDeclaration(
-                attributes,
-                modifiers.ToList(),
-                type,
-                opKeyword,
-                opToken,
-                paramList,
-                blockBody,
-                expressionBody,
-                semicolon);
+                BlockSyntax blockBody;
+                ArrowExpressionClauseSyntax expressionBody;
+                SyntaxToken semicolon;
+                this.ParseBlockAndExpressionBodiesWithSemicolon(out blockBody, out expressionBody, out semicolon);
+
+                // if the operator is invalid, then switch it to plus (which will work either way) so that
+                // we can finish building the tree
+                if (!(opKind == SyntaxKind.IsKeyword ||
+                      SyntaxFacts.IsOverloadableUnaryOperator(opKind) ||
+                      SyntaxFacts.IsOverloadableBinaryOperator(opKind)))
+                {
+                    opToken = ConvertToMissingWithTrailingTrivia(opToken, SyntaxKind.PlusToken);
+                }
+
+                return _syntaxFactory.OperatorDeclaration(
+                    attributes,
+                    modifiers.ToList(),
+                    type,
+                    opKeyword,
+                    opToken,
+                    typeParameterListOpt,
+                    paramList,
+                    constraints,
+                    blockBody,
+                    expressionBody,
+                    semicolon);
+            }
+            finally
+            {
+                if (!constraints.IsNull)
+                {
+                    _pool.Free(constraints);
+                }
+            }
         }
 
         private IndexerDeclarationSyntax ParseIndexerDeclaration(

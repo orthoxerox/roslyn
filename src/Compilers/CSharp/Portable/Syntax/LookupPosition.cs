@@ -215,6 +215,43 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
             return !IsBetweenTokens(position, firstNameToken, firstPostNameToken);
         }
 
+        internal static bool IsInOperatorTypeParameterScope(int position, BaseMethodDeclarationSyntax methodDecl)
+        {
+            Debug.Assert(methodDecl != null);
+            Debug.Assert(IsInMethodDeclaration(position, methodDecl));
+
+            if (!(methodDecl is OperatorDeclarationSyntax operatorDecl))
+            {
+                return false;
+            }
+
+            if (operatorDecl.TypeParameterList == null)
+            {
+                // no type parameters => nothing can be in their scope
+                return false;
+            }
+
+            // optimization for a common case - when position is in the ReturnType, we can see type parameters
+            if (operatorDecl.ReturnType.FullSpan.Contains(position))
+            {
+                return true;
+            }
+
+            // Must be in the method, but not in an attribute on the method.
+            if (IsInAttributeSpecification(position, operatorDecl.AttributeLists))
+            {
+                return false;
+            }
+
+            var firstNameToken = operatorDecl.OperatorToken;
+
+            var typeParams = operatorDecl.TypeParameterList;
+            var firstPostNameToken = typeParams == null ? operatorDecl.ParameterList.OpenParenToken : typeParams.LessThanToken;
+
+            // Scope does not include method name.
+            return !IsBetweenTokens(position, firstNameToken, firstPostNameToken);
+        }
+
         /// <remarks>
         /// Used to determine whether it would be appropriate to use the binder for the statement (if any).
         /// Not used to determine whether the position is syntactically within the statement.

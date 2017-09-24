@@ -5314,6 +5314,93 @@ class Class1<T>{
         }
 
         [Fact]
+        public void TestClassGenericOperatorMethod()
+        {
+            var text = "class a { b operator + <T> (c d, T f) where T : struct { } }";
+            var file = this.ParseFile(text);
+
+            Assert.NotNull(file);
+            Assert.Equal(1, file.Members.Count);
+            Assert.Equal(text, file.ToString());
+            Assert.Equal(0, file.Errors().Length);
+
+            Assert.Equal(SyntaxKind.ClassDeclaration, file.Members[0].Kind());
+            var cs = (TypeDeclarationSyntax)file.Members[0];
+            Assert.Equal(0, cs.AttributeLists.Count);
+            Assert.Equal(0, cs.Modifiers.Count);
+            Assert.NotNull(cs.Keyword);
+            Assert.Equal(SyntaxKind.ClassKeyword, cs.Keyword.Kind());
+            Assert.NotNull(cs.Identifier);
+            Assert.Equal("a", cs.Identifier.ToString());
+            Assert.Null(cs.BaseList);
+            Assert.Equal(0, cs.ConstraintClauses.Count);
+            Assert.NotNull(cs.OpenBraceToken);
+            Assert.NotNull(cs.CloseBraceToken);
+
+            Assert.Equal(1, cs.Members.Count);
+
+            Assert.Equal(SyntaxKind.OperatorDeclaration, cs.Members[0].Kind());
+            var ps = (OperatorDeclarationSyntax)cs.Members[0];
+            Assert.Equal(0, ps.AttributeLists.Count);
+            Assert.Equal(0, ps.Modifiers.Count);
+            Assert.NotNull(ps.ReturnType);
+            Assert.Equal("b", ps.ReturnType.ToString());
+            Assert.NotNull(ps.OperatorKeyword);
+            Assert.Equal(SyntaxKind.OperatorKeyword, ps.OperatorKeyword.Kind());
+            Assert.NotNull(ps.OperatorToken);
+            Assert.Equal(SyntaxKind.PlusToken, ps.OperatorToken.Kind());
+
+            Assert.NotNull(ps.TypeParameterList);
+            Assert.NotNull(ps.TypeParameterList.LessThanToken);
+            Assert.NotNull(ps.TypeParameterList.GreaterThanToken);
+
+            Assert.Equal(1, ps.TypeParameterList.Parameters.Count);
+
+            Assert.Equal(0, ps.TypeParameterList.Parameters[0].AttributeLists.Count);
+            Assert.NotNull(ps.TypeParameterList.Parameters[0].VarianceKeyword);
+            Assert.Equal(SyntaxKind.None, ps.TypeParameterList.Parameters[0].VarianceKeyword.Kind());
+            Assert.NotNull(ps.TypeParameterList.Parameters[0].Identifier);
+            Assert.Equal("T", ps.TypeParameterList.Parameters[0].Identifier.ToString());
+
+            Assert.NotNull(ps.ParameterList.OpenParenToken);
+            Assert.NotNull(ps.ParameterList.CloseParenToken);
+            Assert.NotNull(ps.Body);
+
+            Assert.Equal(2, ps.ParameterList.Parameters.Count);
+
+            Assert.Equal(0, ps.ParameterList.Parameters[0].AttributeLists.Count);
+            Assert.Equal(0, ps.ParameterList.Parameters[0].Modifiers.Count);
+            Assert.NotNull(ps.ParameterList.Parameters[0].Type);
+            Assert.Equal("c", ps.ParameterList.Parameters[0].Type.ToString());
+            Assert.NotNull(ps.ParameterList.Parameters[0].Identifier);
+            Assert.Equal("d", ps.ParameterList.Parameters[0].Identifier.ToString());
+
+            Assert.Equal(0, ps.ParameterList.Parameters[1].AttributeLists.Count);
+            Assert.Equal(0, ps.ParameterList.Parameters[1].Modifiers.Count);
+            Assert.NotNull(ps.ParameterList.Parameters[1].Type);
+            Assert.Equal("T", ps.ParameterList.Parameters[1].Type.ToString());
+            Assert.NotNull(ps.ParameterList.Parameters[1].Identifier);
+            Assert.Equal("f", ps.ParameterList.Parameters[1].Identifier.ToString());
+
+            Assert.NotNull(ps.ConstraintClauses);
+
+            Assert.Equal(1, ps.ConstraintClauses.Count);
+
+            Assert.NotNull(ps.ConstraintClauses[0].WhereKeyword);
+            Assert.Equal(SyntaxKind.WhereKeyword, ps.ConstraintClauses[0].WhereKeyword.Kind());
+            Assert.NotNull(ps.ConstraintClauses[0].Name);
+            Assert.Equal("T", ps.ConstraintClauses[0].Name.ToString());
+            Assert.NotNull(ps.ConstraintClauses[0].ColonToken);
+            Assert.Equal(SyntaxKind.ColonToken, ps.ConstraintClauses[0].ColonToken.Kind());
+            Assert.NotNull(ps.ConstraintClauses[0].Constraints);
+
+            Assert.Equal(1, ps.ConstraintClauses[0].Constraints.Count);
+
+            Assert.Equal(SyntaxKind.StructConstraint, ps.ConstraintClauses[0].Constraints[0].Kind());
+        }
+
+
+        [Fact]
         public void TestClassImplicitConversionOperatorMethod()
         {
             var text = "class a { implicit operator b (c d) { } }";

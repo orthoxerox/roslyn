@@ -298,7 +298,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 returnType,
                 operatorKeyword,
                 operatorToken,
+                syntax.TypeParameterList,
                 parameterList,
+                syntax.ConstraintClauses,
                 block,
                 default(ArrowExpressionClauseSyntax),
                 semicolonToken);

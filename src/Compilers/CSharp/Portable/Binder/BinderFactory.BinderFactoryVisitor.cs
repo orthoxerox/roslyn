@@ -288,18 +288,41 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return VisitCore(parent.Parent);
                 }
 
-                bool inBody = LookupPosition.IsInBody(_position, parent);
-                var extraInfo = inBody ? NodeUsage.OperatorBody : NodeUsage.Normal;  // extra info for the cache.
-                var key = CreateBinderCacheKey(parent, extraInfo);
+                NodeUsage usage;
+                if (LookupPosition.IsInBody(_position, parent))
+                {
+                    usage = NodeUsage.MethodBody;
+                }
+                else if (LookupPosition.IsInOperatorTypeParameterScope(_position, parent))
+                {
+                    usage = NodeUsage.MethodTypeParameters;
+                }
+                else
+                {
+                    // Normal - is when method itself is not involved (will use outer binder)
+                    //          that would be if position is within the return type or method name
+                    usage = NodeUsage.Normal;
+                }
+
+                var key = CreateBinderCacheKey(parent, usage);
 
                 Binder resultBinder;
                 if (!binderCache.TryGetValue(key, out resultBinder))
                 {
                     resultBinder = VisitCore(parent.Parent);
 
-                    MethodSymbol method = GetMethodSymbol(parent, resultBinder);
-                    if ((object)method != null && inBody)
+                    MethodSymbol method = null;
+
+                    if (usage != NodeUsage.Normal 
+                        && (parent as OperatorDeclarationSyntax)?.TypeParameterList != null)
                     {
+                        method = GetMethodSymbol(parent, resultBinder);
+                        resultBinder = new WithMethodTypeParametersBinder(method, resultBinder);
+                    }
+
+                    if (usage == NodeUsage.MethodBody)
+                    {
+                        method = method ?? GetMethodSymbol(parent, resultBinder);
                         resultBinder = new InMethodBinder(method, resultBinder);
                     }
 
