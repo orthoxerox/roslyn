@@ -8663,6 +8663,7 @@ tryAgain:
         enum Precedence : uint
         {
             Expression = 0, // Loosest possible precedence, used to accept all expressions
+            With,
             Assignment,
             Lambda = Assignment, // "The => operator has the same precedence as assignment (=) and is right-associative."
             Ternary,
@@ -8688,6 +8689,8 @@ tryAgain:
         {
             switch (op)
             {
+                case SyntaxKind.WithExpression:
+                    return Precedence.With;
                 case SyntaxKind.SimpleAssignmentExpression:
                 case SyntaxKind.AddAssignmentExpression:
                 case SyntaxKind.SubtractAssignmentExpression:
@@ -8995,6 +8998,14 @@ tryAgain:
 
                         leftOperand = _syntaxFactory.AssignmentExpression(opKind, leftOperand, opToken, this.ParseSubExpression(newPrecedence));
                     }
+                    else if (opKind == SyntaxKind.WithExpression)
+                    {
+                        //var withKeyword = this.EatToken();
+                        var accessorPath = this.ParseAccessorPath();
+                        var assignmentOperator = this.EatToken();
+                        var newValue = this.ParseExpressionCore();
+                        leftOperand = _syntaxFactory.WithExpression(leftOperand, opToken, accessorPath, assignmentOperator, newValue);
+                    }
                     else
                     {
                         leftOperand = _syntaxFactory.BinaryExpression(opKind, leftOperand, opToken, this.ParseSubExpression(newPrecedence));
@@ -9020,14 +9031,7 @@ tryAgain:
                 leftOperand = _syntaxFactory.ConditionalExpression(leftOperand, questionToken, colonLeft, colon, colonRight);
             }
 
-            if (tk == SyntaxKind.WithKeyword)
-            {
-                var withKeyword = this.EatToken();
-                var accessorPath = this.ParseAccessorPath();
-                var assignmentOperator = this.EatToken();
-                var newValue = this.ParseExpressionCore();
-                leftOperand = _syntaxFactory.WithExpression(leftOperand, withKeyword, accessorPath, assignmentOperator, newValue);
-            }
+
 
             return leftOperand;
         }
