@@ -1939,8 +1939,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
   public sealed partial class WithExpressionSyntax : ExpressionSyntax
   {
     private ExpressionSyntax expression;
-    private SyntaxNode accessorPath;
-    private ExpressionSyntax valueExpression;
+    private SyntaxNode withExpressionClauses;
 
     internal WithExpressionSyntax(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CSharpSyntaxNode green, SyntaxNode parent, int position)
         : base(green, parent, position)
@@ -1962,28 +1961,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
       get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax)this.Green).withKeyword, this.GetChildPosition(1), this.GetChildIndex(1)); }
     }
 
-    /// <summary>A list of ExpressionSyntax nodes representing the (nested) member being modified.</summary>
-    public SyntaxList<ExpressionSyntax> AccessorPath 
+    public SyntaxToken OpenBraceToken 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax)this.Green).openBraceToken, this.GetChildPosition(2), this.GetChildIndex(2)); }
+    }
+
+    public SeparatedSyntaxList<WithExpressionClauseSyntax> WithExpressionClauses 
     {
         get
         {
-            return new SyntaxList<ExpressionSyntax>(this.GetRed(ref this.accessorPath, 2));
+            var red = this.GetRed(ref this.withExpressionClauses, 3);
+            if (red != null)
+                return new SeparatedSyntaxList<WithExpressionClauseSyntax>(red, this.GetChildIndex(3));
+
+            return default(SeparatedSyntaxList<WithExpressionClauseSyntax>);
         }
     }
 
-    /// <summary>SyntaxToken representing the operator of the assignment expression.</summary>
-    public SyntaxToken OperatorToken 
+    public SyntaxToken CloseBraceToken 
     {
-      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax)this.Green).operatorToken, this.GetChildPosition(3), this.GetChildIndex(3)); }
-    }
-
-    /// <summary>ExpressionSyntax node representing the new value being assigned.</summary>
-    public ExpressionSyntax ValueExpression 
-    {
-        get
-        {
-            return this.GetRed(ref this.valueExpression, 4);
-        }
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax)this.Green).closeBraceToken, this.GetChildPosition(4), this.GetChildIndex(4)); }
     }
 
     internal override SyntaxNode GetNodeSlot(int index)
@@ -1991,8 +1988,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         switch (index)
         {
             case 0: return this.GetRedAtZero(ref this.expression);
-            case 2: return this.GetRed(ref this.accessorPath, 2);
-            case 4: return this.GetRed(ref this.valueExpression, 4);
+            case 3: return this.GetRed(ref this.withExpressionClauses, 3);
             default: return null;
         }
     }
@@ -2001,8 +1997,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         switch (index)
         {
             case 0: return this.expression;
-            case 2: return this.accessorPath;
-            case 4: return this.valueExpression;
+            case 3: return this.withExpressionClauses;
             default: return null;
         }
     }
@@ -2017,11 +2012,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
         visitor.VisitWithExpression(this);
     }
 
-    public WithExpressionSyntax Update(ExpressionSyntax expression, SyntaxToken withKeyword, SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    public WithExpressionSyntax Update(ExpressionSyntax expression, SyntaxToken withKeyword, SyntaxToken openBraceToken, SeparatedSyntaxList<WithExpressionClauseSyntax> withExpressionClauses, SyntaxToken closeBraceToken)
     {
-        if (expression != this.Expression || withKeyword != this.WithKeyword || accessorPath != this.AccessorPath || operatorToken != this.OperatorToken || valueExpression != this.ValueExpression)
+        if (expression != this.Expression || withKeyword != this.WithKeyword || openBraceToken != this.OpenBraceToken || withExpressionClauses != this.WithExpressionClauses || closeBraceToken != this.CloseBraceToken)
         {
-            var newNode = SyntaxFactory.WithExpression(expression, withKeyword, accessorPath, operatorToken, valueExpression);
+            var newNode = SyntaxFactory.WithExpression(expression, withKeyword, openBraceToken, withExpressionClauses, closeBraceToken);
             var annotations = this.GetAnnotations();
             if (annotations != null && annotations.Length > 0)
                return newNode.WithAnnotations(annotations);
@@ -2033,30 +2028,128 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
 
     public WithExpressionSyntax WithExpression(ExpressionSyntax expression)
     {
-        return this.Update(expression, this.WithKeyword, this.AccessorPath, this.OperatorToken, this.ValueExpression);
+        return this.Update(expression, this.WithKeyword, this.OpenBraceToken, this.WithExpressionClauses, this.CloseBraceToken);
     }
 
     public WithExpressionSyntax WithWithKeyword(SyntaxToken withKeyword)
     {
-        return this.Update(this.Expression, withKeyword, this.AccessorPath, this.OperatorToken, this.ValueExpression);
+        return this.Update(this.Expression, withKeyword, this.OpenBraceToken, this.WithExpressionClauses, this.CloseBraceToken);
     }
 
-    public WithExpressionSyntax WithAccessorPath(SyntaxList<ExpressionSyntax> accessorPath)
+    public WithExpressionSyntax WithOpenBraceToken(SyntaxToken openBraceToken)
     {
-        return this.Update(this.Expression, this.WithKeyword, accessorPath, this.OperatorToken, this.ValueExpression);
+        return this.Update(this.Expression, this.WithKeyword, openBraceToken, this.WithExpressionClauses, this.CloseBraceToken);
     }
 
-    public WithExpressionSyntax WithOperatorToken(SyntaxToken operatorToken)
+    public WithExpressionSyntax WithWithExpressionClauses(SeparatedSyntaxList<WithExpressionClauseSyntax> withExpressionClauses)
     {
-        return this.Update(this.Expression, this.WithKeyword, this.AccessorPath, operatorToken, this.ValueExpression);
+        return this.Update(this.Expression, this.WithKeyword, this.OpenBraceToken, withExpressionClauses, this.CloseBraceToken);
     }
 
-    public WithExpressionSyntax WithValueExpression(ExpressionSyntax valueExpression)
+    public WithExpressionSyntax WithCloseBraceToken(SyntaxToken closeBraceToken)
     {
-        return this.Update(this.Expression, this.WithKeyword, this.AccessorPath, this.OperatorToken, valueExpression);
+        return this.Update(this.Expression, this.WithKeyword, this.OpenBraceToken, this.WithExpressionClauses, closeBraceToken);
     }
 
-    public WithExpressionSyntax AddAccessorPath(params ExpressionSyntax[] items)
+    public WithExpressionSyntax AddWithExpressionClauses(params WithExpressionClauseSyntax[] items)
+    {
+        return this.WithWithExpressionClauses(this.WithExpressionClauses.AddRange(items));
+    }
+  }
+
+  public sealed partial class WithExpressionClauseSyntax : CSharpSyntaxNode
+  {
+    private SyntaxNode accessorPath;
+    private ExpressionSyntax valueExpression;
+
+    internal WithExpressionClauseSyntax(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CSharpSyntaxNode green, SyntaxNode parent, int position)
+        : base(green, parent, position)
+    {
+    }
+
+    /// <summary>A list of ExpressionSyntax nodes representing the (nested) member being modified.</summary>
+    public SyntaxList<ExpressionSyntax> AccessorPath 
+    {
+        get
+        {
+            return new SyntaxList<ExpressionSyntax>(this.GetRed(ref this.accessorPath, 0));
+        }
+    }
+
+    /// <summary>SyntaxToken representing the operator of the assignment expression.</summary>
+    public SyntaxToken OperatorToken 
+    {
+      get { return new SyntaxToken(this, ((Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionClauseSyntax)this.Green).operatorToken, this.GetChildPosition(1), this.GetChildIndex(1)); }
+    }
+
+    /// <summary>ExpressionSyntax node representing the new value being assigned.</summary>
+    public ExpressionSyntax ValueExpression 
+    {
+        get
+        {
+            return this.GetRed(ref this.valueExpression, 2);
+        }
+    }
+
+    internal override SyntaxNode GetNodeSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.GetRedAtZero(ref this.accessorPath);
+            case 2: return this.GetRed(ref this.valueExpression, 2);
+            default: return null;
+        }
+    }
+    internal override SyntaxNode GetCachedSlot(int index)
+    {
+        switch (index)
+        {
+            case 0: return this.accessorPath;
+            case 2: return this.valueExpression;
+            default: return null;
+        }
+    }
+
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor)
+    {
+        return visitor.VisitWithExpressionClause(this);
+    }
+
+    public override void Accept(CSharpSyntaxVisitor visitor)
+    {
+        visitor.VisitWithExpressionClause(this);
+    }
+
+    public WithExpressionClauseSyntax Update(SyntaxList<ExpressionSyntax> accessorPath, SyntaxToken operatorToken, ExpressionSyntax valueExpression)
+    {
+        if (accessorPath != this.AccessorPath || operatorToken != this.OperatorToken || valueExpression != this.ValueExpression)
+        {
+            var newNode = SyntaxFactory.WithExpressionClause(accessorPath, operatorToken, valueExpression);
+            var annotations = this.GetAnnotations();
+            if (annotations != null && annotations.Length > 0)
+               return newNode.WithAnnotations(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    public WithExpressionClauseSyntax WithAccessorPath(SyntaxList<ExpressionSyntax> accessorPath)
+    {
+        return this.Update(accessorPath, this.OperatorToken, this.ValueExpression);
+    }
+
+    public WithExpressionClauseSyntax WithOperatorToken(SyntaxToken operatorToken)
+    {
+        return this.Update(this.AccessorPath, operatorToken, this.ValueExpression);
+    }
+
+    public WithExpressionClauseSyntax WithValueExpression(ExpressionSyntax valueExpression)
+    {
+        return this.Update(this.AccessorPath, this.OperatorToken, valueExpression);
+    }
+
+    public WithExpressionClauseSyntax AddAccessorPath(params ExpressionSyntax[] items)
     {
         return this.WithAccessorPath(this.AccessorPath.AddRange(items));
     }

@@ -126,7 +126,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         
         private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionSyntax GenerateWithExpression()
         {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WithExpression(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WithKeyword), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
+            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WithExpression(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WithKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionClauseSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        }
+        
+        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WithExpressionClauseSyntax GenerateWithExpressionClause()
+        {
+            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WithExpressionClause(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
         }
         
         private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ImplicitElementAccessSyntax GenerateImplicitElementAccess()
@@ -1301,6 +1306,18 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.NotNull(node.Expression);
             Assert.Equal(SyntaxKind.WithKeyword, node.WithKeyword.Kind);
+            Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
+            Assert.NotNull(node.WithExpressionClauses);
+            Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestWithExpressionClauseFactoryAndProperties()
+        {
+            var node = GenerateWithExpressionClause();
+            
             Assert.NotNull(node.AccessorPath);
             Assert.Equal(SyntaxKind.EqualsToken, node.OperatorToken.Kind);
             Assert.NotNull(node.ValueExpression);
@@ -4255,6 +4272,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestWithExpressionIdentityRewriter()
         {
             var oldNode = GenerateWithExpression();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestWithExpressionClauseTokenDeleteRewriter()
+        {
+            var oldNode = GenerateWithExpressionClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestWithExpressionClauseIdentityRewriter()
+        {
+            var oldNode = GenerateWithExpressionClause();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             
@@ -9089,7 +9132,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         
         private static WithExpressionSyntax GenerateWithExpression()
         {
-            return SyntaxFactory.WithExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.WithKeyword), new SyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
+            return SyntaxFactory.WithExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.WithKeyword), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<WithExpressionClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        }
+        
+        private static WithExpressionClauseSyntax GenerateWithExpressionClause()
+        {
+            return SyntaxFactory.WithExpressionClause(new SyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
         }
         
         private static ImplicitElementAccessSyntax GenerateImplicitElementAccess()
@@ -10264,10 +10312,22 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.NotNull(node.Expression);
             Assert.Equal(SyntaxKind.WithKeyword, node.WithKeyword.Kind());
+            Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
+            Assert.NotNull(node.WithExpressionClauses);
+            Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
+            var newNode = node.WithExpression(node.Expression).WithWithKeyword(node.WithKeyword).WithOpenBraceToken(node.OpenBraceToken).WithWithExpressionClauses(node.WithExpressionClauses).WithCloseBraceToken(node.CloseBraceToken);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestWithExpressionClauseFactoryAndProperties()
+        {
+            var node = GenerateWithExpressionClause();
+            
             Assert.NotNull(node.AccessorPath);
             Assert.Equal(SyntaxKind.EqualsToken, node.OperatorToken.Kind());
             Assert.NotNull(node.ValueExpression);
-            var newNode = node.WithExpression(node.Expression).WithWithKeyword(node.WithKeyword).WithAccessorPath(node.AccessorPath).WithOperatorToken(node.OperatorToken).WithValueExpression(node.ValueExpression);
+            var newNode = node.WithAccessorPath(node.AccessorPath).WithOperatorToken(node.OperatorToken).WithValueExpression(node.ValueExpression);
             Assert.Equal(node, newNode);
         }
         
@@ -13218,6 +13278,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestWithExpressionIdentityRewriter()
         {
             var oldNode = GenerateWithExpression();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestWithExpressionClauseTokenDeleteRewriter()
+        {
+            var oldNode = GenerateWithExpressionClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestWithExpressionClauseIdentityRewriter()
+        {
+            var oldNode = GenerateWithExpressionClause();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             

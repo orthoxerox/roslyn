@@ -8663,7 +8663,6 @@ tryAgain:
         enum Precedence : uint
         {
             Expression = 0, // Loosest possible precedence, used to accept all expressions
-            With,
             Assignment,
             Lambda = Assignment, // "The => operator has the same precedence as assignment (=) and is right-associative."
             Ternary,
@@ -8678,6 +8677,7 @@ tryAgain:
             Shift,
             Additive,
             Mutiplicative,
+            With,
             Unary,
             Cast,
             PointerIndirection,
@@ -9001,10 +9001,38 @@ tryAgain:
                     else if (opKind == SyntaxKind.WithExpression)
                     {
                         //var withKeyword = this.EatToken();
-                        var accessorPath = this.ParseAccessorPath();
-                        var assignmentOperator = this.EatToken();
-                        var newValue = this.ParseExpressionCore();
-                        leftOperand = _syntaxFactory.WithExpression(leftOperand, opToken, accessorPath, assignmentOperator, newValue);
+                        var openBrace = this.EatToken(SyntaxKind.OpenBraceToken);
+                        var clauses = SeparatedSyntaxListBuilder<WithExpressionClauseSyntax>.Create();
+
+                        while (true)
+                        {
+                            var accessorPath = this.ParseAccessorPath();
+                            var operatorToken = this.EatToken();
+                            //checking for >>=, which is lexed as > >=
+                            if (operatorToken.Kind == SyntaxKind.GreaterThanToken
+                                && !operatorToken.HasTrailingTrivia
+                                && this.CurrentToken.Kind == SyntaxKind.GreaterThanEqualsToken
+                                && !this.CurrentToken.HasLeadingTrivia)
+                            {
+                                var ge = this.EatToken();
+                                operatorToken = SyntaxFactory.Token(operatorToken.GetLeadingTrivia(), SyntaxKind.GreaterThanGreaterThanEqualsToken, ge.GetTrailingTrivia());
+                            }
+                            var valueExpression = this.ParseExpressionCore();
+                            clauses.Add(
+                                _syntaxFactory.WithExpressionClause(accessorPath, operatorToken, valueExpression));
+                            if (this.CurrentToken.Kind == SyntaxKind.CommaToken)
+                            {
+                                clauses.AddSeparator(this.EatToken());
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        var closeBrace = this.EatToken(SyntaxKind.CloseBraceToken);
+
+                        leftOperand = _syntaxFactory.WithExpression(leftOperand, opToken, openBrace, clauses.ToList(), closeBrace);
                     }
                     else
                     {

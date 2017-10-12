@@ -2136,7 +2136,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         [Fact]
         public void TestWith1()
         {
-            var text = "x with .y = z";
+            var text = "x with { .y = z }";
             var expr = SyntaxFactory.ParseExpression(text);
 
             Assert.NotNull(expr);
@@ -2147,22 +2147,27 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var ws = (WithExpressionSyntax)expr;
             Assert.NotNull(ws.Expression);
 
-            Assert.NotNull(ws.AccessorPath);
-            var ap = ws.AccessorPath;
+            Assert.NotNull(ws.WithExpressionClauses);
+            Assert.Equal(1, ws.WithExpressionClauses.Count);
+
+            var wsc = ws.WithExpressionClauses[0];
+
+            Assert.NotNull(wsc.AccessorPath);
+            var ap = wsc.AccessorPath;
             Assert.Equal(1, ap.Count);
             Assert.IsType(typeof(MemberBindingExpressionSyntax), ap[0]);
 
-            Assert.NotNull(ws.OperatorToken);
-            Assert.Equal(SyntaxKind.EqualsToken, ws.OperatorToken.Kind());
+            Assert.NotNull(wsc.OperatorToken);
+            Assert.Equal(SyntaxKind.EqualsToken, wsc.OperatorToken.Kind());
 
-            Assert.NotNull(ws.ValueExpression);
+            Assert.NotNull(wsc.ValueExpression);
 
         }
 
         [Fact]
         public void TestWith2()
         {
-            var text = "a(b) + c with .x[y].z += u(v) + w";
+            var text = "c with { .x[y].z += u(v) + w, [b][d] >>= e.f }";
             var expr = SyntaxFactory.ParseExpression(text);
 
             Assert.NotNull(expr);
@@ -2173,17 +2178,22 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var ws = (WithExpressionSyntax)expr;
             Assert.NotNull(ws.Expression);
 
-            Assert.NotNull(ws.AccessorPath);
-            var ap = ws.AccessorPath;
+            Assert.NotNull(ws.WithExpressionClauses);
+            Assert.Equal(2, ws.WithExpressionClauses.Count);
+
+            var wsc1 = ws.WithExpressionClauses[0];
+
+            Assert.NotNull(wsc1.AccessorPath);
+            var ap = wsc1.AccessorPath;
             Assert.Equal(3, ap.Count);
             Assert.IsType(typeof(MemberBindingExpressionSyntax), ap[0]);
             Assert.IsType(typeof(ElementBindingExpressionSyntax), ap[1]);
             Assert.IsType(typeof(MemberBindingExpressionSyntax), ap[2]);
 
-            Assert.NotNull(ws.OperatorToken);
-            Assert.Equal(SyntaxKind.PlusEqualsToken, ws.OperatorToken.Kind());
+            Assert.NotNull(wsc1.OperatorToken);
+            Assert.Equal(SyntaxKind.PlusEqualsToken, wsc1.OperatorToken.Kind());
 
-            Assert.NotNull(ws.ValueExpression);
+            Assert.NotNull(wsc1.ValueExpression);
 
         }
 

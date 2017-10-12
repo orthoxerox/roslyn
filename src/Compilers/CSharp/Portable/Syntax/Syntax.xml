@@ -536,6 +536,17 @@
         <summary>SyntaxToken node representing 'with' keyword.</summary>
       </PropertyComment>
     </Field>
+	<Field Name="OpenBraceToken" Type="SyntaxToken">
+	  <Kind Name="OpenBraceToken"/>
+	</Field>
+	<Field Name="WithExpressionClauses" Type="SeparatedSyntaxList&lt;WithExpressionClauseSyntax&gt;">
+	</Field>
+	<Field Name="CloseBraceToken" Type="SyntaxToken">
+	  <Kind Name="CloseBraceToken"/>
+	</Field>
+  </Node>
+  <Node Name="WithExpressionClauseSyntax" Base="CSharpSyntaxNode">
+	<Kind Name="WithExpressionClause"/>
 	<Field Name="AccessorPath" Type="SyntaxList&lt;ExpressionSyntax&gt;">
 	  <PropertyComment>
         <summary>A list of ExpressionSyntax nodes representing the (nested) member being modified.</summary>
@@ -561,7 +572,7 @@
 	  <PropertyComment>
         <summary>ExpressionSyntax node representing the new value being assigned.</summary>
       </PropertyComment>
-    </Field>
+    </Field>  
   </Node>
   <Node Name="ImplicitElementAccessSyntax" Base="ExpressionSyntax">
     <Kind Name="ImplicitElementAccess"/>
