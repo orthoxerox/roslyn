@@ -156,6 +156,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         Lambda,
         UnboundLambda,
         QueryClause,
+        WithExpression,
         TypeOrInstanceInitializers,
         NameOfOperator,
         InterpolatedString,
@@ -5646,6 +5647,38 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
     }
 
+    internal sealed partial class BoundWithExpression : BoundExpression
+    {
+        public BoundWithExpression(SyntaxNode syntax, BoundExpression value, TypeSymbol type, bool hasErrors = false)
+            : base(BoundKind.WithExpression, syntax, type, hasErrors || value.HasErrors())
+        {
+
+            Debug.Assert(value != null, "Field 'value' cannot be null (use Null=\"allow\" in BoundNodes.xml to remove this check)");
+            Debug.Assert(type != null, "Field 'type' cannot be null (use Null=\"allow\" in BoundNodes.xml to remove this check)");
+
+            this.Value = value;
+        }
+
+
+        public BoundExpression Value { get; }
+
+        public override BoundNode Accept(BoundTreeVisitor visitor)
+        {
+            return visitor.VisitWithExpression(this);
+        }
+
+        public BoundWithExpression Update(BoundExpression value, TypeSymbol type)
+        {
+            if (value != this.Value || type != this.Type)
+            {
+                var result = new BoundWithExpression(this.Syntax, value, type, this.HasErrors);
+                result.WasCompilerGenerated = this.WasCompilerGenerated;
+                return result;
+            }
+            return this;
+        }
+    }
+
     internal sealed partial class BoundTypeOrInstanceInitializers : BoundStatementList
     {
         public BoundTypeOrInstanceInitializers(SyntaxNode syntax, ImmutableArray<BoundStatement> statements, bool hasErrors = false)
@@ -6359,6 +6392,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return VisitUnboundLambda(node as UnboundLambda, arg);
                 case BoundKind.QueryClause: 
                     return VisitQueryClause(node as BoundQueryClause, arg);
+                case BoundKind.WithExpression: 
+                    return VisitWithExpression(node as BoundWithExpression, arg);
                 case BoundKind.TypeOrInstanceInitializers: 
                     return VisitTypeOrInstanceInitializers(node as BoundTypeOrInstanceInitializers, arg);
                 case BoundKind.NameOfOperator: 
@@ -6934,6 +6969,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             return this.DefaultVisit(node, arg);
         }
         public virtual R VisitQueryClause(BoundQueryClause node, A arg)
+        {
+            return this.DefaultVisit(node, arg);
+        }
+        public virtual R VisitWithExpression(BoundWithExpression node, A arg)
         {
             return this.DefaultVisit(node, arg);
         }
@@ -7534,6 +7573,10 @@ namespace Microsoft.CodeAnalysis.CSharp
             return this.DefaultVisit(node);
         }
         public virtual BoundNode VisitQueryClause(BoundQueryClause node)
+        {
+            return this.DefaultVisit(node);
+        }
+        public virtual BoundNode VisitWithExpression(BoundWithExpression node)
         {
             return this.DefaultVisit(node);
         }
@@ -8291,6 +8334,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             return null;
         }
         public override BoundNode VisitQueryClause(BoundQueryClause node)
+        {
+            this.Visit(node.Value);
+            return null;
+        }
+        public override BoundNode VisitWithExpression(BoundWithExpression node)
         {
             this.Visit(node.Value);
             return null;
@@ -9161,6 +9209,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundExpression value = (BoundExpression)this.Visit(node.Value);
             TypeSymbol type = this.VisitType(node.Type);
             return node.Update(value, node.DefinedSymbol, node.Binder, type);
+        }
+        public override BoundNode VisitWithExpression(BoundWithExpression node)
+        {
+            BoundExpression value = (BoundExpression)this.Visit(node.Value);
+            TypeSymbol type = this.VisitType(node.Type);
+            return node.Update(value, type);
         }
         public override BoundNode VisitTypeOrInstanceInitializers(BoundTypeOrInstanceInitializers node)
         {
@@ -10663,6 +10717,15 @@ namespace Microsoft.CodeAnalysis.CSharp
                 new TreeDumperNode("value", null, new TreeDumperNode[] { Visit(node.Value, null) }),
                 new TreeDumperNode("definedSymbol", node.DefinedSymbol, null),
                 new TreeDumperNode("binder", node.Binder, null),
+                new TreeDumperNode("type", node.Type, null)
+            }
+            );
+        }
+        public override TreeDumperNode VisitWithExpression(BoundWithExpression node, object arg)
+        {
+            return new TreeDumperNode("withExpression", null, new TreeDumperNode[]
+            {
+                new TreeDumperNode("value", null, new TreeDumperNode[] { Visit(node.Value, null) }),
                 new TreeDumperNode("type", node.Type, null)
             }
             );

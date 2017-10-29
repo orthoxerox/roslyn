@@ -1533,6 +1533,13 @@
     <!-- The enclosing binder in which the query clause was evaluated. -->
     <Field Name="Binder" Type="Binder" Null="disallow" />
   </Node>
+  
+  <Node Name="BoundWithExpression" Base="BoundExpression">
+    <!-- Equal to Value.Type. -->
+    <Field Name="Type" Type="TypeSymbol" Override="true" Null="disallow"/>
+    <!-- The value computed for this with expression. -->
+    <Field Name="Value" Type="BoundExpression" Null="disallow"/>
+  </Node>
 
   <!-- 
   Special node to encapsulate initializers added into a constructor. 
